@@ -1,0 +1,312 @@
+:39] [Server thread/WARNING]: Non-packaged TerminatorVN installation detected, do not use on production.
+[18:06:39] [Server thread/INFO]:
+┌───────────────────────────────────────────────────────────────────────────────┐
+│•=» _______                  _             _          __      ___   _          │
+│•=»|__   __|                (_)           | |         \ \    / / \ | |         │
+│•=»   | | ___ _ __ _ __ ___  _ _ __   __ _| |_ ___  _ _\ \  / /|  \| |         │
+│•=»   | |/ _ \ '__| '_ ` _ \| | '_ \ / _` | __/ _ \| '__\ \/ / | . ` |         │
+│•=»   | |  __/ |  | | | | | | | | | | (_| | || (_) | |   \  /  | |\  |         │
+│•=»   |_|\___|_|  |_| |_| |_|_|_| |_|\__,_|\__\___/|_|    \/   |_| \_|         │
+│•=» Nếu Có Lỗi Hãy Lên Báo Cho: fb.com/dev.terminatorvn                        │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+[18:06:39] [Server thread/INFO]: Loading properties and configuration...
+[18:06:39] [Server thread/WARNING]: OpenSSL extension not found
+[18:06:39] [Server thread/WARNING]: Please configure OpenSSL extension for PHP if you want to use Xbox Live authentication or global resource pack.
+[18:06:39] [Server thread/INFO]: Chọn Vietnamese (vie) là ngôn ngữ chính
+[18:06:39] [Server thread/WARNING]: Debugging assertions are enabled, this may impact on performance. To disable them, set `zend.assertions = -1` in php.ini.
+[18:06:39] [Server thread/INFO]: Opening server on 0.0.0.0:19133
+[18:06:39] [Server thread/INFO]: TerminatorVN is distributed under the LGPL License
+[18:06:40] [Server thread/INFO]: Loading recipes...
+[18:06:41] [Server thread/INFO]: Loading resource packs...
+[18:06:41] [Server thread/ERROR]: Could not load 'C:\Users\Wc2018\Desktop\WolfMine\plugins\SlapperRotation Vi?t H▒a By S▒i Con_v1.1(2).phar' in folder 'C:\Users\Wc2018\Desktop\WolfMine\plugins\': creating archive "C:/Users/Wc2018/Desktop/WolfMine/plugins/SlapperRotation Vi?t H▒a By S▒i Con_v1.1(2).phar" disabled by the php.ini setting phar.readonly
+[18:06:41] [Server thread/CRITICAL]: UnexpectedValueException: "creating archive "C:/Users/Wc2018/Desktop/WolfMine/plugins/SlapperRotation Vi?t H▒a By S▒i Con_v1.1(2).phar" disabled by the php.ini setting phar.readonly" (EXCEPTION) in "/src/pocketmine/plugin/PharPluginLoader" at line 84
+
+Warning: Invalid argument supplied for foreach() in C:\Users\Wc2018\Desktop\WolfMine\src\pocketmine\plugin\PluginDescription.php on line 115
+[18:06:41] [Server thread/ERROR]: Could not load plugin 'CustomEnchants[PTK]': plugin exists
+[18:06:41] [Server thread/ERROR]: Could not load plugin 'FlyText[PTK]': plugin exists
+
+Notice: Undefined index: api in C:\Users\Wc2018\Desktop\WolfMine\src\pocketmine\plugin\PluginDescription.php on line 68
+
+Notice: Undefined index: api in C:\Users\Wc2018\Desktop\WolfMine\src\pocketmine\plugin\PluginDescription.php on line 68
+
+Warning: yaml_parse(): scanning error encountered during parsing: mapping values are not allowed in this context (line 10, column 16) in C:\Users\Wc2018\Desktop\WolfMine\src\pocketmine\plugin\PluginDescription.php on line 52
+
+Warning: yaml_parse(): Unexpected event type 0 (line 10, column 16) in C:\Users\Wc2018\Desktop\WolfMine\src\pocketmine\plugin\PluginDescription.php on line 52
+[18:06:41] [Server thread/ERROR]: Could not load 'C:\Users\Wc2018\Desktop\WolfMine\plugins\SetVip-master' in folder 'C:\Users\Wc2018\Desktop\WolfMine\plugins\': Argument 1 passed to pocketmine\plugin\PluginDescription::loadMap() must be of the type array, boolean given, called in C:\Users\Wc2018\Desktop\WolfMine\src\pocketmine\plugin\PluginDescription.php on line 52
+[18:06:41] [Server thread/CRITICAL]: TypeError: "Argument 1 passed to pocketmine\plugin\PluginDescription::loadMap() must be of the type array, boolean given, called in C:\Users\Wc2018\Desktop\WolfMine\src\pocketmine\plugin\PluginDescription.php on line 52" (EXCEPTION) in "/src/pocketmine/plugin/PluginDescription" at line 60
+[18:06:41] [Server thread/INFO]: Loading AntiSpam v1.3
+[18:06:41] [Server thread/INFO]: Loading BetterSitting v1.0.30
+[18:06:41] [Server thread/INFO]: [BetterSitting] Preparing BetterSitting...
+[18:06:41] [Server thread/INFO]: [BetterSitting] Checking for updates...
+[18:06:41] [Server thread/INFO]: [BetterSitting] Connecting to the destinated server...
+
+Warning: file_get_contents(): Unable to find the wrapper "https" - did you forget to enable it when you configured PHP? in phar://C:/Users/Wc2018/Desktop/WolfMine/plugins/BetterSitting_v1.0.30.phar/src/BetterSitting/BetterSitting.php on line 104
+
+Warning: file_get_contents(https://imgcl.co/plugins/bettersitting.265/): failed to open stream: Invalid argument in phar://C:/Users/Wc2018/Desktop/WolfMine/plugins/BetterSitting_v1.0.30.phar/src/BetterSitting/BetterSitting.php on line 104
+[18:06:41] [Server thread/NOTICE]: [BetterSitting] Hey! It seems like a new update has been detected.
+[18:06:41] [Server thread/NOTICE]: [BetterSitting] Please update to the latest version here: https://imgcl.co/plugins/bettersitting.265/
+[18:06:41] [Server thread/NOTICE]: [BetterSitting] Not updating it may cause the plugin to incompatibility.
+[18:06:41] [Server thread/INFO]: [BetterSitting] Plugin is loading. Plugin will be enabled after the other plugins loaded.
+[18:06:41] [Server thread/INFO]: Loading Broadcaster v1.16
+[18:06:41] [Server thread/INFO]: Loading EconomyAPI v2.0.9
+[18:06:41] [Server thread/INFO]: Loading essentialsTP v1.1.0
+[18:06:41] [Server thread/INFO]: Loading iProtector v3.1b
+[18:06:41] [Server thread/INFO]: Loading NoFrameDrop v1
+[18:06:41] [Server thread/INFO]: Loading Slapper v1.3.5
+[18:06:41] [Server thread/INFO]: Loading TapToDo v2.2.1
+[18:06:41] [Server thread/INFO]: Loading TimeCommander v2.1
+[18:06:41] [Server thread/INFO]: Loading WorldFixer v1
+[18:06:41] [Server thread/INFO]: Loading (Source) Kitt v1
+[18:06:41] [Server thread/INFO]: Loading (Source) HealthBarFit v1.3
+[18:06:41] [Server thread/INFO]: Loading (Source) BlockSniper v1.3.4
+
+Warning: Invalid argument supplied for foreach() in C:\Users\Wc2018\Desktop\WolfMine\src\pocketmine\plugin\PluginDescription.php on line 115
+
+Warning: Invalid argument supplied for foreach() in C:\Users\Wc2018\Desktop\WolfMine\src\pocketmine\plugin\PluginDescription.php on line 115
+[18:06:41] [Server thread/INFO]: Loading (Source) BlockBoost[PTK] v1.0.0
+[18:06:41] [Server thread/INFO]: Loading (Source) Buyec v97
+[18:06:41] [Server thread/INFO]: Loading (Source) CustomEnchants[PTK] v0.2
+[18:06:41] [Server thread/INFO]: Loading (Source) DonRac[PTK] v2
+[18:06:41] [Server thread/INFO]: Loading (Source) DropParty v1.0.3
+[18:06:41] [Server thread/INFO]: Loading (Source) Enchant[PTK] v2
+[18:06:41] [Server thread/INFO]: Loading (Source) Firework[PTK] v1
+[18:06:41] [Server thread/INFO]: Loading (Source) FlyText[PTK] v1
+[18:06:41] [Server thread/INFO]: Loading (Source) GenBuckets v1.0.0
+[18:06:41] [Server thread/INFO]: [GenBuckets] Loading Configuration...
+[18:06:41] [Server thread/INFO]: Loading (Source) WarClan v9.7
+[18:06:41] [Server thread/INFO]: Loading (Source) GiftCode v2
+[18:06:41] [Server thread/INFO]: Loading (Source) GiftCode-Sapling v2.0.1
+[18:06:41] [Server thread/INFO]: Loading (Source) GiftCodeV4 v2.0.4
+[18:06:41] [Server thread/INFO]: Loading (Source) GiftCode[PTK] v2
+[18:06:41] [Server thread/INFO]: Loading (Source) FactionsPro v1.0 rewrite by PTK-KienPham
+[18:06:41] [Server thread/INFO]: Loading (Source) ItemCommand20 v1
+[18:06:41] [Server thread/INFO]: Loading (Source) JoinItems v1
+[18:06:41] [Server thread/INFO]: Loading (Source) LevelToMine v0.1
+[18:06:41] [Server thread/INFO]: Loading (Source) ManyWorlds v2.1.0
+[18:06:41] [Server thread/INFO]: Loading (Source) MSpawns v1.5
+[18:06:41] [Server thread/INFO]: Loading (Source) MuaVIP v1.3
+
+Notice: Undefined index: api in C:\Users\Wc2018\Desktop\WolfMine\src\pocketmine\plugin\PluginDescription.php on line 68
+
+Notice: Undefined index: api in C:\Users\Wc2018\Desktop\WolfMine\src\pocketmine\plugin\PluginDescription.php on line 68
+
+Notice: Undefined index: api in C:\Users\Wc2018\Desktop\WolfMine\src\pocketmine\plugin\PluginDescription.php on line 68
+
+Notice: Undefined index: api in C:\Users\Wc2018\Desktop\WolfMine\src\pocketmine\plugin\PluginDescription.php on line 68
+[18:06:41] [Server thread/INFO]: Loading (Source) ConfigNapThe v2.2
+[18:06:41] [Server thread/INFO]: Loading (Source) AutoInv[PTK] v1.0.0
+[18:06:41] [Server thread/INFO]: Loading (Source) PurePerms v1.4.0
+[18:06:41] [Server thread/NOTICE]: PurePerms by 64FF00 & ProjectInfinity! #LEET.CC
+
+  888  888    .d8888b.      d8888  8888888888 8888888888 .d8888b.   .d8888b.
+  888  888   d88P  Y88b    d8P888  888        888       d88P  Y88b d88P  Y88b
+888888888888 888          d8P 888  888        888       888    888 888    888
+  888  888   888d888b.   d8P  888  8888888    8888888   888    888 888    888
+  888  888   888P "Y88b d88   888  888        888       888    888 888    888
+888888888888 888    888 8888888888 888        888       888    888 888    888
+  888  888   Y88b  d88P       888  888        888       Y88b  d88P Y88b  d88P
+  888  888    "Y8888P"        888  888        888        "Y8888P"   "Y8888P"
+
+[18:06:41] [Server thread/INFO]: [PurePerms] Setting default language to 'en'
+[18:06:41] [Server thread/NOTICE]: [PurePerms] →Hỗ trợ nhiều thế giới đã bị hủy kích hoạt.
+[18:06:41] [Server thread/NOTICE]: [PurePerms] →Đừng quên set cài đặt enable-multiworld-perms trong config.yml thành true nếu bạn muốn set perm ở nhiều thế giới khác nhau!
+[18:06:41] [Server thread/INFO]: Loading (Source) REDNoBreak v0.1
+[18:06:41] [Server thread/INFO]: Loading (Source) AcidWater v1.1.0BETA
+[18:06:41] [Server thread/INFO]: Loading (Source) SlapperRotation v1.0.1
+[18:06:41] [Server thread/INFO]: Loading (Source) SuperManOverBar v1.0.0
+[18:06:41] [Server thread/INFO]: Loading (Source) Tool[PTK] v2.0.0
+[18:06:41] [Server thread/INFO]: Loading (Source) TradeAPI v2
+[18:06:41] [Server thread/INFO]: Loading (Source) TransferServerTitle v1
+[18:06:41] [Server thread/INFO]: Loading (Source) MagicWE v0.2.6
+[18:06:41] [Server thread/INFO]: [MagicWE] MagicWE has been loaded!
+[18:06:41] [Server thread/INFO]: Loading (Source) Coin v2
+[18:06:41] [Server thread/INFO]: Loading (Source) WorldProtect[PTK] v1
+[18:06:41] [Server thread/INFO]: Loading (Source) Worlds v1.0.9
+[18:06:41] [Server thread/INFO]: Loading EconomySell v2.0.7
+[18:06:41] [Server thread/INFO]: Loading EconomyShop v2.0.7
+[18:06:41] [Server thread/INFO]: Loading (Source) AacidIslandacutexxvide.com v3.2.9
+[18:06:41] [Server thread/INFO]: Loading (Source) PureChat v1.4.0
+[18:06:42] [Server thread/INFO]: Loading (Source) SimpleWarp v3.3.0
+[18:06:42] [Server thread/INFO]: Enabling AntiSpam v1.3
+[18:06:42] [Server thread/INFO]: Enabling Broadcaster v1.16
+[18:06:42] [Server thread/INFO]: Enabling BlockBoost[PTK] v1.0.0
+[18:06:42] [Server thread/INFO]: BlockBoost Activate v1.0.0
+[18:06:42] [Server thread/INFO]: Enabling DonRac[PTK] v2
+[18:06:42] [Server thread/INFO]: [DonRac[PTK]] Plugin Dọn Rác Bởi PTK Đã Được Kích Hoạt Phiên Bản:2!
+[18:06:42] [Server thread/INFO]: Enabling MSpawns v1.5
+[18:06:42] [Server thread/INFO]: Enabling REDNoBreak v0.1
+[18:06:42] [Server thread/INFO]: [REDNoBreak] Kích hoạt: TNT không nổ block!
+[18:06:42] [Server thread/INFO]: Enabling MagicWE v0.2.6
+[18:06:42] [Server thread/INFO]: [MagicWE] MagicWE enabled!
+[18:06:42] [Server thread/INFO]: Preparing level "world"
+[18:06:42] [Server thread/INFO]: Preparing level "nether"
+[18:06:42] [Server thread/INFO]: Preparing level "ender"
+[18:06:42] [Server thread/INFO]: Enabling BetterSitting v1.0.30
+[18:06:42] [Server thread/INFO]: [BetterSitting] Checking resources...
+[18:06:42] [Server thread/INFO]: [BetterSitting] Configuration file has been loaded! It's been located in the folder where the plugin is.
+[18:06:42] [Server thread/INFO]: [BetterSitting] Registering commands...
+[18:06:42] [Server thread/INFO]: [BetterSitting] Commands has been loaded! Registering events...
+[18:06:42] [Server thread/INFO]: [BetterSitting] Connected to server, runnning PocketMine API 3.0.1, IP: 0.0.0.0:19133
+[18:06:42] [Server thread/INFO]: [BetterSitting] Plugin has been loaded successfully! Made by KhoaHoang, based on Seat Block by MineRourii!
+[18:06:42] [Server thread/INFO]: Enabling EconomyAPI v2.0.9
+[18:06:42] [Server thread/NOTICE]: [EconomyAPI] Provider was set to: Yaml
+[18:06:42] [Server thread/NOTICE]: [EconomyAPI] Auto save has been set to interval : 10 min(s)
+[18:06:42] [Server thread/INFO]: [EconomyAPI] Checking for updates... It may be take some while.
+[18:06:46] [Server thread/NOTICE]: [EconomyAPI]
+[18:06:46] [Server thread/INFO]: Enabling essentialsTP v1.1.0
+[18:06:46] [Server thread/INFO]: [essentialsTP] essentialsTP+ loading...
+[18:06:46] [Server thread/INFO]: [essentialsTP] [INFO] Đang tải [config.yml]....
+[18:06:46] [Server thread/INFO]: [essentialsTP] [INFO] Đang tải [config.yml] ... xong!
+[18:06:46] [Server thread/INFO]: [essentialsTP] essentialsTP+ đã tải xong!
+[18:06:46] [Server thread/INFO]: Enabling iProtector v3.1b
+[18:06:46] [Server thread/INFO]: Enabling NoFrameDrop v1
+[18:06:46] [Server thread/INFO]: NoFrameDrop MADE BY vk.com/frago9876543210
+[18:06:46] [Server thread/INFO]: Enabling Slapper v1.3.5
+[18:06:46] [Server thread/INFO]: Enabling TapToDo v2.2.1
+[18:06:46] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:46] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:46] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:46] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:46] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:46] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:46] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:46] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:46] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:46] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:46] [Server thread/WARNING]: [TapToDo] Could not load block in level world because that level is not loaded.
+[18:06:46] [Server thread/WARNING]: [TapToDo] Could not load block in level world because that level is not loaded.
+[18:06:46] [Server thread/WARNING]: [TapToDo] Could not load block in level world because that level is not loaded.
+[18:06:46] [Server thread/INFO]: Enabling TimeCommander v2.1
+[18:06:46] [Server thread/INFO]: Enabling WorldFixer v1
+[18:06:46] [Server thread/INFO]: Enabling Kitt v1
+[18:06:46] [Server thread/INFO]: Enabling HealthBarFit v1.3
+[18:06:46] [Server thread/INFO]: Enabling BlockSniper v1.3.4
+[18:06:46] [Server thread/INFO]: [BlockSniper] [BlockSniper] No new Configuration version found, Configuration is up to date.
+[18:06:46] [Server thread/INFO]: [BlockSniper] All brushes have been restored.
+[18:06:46] [Server thread/INFO]: [BlockSniper] [BlockSniper] No valid language selected, English has been auto-selected.
+Please setup a language by using /blocksniper language <lang>.
+[18:06:46] [Server thread/INFO]: Enabling Buyec v97
+[18:06:46] [Server thread/INFO]: [Buyec]
+
+Plugin BuyEc NoLimited Code By AmGM
+
+[18:06:46] [Server thread/INFO]: Enabling CustomEnchants[PTK] v0.2
+[18:06:46] [Server thread/INFO]: [CustomEnchants[PTK]] Plugi.
+[18:06:46] [Server thread/INFO]: Enabling DropParty v1.0.3
+[18:06:46] [Server thread/INFO]: [DropParty] Has been enabled
+[18:06:46] [Server thread/INFO]: Enabling Enchant[PTK] v2
+[18:06:46] [Server thread/INFO]: [Enchant[PTK]] Плагин загружен
+[18:06:46] [Server thread/INFO]: Enabling Firework[PTK] v1
+[18:06:46] [Server thread/INFO]: [Firework[PTK]] PLUGIN BY jaciel14
+[18:06:46] [Server thread/INFO]: Enabling FlyText[PTK] v1
+[18:06:46] [Server thread/INFO]: [FlyText[PTK]] Đã kích hoạt
+[18:06:46] [Server thread/INFO]: Enabling GenBuckets v1.0.0
+[18:06:46] [Server thread/INFO]: [GenBuckets] GenBuckets Loaded
+[18:06:46] [Server thread/INFO]: Enabling WarClan v9.7
+[18:06:46] [Server thread/INFO]: [WarClan] Plugin GiaoTranh is enabled
+[18:06:46] [Server thread/INFO]: Enabling GiftCode v2
+[18:06:46] [Server thread/INFO]: Enabling GiftCode-Sapling v2.0.1
+[18:06:46] [Server thread/INFO]: Enabling GiftCodeV4 v2.0.4
+[18:06:46] [Server thread/INFO]: Enabling GiftCode[PTK] v2
+[18:06:46] [Server thread/INFO]: Enabling FactionsPro v1.0 rewrite by PTK-KienPham
+[18:06:46] [Server thread/INFO]: Enabling ItemCommand20 v1
+[18:06:46] [Server thread/INFO]: [ItemCommand20] Enable!
+[18:06:46] [Server thread/INFO]: Enabling JoinItems v1
+[18:06:46] [Server thread/INFO]: Enabling LevelToMine v0.1
+[18:06:46] [Server thread/INFO]: [LevelToMine] LevelToMine is enabled!
+[18:06:46] [Server thread/INFO]: Enabling ManyWorlds v2.1.0
+[18:06:46] [Server thread/INFO]: Enabling MuaVIP v1.3
+[18:06:46] [Server thread/INFO]: [MuaVIP] MuaVIpAPI is enabled!
+[18:06:46] [Server thread/INFO]: Enabling ConfigNapThe v2.2
+[18:06:46] [Server thread/INFO]: [ConfigNapThe] Nạp thẻ đã được Load
+[18:06:46] [Server thread/INFO]: [ConfigNapThe] plugins\ConfigNapThe\card_delay.log đã sẵn sàng
+[18:06:46] [Server thread/INFO]: Enabling AutoInv[PTK] v1.0.0
+[18:06:46] [Server thread/INFO]: Enabling PurePerms v1.4.0
+[18:06:46] [Server thread/NOTICE]: [PurePerms] →Set data provider to YAMLv1.
+[18:06:46] [Server thread/INFO]: Enabling AcidWater v1.1.0BETA
+[18:06:46] [Server thread/INFO]: Enabling SlapperRotation v1.0.1
+[18:06:46] [Server thread/INFO]: Enabling SuperManOverBar v1.0.0
+[18:06:46] [Server thread/INFO]: [SuperManOverBar] ♦ Plugin Superbar Code By AmGM
+[18:06:46] [Server thread/INFO]: Enabling Tool[PTK] v2.0.0
+[18:06:47] [Server thread/INFO]: Preparing level "acidisland"
+[18:06:47] [Server thread/INFO]: [TapToDo] Reloading blocks due to level acidisland loaded...
+[18:06:47] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:47] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:47] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:47] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:47] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:47] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:47] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:47] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:47] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:47] [Server thread/WARNING]: [TapToDo] Could not load block in level tp because that level is not loaded.
+[18:06:47] [Server thread/WARNING]: [TapToDo] Could not load block in level world because that level is not loaded.
+[18:06:47] [Server thread/WARNING]: [TapToDo] Could not load block in level world because that level is not loaded.
+[18:06:47] [Server thread/WARNING]: [TapToDo] Could not load block in level world because that level is not loaded.
+[18:06:47] [Server thread/INFO]: [Tool[PTK]] →Đang chạy plugin Tool[PTK]...
+[18:06:47] [Server thread/INFO]: Enabling TradeAPI v2
+[18:06:47] [Server thread/INFO]: Enabling TransferServerTitle v1
+[18:06:47] [Server thread/INFO]: Enabling Coin v2
+[18:06:47] [Server thread/NOTICE]: [Coin] Auto save has been set to interval : 10 min(s)
+[18:06:47] [Server thread/INFO]: [Coin] Checking for updates... It may be take some while.
+[18:06:48] [Server thread/NOTICE]: [Coin]
+[18:06:48] [Server thread/INFO]: Enabling WorldProtect[PTK] v1
+[18:06:48] [Server thread/INFO]: [WorldProtect[PTK]] Enabled 5 features
+[18:06:48] [Server thread/INFO]: Enabling Worlds v1.0.9
+[18:06:48] [Server thread/INFO]: Enabling EconomySell v2.0.7
+[18:06:48] [Server thread/INFO]: Enabling EconomyShop v2.0.7
+[18:06:48] [Server thread/INFO]: Enabling AacidIslandacutexxvide.com v3.2.9
+[18:06:48] [Server thread/INFO]: [AacidIslandacutexxvide.com] Đang tải Acidisland...
+[18:06:48] [Server thread/INFO]: Enabling PureChat v1.4.0
+[18:06:48] [Server thread/NOTICE]: [PureChat] No valid factions plugin in default-factions-plugin node was found. Disabling factions plugin support.
+[18:06:48] [Server thread/INFO]: Enabling SimpleWarp v3.3.0
+[18:06:49] [Server thread/INFO]: Starting GS4 status listener
+[18:06:49] [Server thread/INFO]: Setting query port to 19133
+[18:06:49] [Server thread/INFO]: Query running on 0.0.0.0:19133
+[18:06:49] [Server thread/INFO]: Default game type: Chế độ sống sốt
+[18:06:49] [Server thread/INFO]: Done (11.138s)! For help, type "help" or "?"
+[18:06:49] [Server thread/INFO]: [Tool[PTK]] Running
+[18:06:49] [Server thread/CRITICAL]: "Could not pass event 'pocketmine\event\player\PlayerPreLoginEvent' to 'Tool[PTK] v2.0.0': Argument 2 passed to pocketmine\Server::broadcastPacket() must be an instance of pocketmine\network\mcpe\protocol\DataPacket, instance of pocketmine\network\protocol\MobEffectPacket given, called in C:\Users\Wc2018\Desktop\WolfMine\plugins\Tool_PTK_-F\src\Tool\BaseFiles\BaseAPI.php on line 2181 on Tool\EventHandlers\PlayerEvents
+[18:06:49] [Server thread/CRITICAL]: TypeError: "Argument 2 passed to pocketmine\Server::broadcastPacket() must be an instance of pocketmine\network\mcpe\protocol\DataPacket, instance of pocketmine\network\protocol\MobEffectPacket given, called in C:\Users\Wc2018\Desktop\WolfMine\plugins\Tool_PTK_-F\src\Tool\BaseFiles\BaseAPI.php on line 2181" (EXCEPTION) in "/src/pocketmine/Server" at line 2122
+[18:06:49] [Server thread/INFO]: Để mua đồ enchant hiếm như cúp nổ hãy liên hệ facebook Nguyễn Đông Quý nhé
+[18:06:49] [Server thread/INFO]: Rác sẽ được dọn sau 5 phút nữa
+[18:06:49] [Server thread/INFO]: Lễ hội drop sẽ bắt đầu trong 20 phút
+[18:06:50] [Server thread/INFO]: Đã dọn 0 vật phẩm rác
+[18:06:50] [Server thread/INFO]: [Tool[PTK]-System]→ Không có phiên bản cập nhật nào mới cho Tool[PTK].Bạn đang dùng bản mới nhất!
+pl[18:06:53] [Server thread/CRITICAL]: "Could not pass event 'pocketmine\event\entity\EntityArmorChangeEvent' to 'CustomEnchants[PTK] v0.2': Call to a member function getSize() on null on PTK\CustomEnchants\EventListener
+[18:06:53] [Server thread/CRITICAL]: Error: "Call to a member function getSize() on null" (EXCEPTION) in "/plugins/Ce/src/PTK/CustomEnchants/EventListener" at line 745
+[18:06:53] [Server thread/CRITICAL]: "Could not pass event 'pocketmine\event\entity\EntityArmorChangeEvent' to 'CustomEnchants[PTK] v0.2': Call to a member function getSize() on null on PTK\CustomEnchants\EventListener
+[18:06:53] [Server thread/CRITICAL]: Error: "Call to a member function getSize() on null" (EXCEPTION) in "/plugins/Ce/src/PTK/CustomEnchants/EventListener" at line 745
+[18:06:53] [Server thread/CRITICAL]: "Could not pass event 'pocketmine\event\entity\EntityArmorChangeEvent' to 'CustomEnchants[PTK] v0.2': Call to a member function getSize() on null on PTK\CustomEnchants\EventListener
+[18:06:53] [Server thread/CRITICAL]: Error: "Call to a member function getSize() on null" (EXCEPTION) in "/plugins/Ce/src/PTK/CustomEnchants/EventListener" at line 745
+[18:06:53] [Server thread/CRITICAL]: "Could not pass event 'pocketmine\event\entity\EntityArmorChangeEvent' to 'CustomEnchants[PTK] v0.2': Call to a member function getSize() on null on PTK\CustomEnchants\EventListener
+[18:06:53] [Server thread/CRITICAL]: Error: "Call to a member function getSize() on null" (EXCEPTION) in "/plugins/Ce/src/PTK/CustomEnchants/EventListener" at line 745
+[18:06:53] [Server thread/INFO]: Statu[/14.242.143.170:50084] [ClientID: 9120594901092699626] logged in with entity id 4 at (world, 194, 124, -739)
+
+[18:06:54] [Server thread/INFO]: Plugins (54): AntiSpam v1.3, BetterSitting v1.0.30, Broadcaster v1.16, EconomyAPI v2.0.9, essentialsTP v1.1.0, iProtector v3.1b, NoFrameDrop v1, Slapper v1.3.5, TapToDo v2.2.1, TimeCommander v2.1, WorldFixer v1, Kitt v1, HealthBarFit v1.3, BlockSniper v1.3.4, BlockBoost[PTK] v1.0.0, Buyec v97, CustomEnchants[PTK] v0.2, DonRac[PTK] v2, DropParty v1.0.3, Enchant[PTK] v2, Firework[PTK] v1, FlyText[PTK] v1, GenBuckets v1.0.0, WarClan v9.7, GiftCode v2, GiftCode-Sapling v2.0.1, GiftCodeV4 v2.0.4, GiftCode[PTK] v2, FactionsPro v1.0 rewrite by PTK-KienPham, ItemCommand20 v1, JoinItems v1, LevelToMine v0.1, ManyWorlds v2.1.0, MSpawns v1.5, MuaVIP v1.3, ConfigNapThe v2.2, AutoInv[PTK] v1.0.0, PurePerms v1.4.0, REDNoBreak v0.1, AcidWater v1.1.0BETA, SlapperRotation v1.0.1, SuperManOverBar v1.0.0, Tool[PTK] v2.0.0, TradeAPI v2, TransferServerTitle v1, MagicWE v0.2.6, Coin v2, WorldProtect[PTK] v1, Worlds v1.0.9, EconomySell v2.0.7, EconomyShop v2.0.7, AacidIslandacutexxvide.com v3.2.9, PureChat v1.4.0, SimpleWarp v3.3.0
+[18:06:56] [Server thread/INFO]: Statu tham gia server
+[18:06:58] [Server thread/INFO]: ✡HeoGM✡[/1.55.180.212:37627] logged out due to Tên không hợp lệ!
+[18:07:00] [Server thread/INFO]: [Guest] [] [1] Statu -> helu
+[18:07:17] [Server thread/INFO]: [Tool[PTK]] Running
+[18:07:17] [Server thread/CRITICAL]: "Could not pass event 'pocketmine\event\player\PlayerPreLoginEvent' to 'Tool[PTK] v2.0.0': Argument 2 passed to pocketmine\Server::broadcastPacket() must be an instance of pocketmine\network\mcpe\protocol\DataPacket, instance of pocketmine\network\protocol\MobEffectPacket given, called in C:\Users\Wc2018\Desktop\WolfMine\plugins\Tool_PTK_-F\src\Tool\BaseFiles\BaseAPI.php on line 2181 on Tool\EventHandlers\PlayerEvents
+[18:07:17] [Server thread/CRITICAL]: TypeError: "Argument 2 passed to pocketmine\Server::broadcastPacket() must be an instance of pocketmine\network\mcpe\protocol\DataPacket, instance of pocketmine\network\protocol\MobEffectPacket given, called in C:\Users\Wc2018\Desktop\WolfMine\plugins\Tool_PTK_-F\src\Tool\BaseFiles\BaseAPI.php on line 2181" (EXCEPTION) in "/src/pocketmine/Server" at line 2122
+[18:07:30] [Server thread/INFO]: boss_baby[/171.246.197.160:32814] [ClientID: -4028329044548961784] logged in with entity id 14 at (world, 194, 124, -739)
+[18:07:34] [Server thread/INFO]: boss_baby tham gia server
+[18:07:36] [Server thread/INFO]: Nếu trong quá trình chơi có gì không hài lòng hãy báo với admin
+[18:07:37] [Server thread/INFO]: [Tool[PTK]] Running
+[18:07:37] [Server thread/CRITICAL]: "Could not pass event 'pocketmine\event\player\PlayerPreLoginEvent' to 'Tool[PTK] v2.0.0': Argument 2 passed to pocketmine\Server::broadcastPacket() must be an instance of pocketmine\network\mcpe\protocol\DataPacket, instance of pocketmine\network\protocol\MobEffectPacket given, called in C:\Users\Wc2018\Desktop\WolfMine\plugins\Tool_PTK_-F\src\Tool\BaseFiles\BaseAPI.php on line 2181 on Tool\EventHandlers\PlayerEvents
+[18:07:37] [Server thread/CRITICAL]: TypeError: "Argument 2 passed to pocketmine\Server::broadcastPacket() must be an instance of pocketmine\network\mcpe\protocol\DataPacket, instance of pocketmine\network\protocol\MobEffectPacket given, called in C:\Users\Wc2018\Desktop\WolfMine\plugins\Tool_PTK_-F\src\Tool\BaseFiles\BaseAPI.php on line 2181" (EXCEPTION) in "/src/pocketmine/Server" at line 2122
+[18:07:41] [Server thread/NOTICE]: Player data not found for "heogm", creating new profile
+[18:07:41] [Server thread/INFO]: HeoGM[/1.55.180.212:37627] [ClientID: 1316325961932943223] logged in with entity id 15 at (world, 194, 124, -739)
+[18:07:44] [Server thread/INFO]: HeoGM tham gia server
+[18:07:45] [Server thread/INFO]: [Guest] [] [1] boss_baby -> hi
+[18:07:51] [Server thread/INFO]: [Lỗi] Xin hãy sử dụng lệnh này trong game!
+[18:07:51] [Server thread/INFO]: Lễ hội drop sẽ bắt đầu trong 19 phút
+[18:07:52] [Server thread/INFO]: | KING | <> -[6] HeoGM- chichkku
+[18:07:59] [Server thread/INFO]: [Guest] [] [1] boss_baby -> e chao a
+[18:08:07] [Server thread/INFO]: [Guest] [] [1] Statu -> ủa
+[18:08:11] [Server thread/INFO]: | KING | <> -[6] HeoGM- sói đâu r
+[18:08:14] [Server thread/INFO]: [Guest] [] [1] Statu -> đảo của tui
+[18:08:27] [Server thread/INFO]: | KING | <> -[6] HeoGM- mới rêst island
+[18:08:31] [Server thread/INFO]: Nếu muốn đẳng cấp hơn hãy nạp thẻ, hệ thông 

@@ -1,0 +1,13 @@
+---
+name: WhatCrates
+description: WhatCrates is a crate plugin for Pocketmine-MP Servers.
+version: 2.0.0
+author: SchdowNVIDIA
+api:
+- 3.0.0
+main: SchdowNVIDIA\WhatCrates\Main
+permissions:
+  whatcrates:
+    default: op
+    description: WhatCrates command permission
+...

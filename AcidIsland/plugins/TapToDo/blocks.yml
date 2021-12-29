@@ -1,0 +1,96 @@
+---
+version: 1
+blocks:
+- x: 128
+  "y": 4
+  z: 125
+  level: tp
+  commands:
+  - muavip
+  - muavip
+- x: 128
+  "y": 4
+  z: 126
+  level: tp
+  commands:
+  - wolfcoin
+- x: 128
+  "y": 3
+  z: 127
+  level: tp
+  commands:
+  - trade
+- x: 128
+  "y": 4
+  z: 127
+  level: tp
+  commands:
+  - trade
+- x: 128
+  "y": 4
+  z: 128
+  level: tp
+  commands:
+  - genbucket
+- x: 128
+  "y": 4
+  z: 129
+  level: tp
+  commands:
+  - card
+- x: 128
+  "y": 4
+  z: 130
+  level: tp
+  commands:
+  - addtext Hi!
+- x: 128
+  "y": 4
+  z: 131
+  level: tp
+  commands:
+  - gpb heart
+- x: 128
+  "y": 4
+  z: 132
+  level: tp
+  commands:
+  - give D compass 1
+- x: 128
+  "y": 4
+  z: 133
+  level: tp
+  commands:
+  - give D clock 1
+- x: 193
+  "y": 123
+  z: -739
+  level: world
+  commands:
+  - particles add edita e
+- x: 193
+  "y": 123
+  z: -739
+  level: world
+  commands:
+  - particles add edita r
+- x: 193
+  "y": 124
+  z: -757
+  level: world
+  commands:
+  - mw load PVP
+  - mw load acidisland
+- x: 193
+  "y": 123
+  z: -739
+  level: world
+  commands:
+  - mw load play
+- x: 193
+  "y": 123
+  z: -755
+  level: world
+  commands:
+  - undo
+...

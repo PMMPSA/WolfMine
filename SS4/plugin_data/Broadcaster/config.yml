@@ -1,0 +1,83 @@
+---
+# Available tags for broadcast messages, popups and titles:
+# - {MAXPLAYERS}: Show the maximum number of players supported by the server
+# - {TOTALPLAYERS}: Show the number of all online players
+# - {PREFIX}: Show prefix
+# - {SUFFIX}: Show suffix
+# - {TIME}: Show current time
+# Available tags for /sendmessage, /sendpopup and /sendtitle format:
+# - {MESSAGE}: Show message
+# - {MAXPLAYERS}: Show the maximum number of players supported by the server
+# - {TOTALPLAYERS}: Show the number of all online players
+# - {PREFIX}: Show prefix
+# - {PLAYER}: Message receiver
+# - {SENDER}: Show sender name
+# - {SUFFIX}: Show suffix
+# - {TIME}: Show current time
+# Extra tag for titles:
+# - {SUBTITLE}: Add subtitle (the text after this tag will be the content of the subtitle) 
+# Prefix
+prefix: "&l&c(&aBÁO&c)&r"
+# Suffix
+suffix: "[A]"
+# Date\Time format (replaced in {TIME}). For format codes read http://php.net/manual/en/datetime.formats.php
+datetime-format: "H:i:s"
+# Message broadcast
+message-broadcast:
+ # Enable message broadcast
+ enabled: true
+ # Broadcast interval (in seconds)
+ time: 120
+ # Command /sendmessage format
+ command-format: "{PREFIX}&e {MESSAGE}"
+ # Broadcast messages
+ messages:
+  - "{PREFIX}&e Thành Phố không có hệ thống VIP đâu! Nhưng các Cư Dân có thể dụng Cape để thể hiện sức hút, quyền lực của bản thân trong Thành Phố đó."
+  - "{PREFIX}&e Đừng quên đi tìm Mảnh Đất May Mắn để lập nghiệp nhé các Cư Dân."
+  - "{PREFIX}&e Làm gì thì làm, chứ đừng để điểm Nhân Phẩm bị hạ thấp nha các Cư Dân ơi!"
+  - "{PREFIX}&e Chăm chỉ làm việc mỗi ngày sẽ nhận được điểm Nhân Phẩm và VNĐ đó các Cư Dân nè."
+  - "{PREFIX}&e Cư Dân muốn có nhiều tiền hơn? Hãy thử xin việc làm từ các Cư Dân khác đi nè, biết đâu lại có thêm nhiều tiền đó."
+  - "{PREFIX}&e Các Cư Dân có thể chuyển nghề nếu gặp khó khắn trong công việc hiện tại của mình đó nha."
+  - "{PREFIX}&e Nếu buồn thì hãy tap vào các NPC để nghe thoại của họ nhé!"
+  - "{PREFIX}&e Các NPC trong Thành Phố đều có một nghĩa vụ riêng, hãy tìm hiểu họ nhé Cư Dân."
+  - "{PREFIX}&e Hãy cùng nhau xây dựng một cộng đồng vững mạnh, văn hóa nhé các Cư Dân của Thành Phố!"
+  - "{PREFIX}&e Các Cư Dân hãy tìm đến thùng rác để bỏ rác nhé! Cùng nhau giữ một thang phố xanh sạch đẹp nào"
+  - "{PREFIX}&e Sử dụng /nganhang để xem chi tiết về WOLFBANK nha Cư Dân!"
+  - "{PREFIX}&e Đừng quên VOTE cho máy chủ tại bit.ly/WOLFMINE_VOTE vào mỗi ngày để nhận &c1.000.000VNĐ&e nha Cư Dân!"
+  - "{PREFIX}&e Sử dụng /buudien để cùng người chơi khác mở Mục Bưu Điện và tiến hành trao đổi nè"
+  - "{PREFIX}&e Tham gia Cộng Đồng tại bit.ly/WolfMine để cập nhật những tin tức nóng hổi nha Cư Dân"
+  - "{PREFIX}&e Để xem lại tiêu chuẩn nghề thì hãy sử dụng /nghe-tt nhé!"
+  - "{PREFIX}&e Từ chối gia nhập! Lên án người chơi. Xây dụng cộng đồng máy chủ không có quảng cáo từ máy chủ khác"
+  - "{PREFIX}&e Đừng quên gia nhập vào Quận bằng /quan để được các Cư Dân khác bảo kê nè"
+  - "{PREFIX}&e Để tiến hành nạp thẻ, Cư Dân hãy sử dụng lệnh /muavang nha"
+  - "{PREFIX}&l&c MÁY CHỦ HIỆN ĐANG KHUYẾN MÃI &e30% GIÁ TRỊ&c CHO MỌI LOẠI THẺ-MỆNH GIÁ. &a[&eNẠP NGAY&a]"
+  - "{PREFIX}&e Các Cư Dân trên 5 tuổi hãy sử dụng /hangcam để tiến hành mua &ccác loại hàng cấm&e nha"
+  - "{PREFIX}&e Không nên xả rác bừa bãi từ&a THỰC TẾ&e đến &aGAME&e nha Cư Dân"
+# Popup broadcast
+popup-broadcast:
+ # Enable popup broadcast
+ enabled: false
+ # Popup broadcast interval (in seconds)
+ time: 120
+ # Popup duration (in seconds)
+ duration: 5
+ # Command /sendpopup format
+ command-format: "&a{SENDER}&e>>&f {MESSAGE}"
+ # Popup broadcast messages
+ messages:
+  - "&aWelcome to your server"
+  - "&d{TOTALPLAYERS} &eof &d{MAXPLAYERS} &eonline"
+  - "&bCurrent Time: &a{TIME}"
+# Title broadcast
+title-broadcast:
+ # Enable title broadcast
+ enabled: false
+ # Title broadcast interval
+ time: 30
+ # Command /sendtitle format
+ command-format: "&d{MESSAGE}"
+ # Title broadcast messages
+ messages:
+  - "&aWelcome to your server!{SUBTITLE}&bGood game!"
+  - "&eHello player!"
+...

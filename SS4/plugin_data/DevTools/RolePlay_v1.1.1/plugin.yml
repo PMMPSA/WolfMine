@@ -1,0 +1,19 @@
+---
+name: RolePlay
+main: awzaw\roleplay\Main
+version: 1.1.1
+api:
+- 3.0.0
+load: POSTWORLD
+author: awzaw
+website: https://github.com/awzaw
+commands:
+  rp:
+    description: Join the server RP
+    usage: /rp
+    permission: roleplay
+permissions:
+  roleplay:
+    description: Allows RP toggle on/off
+    default: true
+...

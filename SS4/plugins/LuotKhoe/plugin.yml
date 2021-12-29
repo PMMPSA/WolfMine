@@ -1,0 +1,18 @@
+name: LuotKhoe
+main: HWings\LuotKhoe\LuotKhoe
+version: 1.0.0
+author: NDQ-Zoid
+api: 3.0.0
+description: This is best Plugincommands:
+  khoe-help:
+   description: "Bảng Lệnh Hệ Thống Khoe Vật Phẩm"
+   default: true
+  luotkhoe-mua:
+   description: "Mua Thêm Lượt Khoe Vật Phẩm"
+   default: true
+  luotkhoe:
+   description: "Xem Lượt Khoe Của Cư Dân"
+   default: true
+  khoe:
+   description: "Khoe Vật Phẩm Lên Kênh Chat"
+   default: true

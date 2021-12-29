@@ -1,0 +1,156 @@
+/*********************************************************
++*   File created:                                       *
++*   (c) MINEPAPER. All rights reserved                  *
++*   (c) NaturalPack. All rights reserved.               *
++*********************************************************/
+
+{
+    "namespace": "np_information",
+
+     /*Информация button*/
+    "information_button@settings_common.section_toggle_base": {
+        "$toggle_view_binding_name": "debug_button_toggle",
+        "$glyph_texture": "textures/ui.x/ui.icon/information_glyph",
+        "$glyph_color_texture": "textures/ui.x/ui.icon/information_glyph_color",
+        "$glyph_size": [
+            16,
+            17
+        ],
+        "$button_text": "information.title",
+        "$toggle_property_bag": {
+            "#panel_title": "information.title"
+        }
+    },
+
+     /*Информация section*/
+    "information_section": {
+        "type": "stack_panel",
+        "size": [
+            "100%",
+            "100%c"
+        ],
+        "anchor_from": "top_left",
+        "anchor_to": "top_left",
+        "bindings": [
+            {
+                "binding_type": "view",
+                "source_control_name": "debug_button_toggle",
+                "source_property_name": "#toggle_state",
+                "target_property_name": "#visible"
+            }
+        ],
+        "controls": [
+            {
+                "image": {
+                    "type": "image",
+                    "texture": "textures/ui.x/title_textures",
+                    "size": [
+                        "100%",
+                        50
+                    ],
+                    "layer": 5
+                }
+            },
+            {
+                "information.version.comment@np_panels.header": {
+                    "$text": "information.version.comment",
+                    "layer": 2
+                }
+            },
+            {
+                "information.content.comment@np_panels.naturalpack_panel": {
+                    "$npt": "information.content.comment",
+                    "layer": 2
+                }
+            },
+            {
+                "information.join-discord.link@np_panels.naturalpack_panel": {
+                    "$npt": "information.join-discord.link",
+                    "layer": 2
+                }
+            },
+            {
+                "information.content.title@np_panels.header": {
+                    "$text": "information.content.title",
+                    "layer": 2
+                }
+            },
+            {
+                "image.block.preview": {
+                    "type": "image",
+                    "texture": "textures/ui.x/block.preview",
+                    "size": [
+                        "100%",
+                        100
+                    ],
+                    "layer": 5
+                }
+            },
+            {
+                "information.content.block.title@np_panels.header": {
+                    "$text": "information.content.block.title"
+                }
+            },
+            {
+                "information.content.block.text@np_panels.naturalpack_panel": {
+                    "$npt": "information.content.block.text"
+                }
+            },
+            {
+                "information.content.items.title@np_panels.header": {
+                    "$text": "information.content.items.title"
+                }
+            },
+            {
+                "information.content.items.text@np_panels.naturalpack_panel": {
+                    "$npt": "information.content.items.text"
+                }
+            },
+            {
+                "information.content.entity.title@np_panels.header": {
+                    "$text": "information.content.entity.title"
+                }
+            },
+            {
+                "information.content.entity.text@np_panels.naturalpack_panel": {
+                    "$npt": "information.content.entity.text"
+                }
+            },
+            {
+                "information.content.interface.title@np_panels.header": {
+                    "$text": "information.content.interface.title"
+                }
+            },
+            {
+                "information.content.interface.text@np_panels.naturalpack_panel": {
+                    "$npt": "information.content.interface.text"
+                }
+            },
+            {
+                "information.content.other.title@np_panels.header": {
+                    "$text": "information.content.other.title"
+                }
+            },
+            {
+                "information.content.other.text@np_panels.naturalpack_panel": {
+                    "$npt": "information.content.other.text"
+                }
+            },
+            {
+                "spase_16@how_to_play_common.paragraph": {
+                    "$text": " "
+                }
+            },
+            {
+                "information.content.version@np_panels.header": {
+                    "$text": "information.content.version"
+                }
+            },
+            {
+                "information.content.version_nume@np_panels.header": {
+                    "$text": "information.content.version_nume"
+                }
+            }
+        ]
+    }
+}

@@ -1,0 +1,25 @@
+#Positions of the floating texts
+Positions:
+    - world: Spawn
+      x: 0
+      "y": 0
+      z: 0
+    - world: Spawn
+      x: 2
+      "y": 0
+      z: 0
+#API-Key of your server provided by minecraftpocket-servers.com
+API-Key: ""
+#Amount of voters who shall be shown (Max: 500)
+Amount: 5
+#Update interval of the query to the server in seconds
+Update-Interval: 180
+#Header of the floating text particle
+Header: "§6Top voters of the month <3"
+#Text for every row after the header
+Text: "§a{player} §d{votes}"
+#Check if the name of a voter is valid
+#Votes of invalidly named players will be discarded if enabled
+Check-Name: true
+#When set to true PocketVote will provide aggregated top voters instead of using your API-Key
+Use-PocketVote: false

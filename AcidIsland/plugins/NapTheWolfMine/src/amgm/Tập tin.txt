@@ -1,0 +1,17 @@
+      $s->sendMessage("§e| §a|§d |§c |§b |§f ⬛⬛⬛§b §l§oSword Craft Online§r§f ⬛⬛⬛§b |§c |§d |§a |§e |");
+      $s->sendMessage(" ");
+      $s->sendMessage("§a[SAOPC]§b Chào bạn, hôm nay mình sẽ hướng dẫn bạn cách nạp thẻ ↖(^ω^)↗");
+      $s->sendMessage(" ");
+      $s->sendMessage("§61.§b /card 1 §aseri, pin, mạng");
+      $s->sendMessage(" ");
+      $s->sendMessage("§62.§b Bạn sẽ nhận được một bảng có đầy đủ thông tin thẻ bạn nạp");
+      $s->sendMessage(" ");
+      $s->sendMessage("§63.§b Chờ một lúc bạn sẽ nhận được rank kèm theo§e quà nạp lần đầu");
+      $s->sendMessage(" ");
+      $s->sendMessage(" §2⬛§a⬛§3⬛§b⬛§4⬛§c⬛§5⬛§d⬛§6⬛§7⬛§f♦§7⬛§6⬛§d⬛§5⬛§c⬛§4⬛§b⬛§3⬛§a⬛§2⬛");
+      $s->sendMessage("§f Vui lòng không đưa thẻ cho SAOer khác, mọi chuyện đội ngũ SAOV sẽ không chịu trách nhiệm!!");
+$s->sendMessage(" §2⬛§a⬛§3⬛§b⬛§4⬛§c⬛§5⬛§d⬛§6⬛§7⬛§f♦§7⬛§6⬛§d⬛§5⬛§c⬛§4⬛§b⬛§3⬛§a⬛§2⬛");
+      $s->sendMessage(" ");
+      $s->sendMessage("§64.§a Kêu gọi mọi người nạp thẻ để server phát triển nhé (^)o(^)");
+      $s->sendMessage(" ");
+      $s->sendMessage("§e| §a|§d |§c |§b |§f ⬛⬛⬛§b §l§oSword Craft Online§r§f ⬛⬛⬛§b |§c |§d |§a |§e |");

@@ -1,0 +1,6 @@
+name: PocketGuns
+main: Hytlenz\Loader
+version: 1.5-PCP
+api: [3.0.0, 4.0.0]
+author: Hytlenz
+description: PocketGuns with Drugs

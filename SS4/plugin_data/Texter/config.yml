@@ -1,0 +1,22 @@
+# Texter config file
+
+# set language (en_US or ja_JP)
+locale: en_US
+
+# When set to true, update notification is displayed at startup
+check.update: true
+
+# If you want to disable the command, please set it to false
+can.use.commands: true
+
+# To limit the number of characters, set it to that, if unnecessary, set it to -1
+char: 50
+
+# To limit the number of line feeds, set it to that, if unnecessary, set it to -1
+feed: 3
+
+# Please specify the world name when setting the world where text can not be set up
+world:
+  # ex)
+  # - world
+  # - world-2

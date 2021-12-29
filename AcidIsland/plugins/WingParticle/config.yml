@@ -1,0 +1,9 @@
+---
+lang: eng
+modeldatapath: models
+main-tickrate: 5
+hide-during-movement: true
+hide-during-movement-cooldown: 5
+debug: true
+ConfigVersion: 0.200000
+...

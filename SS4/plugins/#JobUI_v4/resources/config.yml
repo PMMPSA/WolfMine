@@ -1,0 +1,28 @@
+
+job:
+- name: ĐẦU BẾP
+  prefix: ""
+  item: ["357:0:5","350:0:5"]
+  png: ""
+- name: THỢ HỒ
+  prefix: ""
+  item: ["1:0:64","390:0:5"]
+  png: ""
+- name: NÔNG DÂN
+  prefix: ""
+  item: ["296:0:10","391:0:5"]
+  png: ""
+  
+  
+playerjobs:
+  []
+  
+isCheckItem: false
+
+#24 hour
+CheckTime: [18,21]
+
+CommandForDoneJob:
+  - givemoney {name} 50000
+CommandForUnDoneJob:
+  - tdnp {name} 5

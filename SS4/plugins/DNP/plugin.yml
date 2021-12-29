@@ -1,0 +1,18 @@
+name: DNP
+main: HWings\DNP\DNP
+version: 1.0.0
+author: NguyenDongQuy
+api: 3.0.0
+description: Hệ thống điểm Nhân Phẩmcommands:
+  np-help:
+   description: "Bảng lệnh của hệ thống  điểm Nhân Phẩm"
+   default: true
+  np:
+   description: "Xem số điểm Nhân Phẩm mà Cư Dân đang có"
+   default: true
+  np-default:
+   description: "Cho 1 Cư Dân bất kỳ có đủ 100 điểm Nhân Phẩm"
+   default: op
+  np-top:
+   description: "Xem danh sách Cư Dân gương mẫu"
+   default: true

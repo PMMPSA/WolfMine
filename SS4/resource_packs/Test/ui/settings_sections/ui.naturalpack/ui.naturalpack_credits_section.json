@@ -1,0 +1,96 @@
+/*********************************************************
++*   File created:                                       *
++*   (c) MINEPAPER. All rights reserved                  *
++*   (c) NaturalPack. All rights reserved.               *
++*********************************************************/
+
+{
+  "namespace": "np_credits",
+
+  /*Разработчики button*/
+  "credits_button@settings_common.section_toggle_base": {
+    "$toggle_view_binding_name": "automation_button_toggle",
+    "$glyph_texture": "textures/ui.x/ui.icon/credits_glyph",
+    "$glyph_color_texture": "textures/ui.x/ui.icon/credits_glyph_color",
+    "$glyph_size": [
+      16,
+      16
+    ],
+    "$button_text": "credits.title",
+    "$toggle_property_bag": {
+      "#panel_title": "credits.title"
+    }
+  },
+
+  /*Разработчики section*/
+  "credits_section": {
+    "type": "stack_panel",
+    "size": [
+      "100%",
+      "100%c"
+    ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "automation_button_toggle",
+        "source_property_name": "#toggle_state",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "image.title": {
+          "type": "image",
+          "texture": "textures/ui.x/title_textures",
+          "size": [
+            "100%",
+            50
+          ],
+          "layer": 5
+        }
+      },
+      {
+        "credits.content.devTitle@np_panels.header": {
+          "$text": "credits.content.devTitle"
+        }
+      },
+      {
+        "credits.content.devText@np_panels.naturalpack_panel": {
+          "$npt": "credits.content.devText"
+        }
+      },
+      {
+        /*"credits.content.betaTitle@np_panels.header": {
+          "$text": "credits.content.betaTitle"
+        }
+      },
+      {
+        "credits.content.betaText@np_panels.naturalpack_panel": {
+          "$npt": "credits.content.betaText"
+        }
+      },
+      {*/
+        "credits.content.peopleLinkTitle@np_panels.header": {
+          "$text": "credits.content.peopleLinkTitle"
+        }
+      },
+      {
+        "credits.content.peopleLinkText@np_panels.naturalpack_panel": {
+          "$npt": "credits.content.peopleLinkText"
+        }
+      },
+      {
+        "credits.content.peopleLinkText0@np_panels.naturalpack_panel": {
+          "$npt": "credits.content.peopleLinkText0"
+        }
+      },
+      {
+        "credits.content.peopleLinkText1@np_panels.naturalpack_panel": {
+          "$npt": "credits.content.peopleLinkText1"
+        }
+      }
+    ]
+  }
+}

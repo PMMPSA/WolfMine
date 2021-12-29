@@ -1,0 +1,5 @@
+[IMPORTED] Model 'Wing': Required key 'modeltype' does not exist, using default.
+[IMPORTED] Model 'Wing': Key 'particle' does not exist, using default.
+[IMPORTED] Model 'Wing': Key 'spacing' does not exist, using default.
+[IMPORTED] Model 'Wing': Key 'backwardsoffset' does not exist, using default.
+[IMPORTED] Model 'Helix': Key 'particle' does not exist, using default.

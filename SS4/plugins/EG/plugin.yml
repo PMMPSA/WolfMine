@@ -1,0 +1,6 @@
+name: EG
+version: 1.0.0
+main: HWings\Effect\Main
+api: 3.0.0
+author: NguyenDongQuy
+description: Move Effect

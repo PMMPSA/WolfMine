@@ -1,0 +1,61 @@
+---
+language: en
+commands:
+  mymoney:
+    usage: /mymoney
+    description: Số tiền hiện có của bạn
+  topmoney:
+    usage: /topmoney [page]
+    description: Các đại gia trong thành phố
+  setmoney:
+    usage: /setmoney <player> <amount>
+    description: Điều chỉnh số tiền của công dân
+  seemoney:
+    usage: /seemoney <player>
+    description: Xem số tiền của một ai đó
+  givemoney:
+    usage: /givemoney <player> <amount>
+    description: Cho công dân tiền
+  takemoney:
+    usage: /takemoney <player> <amount>
+    description: Lấy lại tiền của công dân
+  pay:
+    usage: /pay <player> <amount>
+    description: Trả tiền cho ai đó
+  setlang:
+    usage: /setlang <language>
+    description: chỉnh ngôn ngữ
+  mystatus:
+    usage: /mystatus
+    description: Trạng thái tiền của bạn
+language-set: Điều chỉnh ngôn ngữ %1 by Every
+request-cancelled: Yêu cầu của bạn đã bị hủy
+player-not-connected: Công dân  %1 không hoạt động.
+player-never-connected: Công dân %1 chưa bao giờ kết nối.
+topmoney-tag: '- Danh sách đại gia (%1 trên %2) -'
+topmoney-format: '[%1] %2: %3%MONETARY_UNIT%'
+pay-failed: Lỗi khi trả.
+pay-success: Paid %1%MONETARY_UNIT% to %2.
+money-paid: '%1 cho bạn %%MONETARY_UNIT%2.'
+takemoney-must-be-number: Số lượng phải là số
+takemoney-invalid-number: Số không hợp lệ
+takemoney-player-lack-of-money: '%1 không có đủ %2%MONETARY_UNIT%. %1''s số tiền :
+  %MONETARY_UNIT%%3'
+takemoney-money-taken: Số tiền %1%MONETARY_UNIT% đã được sử dụng
+takemoney-took-money: Đã lấy %2%MONETARY_UNIT% từ %1
+takemoney-failed: Lấy tiền thất bại
+givemoney-must-be-number: Số lượng phải là số
+givemoney-invalid-number: Số không hợp lệ
+givemoney-money-given: Bạn đã kiếm được %1%MONETARY_UNIT%
+givemoney-gave-money: Cho %MONETARY_UNIT%%1 đến %2
+seemoney-seemoney: 'Công dân %1''s số tiền : %2'
+setmoney-setmoney: Công dân %1's money has been set to %MONETARY_UNIT%%2
+setmoney-set: Số tiền của bạn đã được điều chỉnh thành %1%MONETARY_UNIT%
+setmoney-failed: Không thể điều chỉnh tiền do lỗi không xác định
+setmoney-invalid-number: '%1%MONETARY_UNIT% phải là một giá trị số'
+mymoney-mymoney: 'Số tiền của bạn : %1%MONETARY_UNIT%'
+mystatus-show: 'Trạng thái tiền : %1%'
+гравець-not-connected: Гравець %1 зараз не грає
+гравець-never-connected: Гравця %1 не існує
+takemoney-гравець-lack-of-money: '%1 не має %MONETARY_UNIT%%2. Баланс %1 : %MONETARY_UNIT%%3'
+...

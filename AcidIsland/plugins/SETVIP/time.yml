@@ -1,0 +1,27 @@
+---
+HeoGM:
+  current-vip: 2018-02-12,1000,V7
+  holding-vip:
+  - 3,V1
+  - 1000,V7
+  - 600,V6
+  - 250,V5
+  - 140,V4
+  - 80,V3
+  - 30,V2
+  - 10,V1
+  - 1799,V8
+Dumetuimay:
+  current-vip: 18-02-12,1794,V8
+  holding-vip:
+  - 10,V1
+HeoGM_:
+  current-vip: 18-02-12,1797,V8
+  holding-vip:
+  - 30,V2
+XxBoomer:
+  current-vip: 2018-02-12,1800,V8
+  holding-vip:
+  - 250,V5
+  - 1800,V8
+...

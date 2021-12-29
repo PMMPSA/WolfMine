@@ -1,0 +1,111 @@
+name: MagicWE
+main: MagicWE\Main
+version: 0.2.6
+api: [1.13.0,2.0.0]
+load: STARTUP
+authors: [thebigsmileXD]
+description: WorldEdit with a magic touch
+commands:
+  /pos1:
+    description: Select first position
+    usage: "//pos1"
+    permission: magicwe.commands.pos
+  /pos2:
+    description: Select second position
+    usage: "//pos2"
+    permission: magicwe.commands.pos
+  /set:
+    description: Fill a selection
+    usage: "//set <id[:meta] | id1[:meta1],id2[:meta2],id3[:meta3]>"
+    permission: magicwe.commands.set
+  /replace:
+    description: Replace blocks in selection
+    usage: "//replace <id[:meta] | id1[:meta1],id2[:meta2],id3[:meta3]> <id[:meta] | id1[:meta1],id2[:meta2],id3[:meta3]>"
+    permission: magicwe.commands.replace
+  /copy:
+    description: Copy a selection
+    usage: "//copy"
+    permission: magicwe.commands.copy
+  /paste:
+    description: Paste copied blocks at your position
+    usage: "//paste"
+    permission: magicwe.commands.paste
+  /undo:
+    description: Undo your last action
+    usage: "//undo"
+    permission: magicwe.commands.undo
+  /redo:
+    description: Redo your last action
+    usage: "//redo"
+    permission: magicwe.commands.redo
+  /flip:
+    description: Flip the clipboard of //copy
+    usage: "//flip <x|y|z>"
+    permission: magicwe.commands.flip
+  /wand:
+    description: Quicker way to select area. Tap -> pos1 Break -> pos2
+    usage: "//wand"
+    permission: magicwe.commands.wand
+  /schem:
+    description: Schematic import + pasting + export
+    usage: "//schem <load> <filename> | //schem <paste> <filename> | //schem <save|export> <filename>"
+    permission: magicwe.commands.schem
+  /cyl:
+    description: Creates a cylinder
+    usage: "//cyl <block> <radius> [height]"
+    permission: magicwe.commands.cyl
+  /hcyl:
+    description: Creates a hollow cylinder
+    usage: "//hcyl <block> <outerradius> [height]"
+    permission: magicwe.commands.hcyl
+  /:
+    description: Magicmagicwe.help
+    usage: "// | //help"
+    permission: magicwe.commands.help
+  /help:
+    description: Magicmagicwe.help
+    usage: "// | //help"
+    permission: magicwe.commands.help
+permissions:
+  magicwe.commands.admin:
+    default: op
+    description: "Permission for all Magicmagicwe.commands"
+  magicwe.commands.pos:
+    default: op
+    description: "Permission for //pos1 and //pos2"
+  magicwe.commands.set:
+    default: op
+    description: "Permission for //set"
+  magicwe.commands.replace:
+    default: op
+    description: "Permission for //replace"
+  magicwe.commands.copy:
+    default: op
+    description: "Permission for //copy"
+  magicwe.commands.paste:
+    default: op
+    description: "Permission for //paste"
+  magicwe.commands.undo:
+    default: op
+    description: "Permission for //undo"
+  magicwe.commands.redo:
+    default: op
+    description: "Permission for //redo"
+  magicwe.commands.flip:
+    default: op
+    description: "Permission for //flip"
+  magicwe.commands.wand:
+    default: op
+    description: "Permission for //wand and wand selection tool"
+  magicwe.commands.schem:
+    default: op
+    description: "Permission for //schem"
+  magicwe.commands.cyl:
+    default: op
+    description: "Permission for //cyl"
+  magicwe.commands.hcyl:
+    default: op
+    description: "Permission for //hcyl"
+  magicwe.commands.help:
+    default: op
+    description: "Permission for help"

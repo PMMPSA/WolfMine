@@ -1,0 +1,6 @@
+name: ConfigNapThe
+version: 2.2
+main: amgm\Main
+commands:
+  card:
+    description: Nạp Thẻ Cho Server!

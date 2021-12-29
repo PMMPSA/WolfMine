@@ -1,0 +1,7 @@
+Title: §l§d•§b===§e CỬA HÀNG NHÂN PHẨM §b===§d•
+messages:
+    paid-for: §d•§e Bạn đã mua thành công §a{amount} §eitem §a{item}§e với §a{cost} §eĐiểm Nhân Phẩm.
+    not-enough-money: §d•§e Không thể mua vì bạn còn thiếu §a{missing} §eĐiểm Nhân Phẩm.
+    money: Bạn có
+    money-recieved: §d•§e Bạn đã nhận được §a{money}§e Điểm Nhân Phẩm
+    not-enough-items: §d•§e Bạn không có đủ §a{amount} §ecủa §a{name}.

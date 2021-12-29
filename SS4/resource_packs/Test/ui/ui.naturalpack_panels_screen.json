@@ -1,0 +1,213 @@
+/*********************************************************
++*   File created:                                       *
++*   (c) MINEPAPER. All rights reserved                  *
++*   (c) NaturalPack. All rights reserved.               *
++*********************************************************/
+
+{
+    "namespace": "np_panels", 
+    
+    /*naturalpack_panel_for_marketplace*/
+    "naturalpack_panel_for_marketplace": {
+        "type": "panel",
+        "size": [
+            "100%",
+            "100%cm"
+        ],
+        "anchor_from": "top_left",
+        "anchor_to": "top_left",
+        "layer": 1,
+        "controls": [
+            {
+                "background@play.label_background": {
+                    "size": [
+                        "100%",
+                        "100%c"
+                    ],
+                    "controls": [
+                        {
+                            "label_panel_layout": {
+                                "type": "panel",
+                                "anchor_from": "center",
+                                "anchor_to": "center",
+                                "size": [
+                                    "100%-8px",
+                                    "100%c + 8px"
+                                ],
+                                "controls": [
+                                    {
+                                        "label": {
+                                            "type": "label",
+                                            "color": "$dark_button_default_text_color",
+                                            "size": [
+                                                "100%",
+                                                "default"
+                                            ],
+                                            "anchor_from": "center",
+                                            "anchor_to": "center",
+                                            "layer": 1,
+                                            "shadow": false,
+                                            "text": "$npt",
+                                            "$npt_binding_type|default": "none",
+                                            "$npt_binding_condition|default": "none",
+                                            "bindings": [
+                                                {
+                                                    "binding_name": "$npt",
+                                                    "binding_type": "$npt_binding_type",
+                                                    "binding_condition": "$npt_binding_condition" 
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+
+    /*header_background*/
+    "header_background": {
+        "type": "image",
+        "size": [
+            "100%",
+            "20px"
+        ],
+        "offset": [
+            0,
+            "-2px"
+        ],
+        "anchor_from": "bottom_middle",
+        "anchor_to": "bottom_middle",
+        "texture": "textures/ui/Banners",
+        "controls": [
+            {
+                "header_label": {
+                    "type": "label",
+                    "color": "$body_text_color",
+                    "layer": 1,
+                    "anchor_from": "center",
+                    "anchor_to": "center",
+                    "text_alignment": "center",
+                    "max_size": [
+                        "95%",
+                        10
+                    ],
+                    "text": "$text"
+                }
+            },
+            {
+                "focus_border@common.non_interact_focus_border_button": {
+                    "size": [
+                        "100%",
+                        19 
+                    ]
+                }
+            }
+        ]
+    },
+    
+    /*header*/
+      "header": {
+        "type": "panel",
+        "size": [ "100%", "28px" ],
+        "controls": [
+          { "header@np_panels.header_background": {} }
+        ]
+      },
+
+    /*naturalpack_panel*/
+    "naturalpack_panel": {
+        "type": "panel",
+        "size": [
+            "100%",
+            "100%cm"
+        ],
+        "anchor_from": "top_left",
+        "anchor_to": "top_left",
+        "layer": 1,
+        "controls": [
+            {
+                "background@play.label_background": {
+                    "size": [
+                        "100%",
+                        "100%c"
+                    ],
+                    "controls": [
+                        {
+                            "label_panel_layout": {
+                                "type": "panel",
+                                "anchor_from": "center",
+                                "anchor_to": "center",
+                                "size": [
+                                    "100%-8px",
+                                    "100%c + 8px"
+                                ],
+                                "controls": [
+                                    {
+                                        "label": {
+                                            "type": "label",
+                                            "color": "$dark_button_default_text_color",
+                                            "size": [
+                                                "100%",
+                                                "default"
+                                            ],
+                                            "anchor_from": "center",
+                                            "anchor_to": "center",
+                                            "layer": 1,
+                                            "shadow": false,
+                                            "text": "$npt",
+                                            "$npt_binding_type|default": "none",
+                                            "$npt_binding_condition|default": "none",
+                                            "bindings": [
+                                                {
+                                                    "binding_name": "$npt",
+                                                    "binding_type": "$npt_binding_type",
+                                                    "binding_condition": "$npt_binding_condition"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ] ///del 1-2
+                }
+            }
+        ]
+    }, /*   ///del 2
+            ,{
+                "focus_border@common.non_interact_focus_border_button": {
+                    "size": [
+                        "100%",
+                        28
+                    ]
+                }
+            }
+        ]
+    },  
+    */
+ 
+/*naturalpack_panel_image_downloadbar*/ 
+            "download_bar_soon": { "type": "image", "texture": "textures/ui.x/ui.marketplace/ui/screen/download_bar/download_bar_soon", "size": [ "100%", 220 ], "layer": 10 }, "download_bar_none": { "type": "image", "texture": "textures/ui.x/ui.marketplace/ui/screen/download_bar_icon", "size": [ "100%", 220 ], "layer": 10 }, "download_bar_500": { "type": "image", "texture": "textures/ui.x/ui.marketplace/ui/screen/download_bar/download_bar_500", "size": [ "100%", 220 ], "layer": 10 }, "download_bar_1000": { "type": "image", "texture": "textures/ui.x/ui.marketplace/ui/screen/download_bar/download_bar_1000", "size": [ "100%", 220 ], "layer": 10 }, "download_bar_5000": { "type": "image", "texture": "textures/ui.x/ui.marketplace/ui/screen/download_bar/download_bar_5000", "size": [ "100%", 220 ], "layer": 10 }, "download_bar_10000": { "type": "image", "texture": "textures/ui.x/ui.marketplace/ui/screen/download_bar/download_bar_10000", "size": [ "100%", 220 ], "layer": 10 }, "download_bar_15000plus": { "type": "image", "texture": "textures/ui.x/ui.marketplace/ui/screen/download_bar/download_bar_15000plus", "size": [ "100%", 220 ], "layer": 10
+
+/*naturalpack_panel_image_official*/
+},
+    "naturalpack_panel_image_official": {
+        "type": "panel",
+        "size": [ "100%", 220 ],
+        "layer": 5,
+        "controls": [ { "official_screen": { "type": "image", "texture": "textures/ui.x/ui.marketplace/ui/screen/official_screen", "size": [ "100%", 220 ], "layer": 9 } }, { "shadow_bar": { "type": "image", "texture": "textures/ui.x/ui.marketplace/ui/screen/shadow_bar", "size": [ "100%", 220 ], "layer": 7 } } ]
+        },
+        
+
+    /*naturalpack_panel_image_unofficial*/
+    "naturalpack_panel_image_unofficial": {
+        "type": "panel",
+        "size": [ "100%", 220 ],
+        "layer": 5,
+        "controls": [ { "unofficial_screen": { "type": "image", "texture": "textures/ui.x/ui.marketplace/ui/screen/unofficial_screen", "size": [ "100%", 220 ], "layer": 9 } }, { "shadow_bar": { "type": "image", "texture": "textures/ui.x/ui.marketplace/ui/screen/shadow_bar", "size": [ "100%", 220 ], "layer": 7 } } ]
+    }
+}

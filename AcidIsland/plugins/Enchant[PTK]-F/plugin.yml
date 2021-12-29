@@ -1,0 +1,16 @@
+name: Enchant[PTK]
+main: EnchantBog\main
+author: PTK-KienPham
+version: 2.0
+api: 2.0
+
+commands: 
+ enchantall:
+  permission: enchant
+  alias: [ea]
+  description: "Enchant tất cả"
+permissions:
+ enchant: 
+  default: op
+  alias: [ea]
+  description: Enchant tất cả!!

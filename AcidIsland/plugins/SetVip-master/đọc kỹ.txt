@@ -1,0 +1,12 @@
+▒▐██▄▒▄██▌░▐█▀█▒▐█▀█░▐█▀▀▒▐▌▒▐▌▒██▄░▒█▌     ▒█▀█▀█░▐█▀▀─░▄█▀▄─▒▐██▄▒▄██▌
+░▒█░▒█░▒█░░▐█──▒▐█▄█░▐█▀▀░▒█▒█░▒▐█▒█▒█░     ░░▒█░░░▐█▀▀░▐█▄▄▐█░▒█░▒█░▒█░
+▒▐█░░░░▒█▌░▐█▄█▒▐█░░░▐█▄▄░▒▀▄▀░▒██░▒██▌     ░▒▄█▄░░▐█▄▄░▐█─░▐█▒▐█░░░░▒█▌
+
+HỖ TRỢ CHẠY PLUGIN TỪ A->Z LIÊN HỆ: https://www.facebook.com/yagami.raito.2k
+<plugin của MCPEVN SERVER>
+<ip server: play.mcpevn.com>
+
+cần các plugin sau đễ hoạt động
+1. nạp thẻ: https://github.com/MCPEVN-TEAM/NapThe
+2. pureperm: https://github.com/PurePlugins/PurePerms/releases
+3. economy api:  https://github.com/onebone/EconomyS/tree/master/EconomyAPI

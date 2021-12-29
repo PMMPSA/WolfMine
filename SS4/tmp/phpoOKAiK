@@ -1,0 +1,1233 @@
+<?php
+namespace FaigerSYS\MapImageEngine;
+
+use pocketmine\plugin\PluginBase;
+
+use pocketmine\utils\TextFormat as CLR;
+
+use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
+use FaigerSYS\MapImageEngine\item\FilledMap;
+
+use pocketmine\tile\ItemFrame;
+
+use pocketmine\event\Listener;
+use pocketmine\event\server\DataPacketReceiveEvent;
+use pocketmine\event\level\ChunkLoadEvent;
+
+use FaigerSYS\MapImageEngine\TranslateStrings as TS;
+
+use FaigerSYS\MapImageEngine\storage\ImageStorage;
+use FaigerSYS\MapImageEngine\storage\MapImage;
+use FaigerSYS\MapImageEngine\storage\OldFormatConverter;
+
+use FaigerSYS\MapImageEngine\command\MapImageEngineCommand;
+
+use pocketmine\network\mcpe\protocol\MapInfoRequestPacket;
+use FaigerSYS\MapImageEngine\packet\CustomClientboundMapItemDataPacket;
+
+class MapImageEngine extends PluginBase implements Listener {
+	
+	/** @var bool */
+	private static $is_custom_pk_suppoted;
+	
+	/** @var MapImageEngine */
+	private static $instance;
+	
+	/** @var ImageStorage */
+	private $storage;
+	
+	public function onEnable() {
+		$old_plugin = self::$instance;
+		self::$instance = $this;
+		$is_reload = $old_plugin instanceof MapImageEngine;
+		
+		if (!$is_reload) {
+			TS::init();
+		}
+		
+		$this->getLogger()->info(CLR::GOLD . TS::translate($is_reload ? 'plugin-loader.reloading' : 'plugin-loader.loading'));
+		$this->getLogger()->info(CLR::AQUA . TS::translate('plugin-loader.info-instruction'));
+		$this->getLogger()->info(CLR::AQUA . TS::translate('plugin-loader.info-long-loading'));
+		$this->getLogger()->info(CLR::AQUA . TS::translate('plugin-loader.info-1.1-update'));
+		
+		if ($is_reload) {
+			$this->storage = $old_plugin->storage;
+		}
+		
+		$this->getServer()->getPluginManager()->registerEvents($this, $this);
+		
+		@mkdir($path = $this->getDataFolder());
+		
+		@mkdir($dir = $path . 'instructions/');
+		foreach (scandir($r_dir = $this->getFile() . '/resources/instructions/') as $file) {
+			if ($file{0} !== '.') {
+				copy($r_dir . $file, $dir . $file);
+			}
+		} 
+		
+		@mkdir($path . 'images');
+		@mkdir($path . 'images/old_files');
+		@mkdir($path . 'cache');
+		
+		if (self::$is_custom_pk_suppoted === null) {
+			self::$is_custom_pk_suppoted = CustomClientboundMapItemDataPacket::checkCompatiblity();
+		}
+		
+		$this->loadImages($is_reload);
+		
+		$this->getServer()->getCommandMap()->register('mapimageengine', new MapImageEngineCommand());
+		
+		ItemFactory::registerItem(new FilledMap(), true);
+		
+		$this->getLogger()->info(CLR::GOLD . TS::translate($is_reload ? 'plugin-loader.reloaded' : 'plugin-loader.loaded'));
+	}
+	
+	private function loadImages(bool $is_reload = false) {
+		$path = $this->getDataFolder() . 'images/';
+		$storage = $this->storage ?? new ImageStorage;
+		
+		$files = array_filter(
+			scandir($path),
+			function ($file) use ($path) {
+				return is_file($path . $file) && substr($file, -5, 5) === '.miei';
+			}
+		);
+		
+		$old_files_path = $path . 'old_files/';
+		$old_files = array_filter(
+			scandir($path),
+			function ($file) use ($path) {
+				return is_file($path . $file) && substr($file, -4, 4) === '.mie';
+			}
+		);
+		foreach ($old_files as $old_file) {
+			$new_data = OldFormatConverter::tryConvert(file_get_contents($path . $old_file));
+			if ($new_data !== null) {
+				$this->getLogger()->notice(TS::translate('image-loader.prefix', $old_file) . TS::translate('image-loader.converted'));
+				
+				$basename = pathinfo($old_file, PATHINFO_BASENAME);
+				$new_path = $old_files_path . $basename;
+				$i = 0;
+				while (file_exists($new_path)) {
+					$new_path = $old_files_path . $basename . '.' . ++$i;
+				}
+				rename($path . $old_file, $new_path);
+				
+				$filename = pathinfo($old_file, PATHINFO_FILENAME);
+				$extension = '.miei';
+				$new_file = $filename . $extension;
+				$i = 0;
+				while (file_exists($path . $new_file)) {
+					$new_file = $filename . '_' . ++$i . $extension;
+				}
+				file_put_contents($path . $new_file, $new_data);
+				
+				unset($new_data);
+				
+				$files[] = $new_file;
+			} else {
+				$this->getLogger()->warning(TS::translate('image-loader.prefix', $old_file) . TS::translate('image-loader.not-converted'));
+			}
+		}
+		
+		if (!self::isCustomPacketSupported()) {
+			$this->getLogger()->warning(TS::translate('image-loader.cache-not-supported'));
+		}
+		
+		foreach ($files as $file) {
+			$image = MapImage::fromBinary(file_get_contents($path . $file), $state);
+			if ($image !== null) {
+				$name = substr($file, 0, -5);
+				$state = $storage->registerImage($image, true, $name);
+				switch ($state) {
+					case ImageStorage::R_OK:
+						$this->getLogger()->info(CLR::GREEN . TS::translate('image-loader.prefix', $file) . TS::translate('image-loader.success'));
+						break;
+						
+					case ImageStorage::R_UUID_EXISTS:
+						!$is_reload && $this->getLogger()->info(TS::translate('image-loader.prefix', $file) . TS::translate('image-loader.err-image-exists'));
+						break;
+					
+					case ImageStorage::R_NAME_EXISTS:
+					case ImageStorage::R_INVALID_NAME:
+						$this->getLogger()->warning(TS::translate('image-loader.prefix', $file) . TS::translate('image-loader.err-name-exists'));
+						break;
+				}
+			} else {
+				switch ($state) {
+					case MapImage::R_CORRUPTED:
+						$this->getLogger()->warning(TS::translate('image-loader.prefix', $file) . TS::translate('image-loader.err-corrupted'));
+						break;
+						
+					case MapImage::R_UNSUPPORTED_API:
+						$this->getLogger()->warning(TS::translate('image-loader.prefix', $file) . TS::translate('image-loader.err-unsupported-api'));
+						break;
+				}
+			}
+		}
+		
+		$this->storage = $storage;
+	}
+	
+	public function getImageStorage() : ImageStorage {
+		return $this->storage;
+	}
+	
+	/**
+	 * @ignoreCancelled true
+	 */
+	public function onRequest(DataPacketReceiveEvent $e) {
+		if ($e->getPacket() instanceof MapInfoRequestPacket) {
+			$pk = $this->getImageStorage()->getCachedPacket($e->getPacket()->mapId);
+			if ($pk !== null) {
+				$e->getPlayer()->dataPacket($pk);
+			}
+			$e->setCancelled(true);
+		}
+	}
+	
+	/**
+	 * @priority LOW
+	 */
+	public function onChunkLoad(ChunkLoadEvent $e) {
+		foreach ($e->getChunk()->getTiles() as $frame) {
+			if ($frame instanceof ItemFrame) {
+				$item = $frame->getItem();
+				if ($item instanceof FilledMap) {
+					$frame->setItem($item);
+				}
+			}
+		}
+	}
+	
+	public static function getInstance() : MapImageEngine {
+		return self::$instance;
+	}
+	
+	public static function isCustomPacketSupported() : bool {
+		return self::$is_custom_pk_suppoted;
+	}
+	
+}
+<?php
+namespace FaigerSYS\MapImageEngine;
+
+use pocketmine\Server;
+
+class TranslateStrings {
+	
+	const DEFAULT_LANG = 'eng';
+	
+	/** @var string[] */
+	private static $strings = [];
+	
+	public static function init() {
+		$lang = Server::getInstance()->getLanguage()->getLang();
+		$owner = MapImageEngine::getInstance();
+		
+		$default_strings = parse_ini_string(stream_get_contents($owner->getResource('strings/' . self::DEFAULT_LANG . '.ini')));
+		if ($strings = $owner->getResource('strings/' . $lang . '.ini')) {
+			$strings = parse_ini_string(stream_get_contents($strings)) + $default_strings;
+		} else {
+			$strings = $default_strings;
+		}
+		
+		self::$strings = $strings;
+	}
+	
+	public static function translate(string $str, ...$args) {
+		return sprintf(self::$strings[$str] ?? $str, ...$args);
+	}
+	
+}
+plugin-loader.loading="MapImageEngine enabling..."
+plugin-loader.reloading="MapImageEngine reloading..."
+plugin-loader.info-instruction="Notice #1: find the instructions in the plugin folder"
+plugin-loader.info-long-loading="Notice #2: after installing new images or updating plugin enabling may take longer, but then it will be as usual"
+plugin-loader.info-1.1-update="Notice #3: after installing MapImageEngine v1.1 you must place all your previously placed images again"
+plugin-loader.loaded="MapImageEngine enabled!"
+plugin-loader.reloaded="MapImageEngine reloaded!"
+
+image-loader.prefix="Image \"%s\": "
+image-loader.success="image loaded"
+image-loader.err-name-exists="similar name already registered"
+image-loader.err-image-exists="image already exists"
+image-loader.err-corrupted="file corrupted"
+image-loader.err-unsupported-api="API not supported. Please update your plugin to the latest version (and convert image again if didn't help)"
+image-loader.converted="image was converted to new format! You can find the original in the 'images/old_images' folder"
+image-loader.not-converted="image cannot be converted to new format! Convert the original image again using the online converter or MIE_Converter plugin"
+image-loader.cache-not-supported="It seems our custom packet for caching support is incompatible with your server software. Loading images may be slower than usual"
+
+command.desc="MapImageEngine command"
+command.desc.list="get list of available images"
+command.desc.place="enter placement mode"
+command.desc.exit="leave placement mode"
+
+command.usage="Usage: "
+
+command.in-game="Run this command in-game"
+
+command.list="Available images: "
+command.list.no-images="You do not have any images yet"
+
+command.place.usage="<image name> [flags]"
+command.place.usage.flags="Available flags: "
+command.place.usage.flags.pretty="Show squares for convenient orientation"
+command.place.usage.flags.auto="Automatic mode (place an image in two clicks)"
+command.place.not-found="Image \"%s\" not found!"
+command.place.placing="Placing image!"
+command.place.click-top-left="Click on the top left corner..."
+command.place.click-bottom-right="Click on the bottom right corner..."
+command.place.placing-info="Placement starts from the top left corner (x * y)"
+command.place.click="Click on the frame (%d * %d)"
+command.place.not-frame="This is not a frame!"
+command.place.width-not-match="Width does not match the width of the image!"
+command.place.height-not-match="Height does not match the height of the image!"
+command.place.invalid-upper-corner="The upper corner cannot be lower than the bottom corner!"
+command.place.no-frames="You must place the frames in the selected area! Place all frames and try again"
+command.place.not-flat="The selected area must be flat!"
+command.place.success="Image succesfully placed ;)"
+
+command.exit="You left the placement mode"
+command.exit.not-allowed="You must enter placement mode before leaving it"
+; Translated by nikoskon
+
+Αυτό το plugin δημιουργήθηκε απο τον FaigerSYS
+Ιστοσελίδα Github: https://github.com/FaigerSYS/MapImageEngine
+
+Αν βρήκατε ένα σφάλμα, ενημερώστε μας! Υποβάλετε νέα βλάβη στο GitHub
+
+Πώς να φτιάξετε τη δική σας εικόνα:
+  1. Μετατρέψτε οποιαδήποτε μια εικόνα ('png', 'jpg' κα.)...
+	  - Χρησιμοποιώντας το MIE_Converter plugin: https://github.com/FaigerSYS/MapImageEngine/tree/master/MIE_Converter
+	  - Χρησιμοποιώντας μετατροπέα στο διαδίκτυο (αν το plugin δεν λειτουργεί): https://mie-converter.000webhostapp.com
+  1.1. Δεν χρειάζεται να αλλάξετε το μέγεθος της εικόνας σε 128x128 . Ο ίδιος ο μετατροπέας θα αλλάξει το μέγεθος!
+  1.2. Δεν χρειάζεται να κομματιάσετε την εικόνα. Απλά επιλέξτε το μέγεθος που θέλετε σε κύβους!
+  2. Η μετατρεπόμενη εικόνα μεταφέρεται στο φάκελο 'images' του plugin
+  3. Εγινε! Τώρα μπορείτε να χρησιμοποιήσετε αυτήν την εικόνα
+
+Πώς να εγκαταστήσετε την εικόνα:
+  1. Εισάγετε '/mie list' για να δείτε τη λίστα με τις διαθέσιμες εικόνες
+  2. Επιλέξτε μία από αυτές και εισάγετε '/mie place <όνομα εικόνας>'
+  2.1. Μπορείτε να χρησιμοποιήσετε σημαίες για εύκολη εγκατάσταση εικόνων  (Εισάγετε την εντολή ('/mie place') για να πάρετε μια πλήρη περιγραφή)
+  2.2. Για να φύγετε τη λειτουργία τοποθέτησης εισάγετε την εντολή '/mie exit'
+  3. Ακολουθήστε τις οδηγίες και η εικόνα θα εγκατασταθεί!
+
+Για να δείτε την πλήρη λίστα των εντολών, πληκτρολογήστε '/mie'
+
+Καλή τύχη!
+This plugin was made by FaigerSYS
+Github page: https://github.com/FaigerSYS/MapImageEngine
+
+If you found a bug, please let me know! Submit new issue on GitHub
+
+How to make own image:
+  1. Convert any image ('png', 'jpg' etc.)...
+	  - Using MIE_Converter plugin: https://github.com/FaigerSYS/MapImageEngine/tree/master/MIE_Converter
+	  - Using online converter (if the plugin does not work): https://mie-converter.000webhostapp.com
+  1.1. You don't need to change image size to 128x128. Converter itself will change the size
+  1.2. You don't need to chunk image. Just select required size in blocks
+  2. Move converted image to folder 'images' of this plugin
+  3. Done! Now you can use this image
+
+How to install image:
+  1. Enter '/mie list' to view the list of available images
+  2. Choose one of them and enter '/mie place <image name>'
+  2.1. You can use flags for easy installation of images (enter command without arguments ('/mie place') to get a full description)
+  2.2. To leave the placement mode enter '/mie exit'
+  3. Follow the instructions and the picture will be installed
+
+To view the full list of commands, enter '/mie'
+
+Good luck!
+이 플러그인은 FaigerSYS가 작성했습니다
+GitHub 페이지: https://github.com/FaigerSYS/MapImageEngine
+
+버그를 발견하면 제가 알 수 있게 해주세요! GitHub에 새 이슈를 제출하세요
+
+자신의 이미지 제작 방법:
+  1. 이미지 파일을 변환하세요('png', 'jpg' 기타 등등)...
+	  - MIE_Convert 플러그인 사용: https://github.com/FaigerSYS/MapImageEngine/tree/master/MIE_Converter
+	  - 온라인 변환기 사용(플러그인 미작동 시): https://mie-converter.000webhostapp.com
+  1.1 이미지 크기는 128x128로 변경하지 않아도 됩니다. 변환기가 크기를 변경합니다
+  1.2 이미지는 나누지 않아도 됩니다. 블록으로 필요한 크기를 선택하기만 하면 됩니다
+  2. 변환된 이미지 파일을 이 플러그인의 'images' 폴더에 넣어주세요
+  3. 완료! 이제 이 이미지를 사용할 수 있습니다
+
+이미지 설치 방법:
+  1.'/mie list'를 사용해 사용할 수 있는 이미지 파일 목록을 찾아주세요
+  2. 이 중 하나를 선택해서 '/mie place <이미지 이름>'을 입력해주세요
+  2.1 이미지의 쉬운 설치를 위해 플래그를 사용할 수 있습니다(전체 설명을 보려면 ('/mie place')를 인수 없이 입력하세요)
+  2.2 배치 모드를 마치려면 '/mie exit'를 입력하세요
+  3. 설명을 따르면 이미지가 설치됩니다
+	
+명령어의 모든 목록을 보려면 '/mie'를 입력해주세요
+
+행운을 빕니다!
+Этот плагин создан FaigerSYS. Страница VK: https://vk.com/faigersys
+Оффициальная группа: https://vk.com/faigersys_plugins
+
+Если вы заметили какой-либо баг - сразу сообщайте!
+
+!!! СОВЕТУЕМ ПРОЧИТАТЬ ВСЁ ЧТО-БЫ У ВАС ПОТОМ НЕ ВОЗНИКАЛО ВОПРОСОВ !!!
+
+Как сделать свою картинку:
+  1. Конвертируйте любую картинку ('png', 'jpg' и т.д.)...
+      - Используя плагин MIE_Converter: https://vk.com/faigersys_plugins (найдите здесь)
+	  - Используя онлайн-конвертер (если плагин не сработал): https://mie-converter.000webhostapp.com
+  1.1. Не обязательно изменять размер картинки именно 128x128 . Сайт всё сделает сам!
+  1.2. Не обязательно резать картинку на несколько частей. В конвертере уже предоставлены средства для этого
+  2. Конвертинованную картинку переместите в папку 'images' этого плагина
+  3. Готово! Теперь эту картинку можно использовать в плагине
+
+Как установить картинку:
+  1. Введите '/mie list' для получения списка доступных картинок
+  2. Выберите одну из них и введите команду '/mie place <название>'
+  2.1. Для удобства установки картинки вы можете использовать флаги (введите команду без аргументов ('/mie place') для их полного описания)
+  2.2. Для выхода из режима установки картинки введите '/mie exit'
+  3. Следуйте инструкции что вы увидите после введения команды и картинка будет установлена
+
+Полный список команд доступен по команде '/mie'
+
+Приятного использования!
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+// Custom packet is needed for cache support
+
+declare(strict_types=1);
+
+
+namespace FaigerSYS\MapImageEngine\packet;
+
+use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\protocol\types\DimensionIds;
+use pocketmine\network\mcpe\protocol\types\MapTrackedObject;
+
+use pocketmine\utils\Color;
+use pocketmine\utils\Binary;
+use pocketmine\utils\BinaryStream;
+
+use pocketmine\network\mcpe\protocol\DataPacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
+use pocketmine\network\mcpe\protocol\ClientboundMapItemDataPacket;
+
+class CustomClientboundMapItemDataPacket extends DataPacket {
+	
+	public const NETWORK_ID = ProtocolInfo::CLIENTBOUND_MAP_ITEM_DATA_PACKET;
+	
+	public const BITFLAG_TEXTURE_UPDATE = 0x02;
+	public const BITFLAG_DECORATION_UPDATE = 0x04;
+	
+	/** @var int */
+	public $mapId;
+	/** @var int */
+	public $type;
+	/** @var int */
+	public $dimensionId = DimensionIds::OVERWORLD;
+	/** @var bool */
+	public $isLocked = false;
+
+	/** @var int[] */
+	public $eids = [];
+	/** @var int */
+	public $scale;
+	
+	/** @var MapTrackedObject[] */
+	public $trackedEntities = [];
+	/** @var array */
+	public $decorations = [];
+
+	/** @var int */
+	public $width;
+	/** @var int */
+	public $height;
+	/** @var int */
+	public $xOffset = 0;
+	/** @var int */
+	public $yOffset = 0;
+	/** @var string */
+	public $colors;
+	
+	protected function decodePayload() : void {
+		$this->mapId = $this->getEntityUniqueId();
+		$this->type = $this->getUnsignedVarInt();
+		$this->dimensionId = $this->getByte();
+		$this->isLocked = $this->getBool();
+
+		if (($this->type & 0x08) !== 0) {
+			$count = $this->getUnsignedVarInt();
+			for ($i = 0; $i < $count; ++$i) {
+				$this->eids[] = $this->getEntityUniqueId();
+			}
+		}
+		
+		if (($this->type & (0x08 | self::BITFLAG_DECORATION_UPDATE | self::BITFLAG_TEXTURE_UPDATE)) !== 0) {
+			$this->scale = $this->getByte();
+		}
+		
+		if (($this->type & self::BITFLAG_DECORATION_UPDATE) !== 0) {
+			for ($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i) {
+				$object = new MapTrackedObject();
+				$object->type = $this->getLInt();
+				if ($object->type === MapTrackedObject::TYPE_BLOCK) {
+					$this->getBlockPosition($object->x, $object->y, $object->z);
+				} elseif ($object->type === MapTrackedObject::TYPE_ENTITY) {
+					$object->entityUniqueId = $this->getEntityUniqueId();
+				} else {
+					throw new \UnexpectedValueException("Unknown map object type");
+				}
+				$this->trackedEntities[] = $object;
+			}
+			
+			for ($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i) {
+				$this->decorations[$i]["rot"] = $this->getByte();
+				$this->decorations[$i]["img"] = $this->getByte();
+				$this->decorations[$i]["xOffset"] = $this->getByte();
+				$this->decorations[$i]["yOffset"] = $this->getByte();
+				$this->decorations[$i]["label"] = $this->getString();
+
+				$this->decorations[$i]["color"] = $this->getUnsignedVarInt();
+			}
+		}
+		
+		if (($this->type & self::BITFLAG_TEXTURE_UPDATE) !== 0) {
+			$this->width = $this->getVarInt();
+			$this->height = $this->getVarInt();
+			$this->xOffset = $this->getVarInt();
+			$this->yOffset = $this->getVarInt();
+			
+			$count = $this->getUnsignedVarInt();
+			assert($count === $this->width * $this->height);
+			
+			$this->colors = $this->get($count);
+		}
+	}
+	
+	protected function encodePayload() : void {
+		$this->putEntityUniqueId($this->mapId);
+		
+		$type = 0;
+		if (($eidsCount = count($this->eids)) > 0) {
+			$type |= 0x08;
+		}
+		if (($decorationCount = count($this->decorations)) > 0) {
+			$type |= self::BITFLAG_DECORATION_UPDATE;
+		}
+		if (!empty($this->colors)) {
+			$type |= self::BITFLAG_TEXTURE_UPDATE;
+		}
+		
+		$this->putUnsignedVarInt($type);
+		$this->putByte($this->dimensionId);
+		$this->putBool($this->isLocked);
+		
+		if (($type & 0x08) !== 0) {
+			$this->putUnsignedVarInt($eidsCount);
+			foreach ($this->eids as $eid) {
+				$this->putEntityUniqueId($eid);
+			}
+		}
+		
+		if (($type & (0x08 | self::BITFLAG_TEXTURE_UPDATE | self::BITFLAG_DECORATION_UPDATE)) !== 0) {
+			$this->putByte($this->scale);
+		}
+		
+		if (($type & self::BITFLAG_DECORATION_UPDATE) !== 0) {
+			$this->putUnsignedVarInt(count($this->trackedEntities));
+			foreach ($this->trackedEntities as $object) {
+				$this->putLInt($object->type);
+				if ($object->type === MapTrackedObject::TYPE_BLOCK) {
+					$this->putBlockPosition($object->x, $object->y, $object->z);
+				} elseif ($object->type === MapTrackedObject::TYPE_ENTITY) {
+					$this->putEntityUniqueId($object->entityUniqueId);
+				} else {
+					throw new \UnexpectedValueException("Unknown map object type");
+				}
+			}
+			
+			$this->putUnsignedVarInt($decorationCount);
+			foreach ($this->decorations as $decoration) {
+				$this->putByte($decoration["rot"]);
+				$this->putByte($decoration["img"]);
+				$this->putByte($decoration["xOffset"]);
+				$this->putByte($decoration["yOffset"]);
+				$this->putString($decoration["label"]);
+				
+				$this->putUnsignedVarInt($decoration["color"]);
+			}
+		}
+		
+		if (($type & self::BITFLAG_TEXTURE_UPDATE) !== 0) {
+			$this->putVarInt($this->width);
+			$this->putVarInt($this->height);
+			$this->putVarInt($this->xOffset);
+			$this->putVarInt($this->yOffset);
+			
+			$this->putUnsignedVarInt($this->width * $this->height);
+			
+			$this->put($this->colors);
+		}
+	}
+	
+	public function handle(NetworkSession $session) : bool {
+		return true;
+	}
+	
+	public static function prepareColors(array $colors, int $width, int $height) {
+		$buffer = new BinaryStream;
+		for ($y = 0; $y < $height; $y++) {
+			for ($x = 0; $x < $width; $x++) {
+				$buffer->putUnsignedVarInt($colors[$y][$x]);
+			}
+		}
+		return $buffer->buffer;
+	}
+	
+	public static function checkCompatiblity() : bool {
+		$original = new ClientboundMapItemDataPacket();
+		$custom = new CustomClientboundMapItemDataPacket();
+		
+		$original->mapId = $custom->mapId = 1;
+		$original->dimensionId = $custom->dimensionId = DimensionIds::OVERWORLD;
+		$original->eids = $custom->eids = [];
+		$original->scale = $custom->scale = 0;
+		$original->trackedEntities = $custom->trackedEntities = [];
+		$original->decorations = $custom->decorations = [];
+		$original->width = $custom->width = 128;
+		$original->height = $custom->height = 128;
+		$original->xOffset = $custom->xOffset = 0;
+		$original->yOffset = $custom->yOffset = 0;
+		
+		$color = new Color(0xff, 0xee, 0xdd);
+		$original->colors = array_fill(0, 128, array_fill(0, 128, $color));
+		$custom->colors = str_repeat(Binary::writeUnsignedVarInt($color->toABGR()), 128 * 128);
+		
+		$original->encode();
+		$custom->encode();
+		return $original->buffer === $custom->buffer;
+	}
+	
+}
+<?php
+namespace FaigerSYS\MapImageEngine\storage;
+
+use pocketmine\Player;
+
+use pocketmine\network\mcpe\protocol\BatchPacket;
+
+use FaigerSYS\MapImageEngine\MapImageEngine;
+
+class ImageStorage {
+	
+	const R_OK = 0;
+	const R_ALREADY_REGISTERED = 1;
+	const R_UUID_EXISTS = 2;
+	const R_INVALID_NAME = 3;
+	const R_NAME_EXISTS = 4;
+	
+	/** @var MapImage[] */
+	private $images = [];
+	
+	/** @var string[] */
+	private $hashes = [];
+	
+	/** @var string[] */
+	private $names = [];
+	
+	/** @var BatchPacket[]*/
+	private $packet_cache = [];
+	
+	/**
+	 * Registers new image
+	 *
+	 * @param MapImage $image
+	 * @param bool     $cache_packets
+	 * @param string   $name
+	 *
+	 * @return int
+	 */
+	public function registerImage(MapImage $image, bool $cache_packets = true, string $name = null) : int {
+		$spl_hash = spl_object_hash($image);
+		if (isset($this->images[$spl_hash])) {
+			return self::R_ALREADY_REGISTERED;
+		}
+		
+		$hash = $image->getHashedUUID();
+		if (isset($this->hashes[$hash])) {
+			return self::R_UUID_EXISTS;
+		}
+		
+		if ($name !== null) {
+			$name = strtr($name, ' ', '_');
+			if (!strlen($name)) {
+				return self::R_INVALID_NAME;
+			}
+			if (isset($this->names[$name])) {
+				return self::R_NAME_EXISTS;
+			}
+			$this->names[$name] = $hash;
+		}
+		
+		$this->images[$spl_hash] = $image;
+		$this->hashes[$hash] = $spl_hash;
+		
+		if ($cache_packets) {
+			$this->regeneratePacketsCache($image);
+		}
+		
+		return self::R_OK;
+	}
+	
+	/**
+	 * Unregisters image
+	 *
+	 * @param MapImage $image
+	 */
+	public function unregisterImage(MapImage $image) {
+		$spl_hash = spl_object_hash($image);
+		if (!isset($this->images[$spl_hash])) {
+			return;
+		}
+		$hash = $image->getHashedUUID();
+		
+		$this->removePacketsCache($image);
+		
+		foreach ($this->names as $name => $o_spl_hash) {
+			if ($spl_hash === $o_spl_hash) {
+				unset($this->names[$name]);
+			}
+		}
+		foreach ($this->names as $name => $o_spl_hash) {
+			if ($spl_hash === $o_spl_hash) {
+				unset($this->names[$name]);
+			}
+		}
+		unset($this->hashes[$hash]);
+		unset($this->images[$spl_hash]);
+	}
+	
+	/**
+	 * Regenerates map image packets cache
+	 *
+	 * @param MapImage $image
+	 * @param int      $chunk_x
+	 * @param int      $chunk_y
+	 */
+	public function regeneratePacketsCache(MapImage $image = null, int $chunk_x = null, int $chunk_y = null) {
+		if ($image === null) {
+			$this->cache = [];
+			foreach ($this->images as $image) {
+				$this->regeneratePacketsCache($image);
+			}
+		} else {
+			if (!isset($this->images[spl_object_hash($image)])) {
+				return;
+			}
+			
+			if ($chunk_x === null && $chunk_y === null) {
+				foreach ($image->getChunks() as $chunks) {
+					foreach ($chunks as $chunk) {
+						$pk = new BatchPacket();
+						$pk->setCompressionLevel(7);
+						if (MapImageEngine::isCustomPacketSupported()) {
+							$pk->addPacket($chunk->generateCustomMapImagePacket());
+						} else {
+							$pk->addPacket($chunk->generateMapImagePacket());
+						}
+						$pk->encode();
+						$this->packet_cache[$chunk->getMapId()] = $pk;
+					}
+				}
+			} else {
+				$chunk = $image->getChunk($chunk_x, $chunk_y);
+				if ($chunk !== null) {
+					$pk = new BatchPacket();
+					$pk->setCompressionLevel(7);
+					if (MapImageEngine::isCustomPacketSupported()) {
+						$pk->addPacket($chunk->generateCustomMapImagePacket());
+					} else {
+						$pk->addPacket($chunk->generateMapImagePacket());
+					}
+					$pk->encode();
+					$this->packet_cache[$chunk->getMapId()] = $pk;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Removes map image packets from cache
+	 *
+	 * @param MapImage $image
+	 * @param int      $chunk_x
+	 * @param int      $chunk_y
+	 */
+	public function removePacketsCache(MapImage $image, int $chunk_x = null, int $chunk_y = null) {
+		if (!isset($this->images[spl_object_hash($image)])) {
+			return;
+		}
+		
+		if ($chunk_x === null && $chunk_y === null) {
+			foreach ($image->getChunks() as $chunks) {
+				foreach ($chunks as $chunk) {
+					unset($this->packet_cache[$chunk->getMapId()]);
+				}
+			}
+		} else {
+			$chunk = $image->getChunk($chunk_x, $chunk_y);
+			if ($chunk !== null) {
+				unset($this->packet_cache[$chunk->getMapId()]);
+			}
+		}
+	}
+	
+	/**
+	 * Removes map image packet with specified map ID
+	 *
+	 * @param int $map_id
+	 */
+	public function removePacketCache(int $map_id) {
+		unset($this->packet_cache[$map_id]);
+	}
+	
+	/**
+	 * Returns map image with specified UUID hash
+	 *
+	 * @param string $uuid_hash
+	 *
+	 * @return MapImage|null
+	 */
+	public function getImage(string $uuid_hash) {
+		return $this->images[$this->hashes[$uuid_hash] ?? null] ?? null;
+	}
+	
+	/**
+	 * Returns map image with specified name
+	 *
+	 * @param string $name
+	 *
+	 * @return MapImage|null
+	 */
+	public function getImageByName(string $name) {
+		return $this->getImage($this->names[strtr($name, ' ', '_')] ?? '');
+	}
+	
+	/**
+	 * Returns all of map images
+	 *
+	 * @return MapImage[]
+	 */
+	public function getImages() : array {
+		return $this->images;
+	}
+	
+	/**
+	 * Returns all of map images that have name
+	 *
+	 * @return MapImage[]
+	 */
+	public function getNamedImages() : array {
+		return array_map(
+			function ($hash) {
+				return $this->getImage($hash);
+			},
+			$this->names
+		);
+	}
+	
+	/**
+	 * Returns cached batched map image packet
+	 *
+	 * @param int $map_id
+	 * 
+	 * @return BatchPacket
+	 */
+	public function getCachedPacket(int $map_id) {
+		if (isset($this->packet_cache[$map_id])) {
+			return clone $this->packet_cache[$map_id];
+		}
+	}
+	
+}
+<?php
+namespace FaigerSYS\MapImageEngine\command;
+
+use pocketmine\utils\TextFormat as CLR;
+
+use pocketmine\Player;
+use pocketmine\command\CommandSender;
+use pocketmine\command\ConsoleCommandSender;
+
+use pocketmine\command\Command;
+use pocketmine\command\PluginIdentifiableCommand;
+
+use pocketmine\plugin\Plugin;
+
+use pocketmine\event\Listener;
+use pocketmine\event\player\PlayerInteractEvent;
+use pocketmine\event\player\PlayerQuitEvent;
+
+use pocketmine\math\Vector3;
+
+use pocketmine\tile\ItemFrame;
+
+use FaigerSYS\MapImageEngine\MapImageEngine;
+use FaigerSYS\MapImageEngine\item\FilledMap;
+use FaigerSYS\MapImageEngine\TranslateStrings as TS;
+
+class MapImageEngineCommand extends Command implements PluginIdentifiableCommand, Listener {
+	
+	const MSG_PREFIX = CLR::BOLD . CLR::GOLD . '[' . CLR::RESET . CLR::GREEN . 'MIE' . CLR::BOLD . CLR::GOLD . ']' . CLR::RESET . CLR::GRAY . ' ';
+	
+	/** @var array */
+	private $cache = [];
+	
+	public function __construct() {
+		$this->getPlugin()->getServer()->getPluginManager()->registerEvents($this, $this->getPlugin());
+		
+		parent::__construct('mapimageengine', TS::translate('command.desc'), null, ['mie']);
+		$this->setPermission('mapimageengine');
+	}
+	
+	public function execute(CommandSender $sender, string $label, array $args) {
+		if (!$this->testPermission($sender)) {
+			return;
+		}
+		
+		if (!$sender instanceof Player) {
+			$sender->sendMessage(self::MSG_PREFIX . TS::translate('command.in-game'));
+			return;
+		}
+		
+		$cmd = array_shift($args);
+		switch ($cmd) {
+			case 'list':
+				$list = $this->getPlugin()->getImageStorage()->getNamedImages();
+				if (empty($list)) {
+					$sender->sendMessage(self::MSG_PREFIX . TS::translate('command.list.no-images'));
+				} else {
+					$new_list = [];
+					foreach ($list as $name => $image) {
+						$w = $image->getBlocksWidth();
+						$h = $image->getBlocksHeight();
+						
+						$new_list[] = $name . CLR::RESET . ' ' . CLR::AQUA  . '(' . CLR::DARK_GREEN . $w . CLR::AQUA . 'x'.  CLR::DARK_GREEN . $h . CLR::AQUA . ')';
+					}
+					
+					$list = CLR::WHITE . CLR::ITALIC . implode($new_list, CLR::GRAY . ', ' . CLR::WHITE . CLR::ITALIC) . CLR::GRAY;
+					$sender->sendMessage(self::MSG_PREFIX . TS::translate('command.list') . $list);
+				}
+				break;
+			
+			case 'place':
+				$image_name = (string) array_shift($args);
+				if (!strlen($image_name)) {
+					$sender->sendMessage(self::MSG_PREFIX . TS::translate('command.usage') . '/' . $label . ' place ' . TS::translate('command.place.usage'));
+					$sender->sendMessage(CLR::GRAY . TS::translate('command.place.usage.flags'));
+					$sender->sendMessage(CLR::GRAY . '  pretty - ' . TS::translate('command.place.usage.flags.pretty'));
+					$sender->sendMessage(CLR::GRAY . '  auto - ' . TS::translate('command.place.usage.flags.auto'));
+				} else {
+					$image = $this->getPlugin()->getImageStorage()->getImageByName($image_name);
+					if (!$image) {
+						$sender->sendMessage(self::MSG_PREFIX . TS::translate('command.place.not-found', $image_name));
+					} else {
+						$this->cache[$sender->getName()] = [
+							'image_hash' => $image->getHashedUUID(),
+							'pretty'     => in_array('pretty', $args),
+							'auto'       => in_array('auto', $args),
+							'placed'     => 0,
+							'x_count'    => $image->getBlocksWidth(),
+							'y_count'    => $image->getBlocksHeight()
+						];
+						
+						$this->processPlaceMessage($sender);
+					}
+				}
+				break;
+			
+			case 'exit':
+				$name = $sender->getName();
+				if (isset($this->cache[$name])) {
+					unset($this->cache[$name]);
+					$sender->sendMessage(self::MSG_PREFIX . TS::translate('command.exit'));
+				} else {
+					$sender->sendMessage(self::MSG_PREFIX . TS::translate('command.exit.not-allowed'));
+				}
+				break;
+			
+			default:
+				$sender->sendMessage(self::MSG_PREFIX . TS::translate('command.usage'));
+				$sender->sendMessage(CLR::GRAY . '  /' . $label . ' list - ' . TS::translate('command.desc.list'));
+				$sender->sendMessage(CLR::GRAY . '  /' . $label . ' place - ' . TS::translate('command.desc.place'));
+				$sender->sendMessage(CLR::GRAY . '  /' . $label . ' exit - ' . TS::translate('command.desc.exit'));
+		}
+	}
+	
+	/**
+	 * @priority LOW
+	 * @ignoreCancelled true
+	 */
+	public function onTouch(PlayerInteractEvent $e) {
+		if ($e->getAction() !== PlayerInteractEvent::RIGHT_CLICK_BLOCK) {
+			return;
+		}
+		
+		$player = $e->getPlayer();
+		$name = $player->getName();
+		
+		if (isset($this->cache[$name])) {
+			$block = $e->getBlock();
+			$level = $block->getLevel();
+			
+			$frame = $level->getTile($block);
+			if (!($frame instanceof ItemFrame)) {
+				$player->sendMessage(self::MSG_PREFIX . TS::translate('command.place.not-frame'));
+			} else {
+				$data = &$this->cache[$name];
+				
+				if ($data['auto']) {
+					if (!isset($data['p1'])) {
+						$data['p1'] = $block;
+						$this->processPlaceMessage($player);
+					} else {
+						$p1 = $data['p1'];
+						$p2 = $block;
+						
+						$x1 = $p1->getX();
+						$y1 = $p1->getY();
+						$z1 = $p1->getZ();
+						$x2 = $p2->getX();
+						$y2 = $p2->getY();
+						$z2 = $p2->getZ();
+						
+						if ($y1 < $y2) {
+							$player->sendMessage(self::MSG_PREFIX . TS::translate('command.place.invalid-upper-corner'));
+						} else if ($y1 - $y2 + 1 !== $data['y_count']) {
+							$player->sendMessage(self::MSG_PREFIX . TS::translate('command.place.height-not-match'));
+						} else {
+							$x = $x1;
+							$z = $z1;
+							$a = null;
+							if ($x1 === $x2) {
+								$a = &$z;
+								$from = $z1;
+								$to = $z2;
+							} else if ($z1 === $z2) {
+								$a = &$x;
+								$from = $x1;
+								$to = $x2;
+							} else {
+								$player->sendMessage(self::MSG_PREFIX . TS::translate('command.place.not-flat'));
+							}
+							
+							if (abs($to - $from) + 1 !== $data['x_count']) {
+								$player->sendMessage(self::MSG_PREFIX . TS::translate('command.place.width-not-match'));
+							} else if ($a !== null) {
+								$x_b = -1;
+								for ($a = $from; $from < $to ? $a <= $to : $a >= $to; $from < $to ? $a++ : $a--) {
+									$y_b = -1;
+									$x_b++;
+									for ($y = $y1; $y >= $y2; $y--) {
+										$y_b++;
+										
+										$frame = $level->getTile(new Vector3($x, $y, $z));
+										if (!($frame instanceof ItemFrame)) {
+											$player->sendMessage(self::MSG_PREFIX . TS::translate('command.place.no-frames'));
+											break 2;
+										}
+										
+										$map = new FilledMap();
+										$map->setImageData($data['image_hash'], $x_b, $y_b);
+										
+										$frame->setItem($map);
+									}
+									
+									$player->sendMessage(self::MSG_PREFIX . TS::translate('command.place.success'));
+								}
+							}
+						}
+						
+						unset($this->cache[$name]);
+					}
+				} else {
+					$x = $data['placed'] % $data['x_count'];
+					$y = floor($data['placed'] / $data['x_count']);
+					
+					$map = new FilledMap();
+					$map->setImageData($data['image_hash'], $x, $y);
+					
+					$frame->setItem($map);
+					
+					if (++$data['placed'] === ($data['x_count'] * $data['y_count'])) {
+						$player->sendMessage(self::MSG_PREFIX . TS::translate('command.place.success'));
+						unset($this->cache[$name]);
+					} else {
+						$this->processPlaceMessage($player);
+					}
+				}
+			}
+			
+			$e->setCancelled(true);
+		}
+	}
+	
+	public function onQuit(PlayerQuitEvent $e) {
+		unset($this->cache[$e->getPlayer()->getName()]);
+	}
+	
+	private function processPlaceMessage(Player $player) {
+		$name = $player->getName();
+		$data = &$this->cache[$name];
+		
+		$player->sendMessage('');
+		$player->sendMessage(self::MSG_PREFIX . TS::translate('command.place.placing'));
+		
+		if ($data['auto']) {
+			if (!isset($data['p1'])) {
+				$player->sendMessage(CLR::GRAY . TS::translate('command.place.click-top-left'));
+			} else {
+				$player->sendMessage(CLR::GRAY . TS::translate('command.place.click-bottom-right'));
+			}
+		} else {
+			$player->sendMessage(CLR::GRAY . TS::translate('command.place.placing-info'));
+			
+			$x = (int) $data['placed'] % $data['x_count'];
+			$y = (int) ($data['placed'] / $data['x_count']);
+			
+			if ($data['pretty']) {
+				$block = "\xe2\xac\x9b";
+				
+				for ($y_b = 0; $y_b < $data['y_count']; $y_b++) {
+					$line = CLR::WHITE;
+					for ($x_b = 0; $x_b < $data['x_count']; $x_b++) {
+						$line .= ($x_b === $x && $y_b === $y) ? CLR::GREEN . $block . CLR::WHITE : $block;
+					}
+					
+					$player->sendMessage($line);
+				}
+			}
+			
+			$player->sendMessage(CLR::GRAY . TS::translate('command.place.click', $x + 1, $y + 1));
+		}
+	}
+	
+	public function getPlugin() : Plugin {
+		return MapImageEngine::getInstance();
+	}
+	
+}
+<?php
+namespace FaigerSYS\MapImageEngine\item;
+
+use pocketmine\item\Item;
+
+use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\nbt\tag\StringTag;
+
+use FaigerSYS\MapImageEngine\MapImageEngine;
+
+class FilledMap extends Item {
+	
+	const CURRENT_MAP_API = 3;
+	const SUPPORTED_MAP_API = [3];
+	
+	public function __construct() {
+		parent::__construct(self::FILLED_MAP, 0, 1, 'Map');
+	}
+	
+	public function setCompoundTag($tag) : Item {
+		parent::setCompoundTag($tag);
+		$this->updateMapData();
+		
+		return $this;
+	}
+	
+	public function setNamedTag(CompoundTag $tag) : Item {
+		parent::setNamedTag($tag);
+		$this->updateMapData();
+		
+		return $this;
+	}
+	
+	protected function updateMapData() {
+		$plugin = MapImageEngine::getInstance();
+		if (!$plugin) {
+			return;
+		}
+		
+		$mie_data = $this->getImageData();
+		if (!is_array($mie_data)) {
+			return;
+		}
+		
+		$map_id = 0;
+		
+		$api = $mie_data['api'] ?? -1;;
+		if (in_array($api, self::SUPPORTED_MAP_API)) {
+			$image = $plugin->getImageStorage()->getImage($mie_data['image_hash']);
+			if ($image) {
+				$chunk = $image->getChunk($mie_data['x_block'], $mie_data['y_block']);
+				if ($chunk) {
+					$map_id = $chunk->getMapId();
+				}
+			}
+		}
+		
+		$tag = $this->getNamedTag();
+		$tag->setString('map_uuid', (string) $map_id, true);
+		parent::setNamedTag($tag);
+	}
+	
+	public function setImageData(string $image_hash, int $block_x, int $block_y) {
+		$tag = $this->getNamedTag();
+		$tag->setString('mie_data', json_encode([
+			'api'        => self::CURRENT_MAP_API,
+			'image_hash' => $image_hash,
+			'x_block'    => $block_x,
+			'y_block'    => $block_y
+		]));
+		parent::setNamedTag($tag);
+		
+		$this->updateMapData();
+	}
+	
+	public function getImageData() {
+		$tag = $this->getNamedTag();
+		if ($tag->hasTag('mie_data', StringTag::class)) {
+			return json_decode($tag->getString('mie_data'), true);
+		}
+	}
+	
+	public function getImageHash() {
+		return $this->getImageData()['image_hash'] ?? null;
+	}
+	
+	public function getImageChunkX() {
+		return $this->getImageData()['x_block'] ?? null;
+	}
+	
+	public function getImageChunkY() {
+		return $this->getImageData()['y_block'] ?? null;
+	}
+	
+}

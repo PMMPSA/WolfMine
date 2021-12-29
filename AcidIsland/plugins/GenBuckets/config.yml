@@ -1,0 +1,23 @@
+---
+buckets:
+  cobble:
+    blockId: 4
+    bucketDamage: 4
+    bucketPrice: 100
+    bucketName: §cCobblestone Bucket
+  sand:
+    blockId: 12
+    bucketDamage: 12
+    bucketPrice: 100
+    bucketName: §eSand Bucket
+  obsidian:
+    blockId: 49
+    bucketDamage: 49
+    bucketPrice: 150
+    bucketName: §dObsidian Bucket
+  bedrock:
+    blockId: 7
+    bucketDamage: 7
+    bucketPrice: 200
+    bucketName: §8Bedrock Bucket
+...

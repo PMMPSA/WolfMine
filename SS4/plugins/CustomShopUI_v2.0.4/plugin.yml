@@ -1,0 +1,12 @@
+---
+name: CustomShopUI
+main: AlexPads\ShopUI\TinyPixelDevz\Shop
+version: 2.0.4
+api:
+- 3.0.0
+author: TinyPixelDevz
+website: tinypixel.ga
+commands:
+  np-shop:
+    description: 'Cửa Hàng Nhân Phẩm'
+...

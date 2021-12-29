@@ -1,0 +1,15 @@
+name: TichNap
+main: HWings\TichNap\TichNap
+version: 1.0.0
+author: NguyenDongQuy
+api: 3.0.0
+description: Hệ thống tiền tệ Vàngcommands:
+  mocnap:
+   description: "Xem quyền lợi của các mốc nạp"
+   default: true
+  tongnap:
+   description: "Xem tổng số tiền bạn đã nạp"
+   default: true
+  topnap:
+   description: "Xem top nạp"
+   default: true

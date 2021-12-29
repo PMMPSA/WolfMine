@@ -1,0 +1,5 @@
+name: LevelToMine
+main: AmGM\LVTM\Mine
+api: [3.0.0, 2.0.0]
+author: AmGM-Encode
+version: 0.1

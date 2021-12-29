@@ -1,0 +1,13 @@
+name: Banking_vonfram
+version: 1
+main: Tungst_nganhang\Main
+api: 3.0.0
+author: TungstenVn
+commands:
+ nganhang:
+  description: "Hệ Thống Ngân Hàng"
+  default: true
+ rob:
+  description: ""
+  default: false
+  permision: rob.bank.tungs

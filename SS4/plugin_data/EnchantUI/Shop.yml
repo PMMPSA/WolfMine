@@ -1,0 +1,115 @@
+---
+#Dont Change this
+version: "0.4"
+#EnchantUI Version 0.4
+Title: "§eBuyEnchant§c ❖ §bShop"
+Button: "§e➼§a {NAME} §b-§e Giá:§f {PRICE} xu"
+slider-title: "§e➼§a§l Cấp độ:§r"
+messages:
+  label: "§e➼§a Bạn phải trả§b {PRICE} §axu§e cho mỗi một cấp độ"
+  not-enough-money: "§e➼§c Bạn không có đủ tiền!"
+  paid-success: "§e➼§a Bạn đã phù phép thành công§e {NAME} §acấp§e {LEVEL} §avới giá§e {PRICE} xu"
+  hold-item: "§e➼§c Vui lòng cầm đồ vật có thể phù phép"
+  no-perm: "§e➼§c Bạn không có quyền để thực hiện lệnh này"
+shop:
+- name: Protection
+  enchantment: 0
+  price: 7000
+  max-level: 10
+- name: Fire Protection
+  enchantment: 1
+  price: 7000
+  max-level: 15
+- name: Feather Falling
+  enchantment: 2
+  price: 7000
+  max-level: 5
+- name: Blast Protection
+  enchantment: 3
+  price: 7000
+  max-level: 10
+- name: Projectile Protection
+  enchantment: 4
+  price: 7000
+  max-level: 10
+- name: Thorns
+  enchantment: 5
+  price: 7000
+  max-level: 10  
+- name: Respiration
+  enchantment: 6
+  price: 7000
+  max-level: 10
+- name: Depth Strider
+  enchantment: 7
+  price: 7000
+  max-level: 10
+- name: Aqua Affinity
+  enchantment: 8
+  price: 7000
+  max-level: 10
+- name: Sharpness
+  enchantment: 9
+  price: 7000
+  max-level: 10
+- name: Smite
+  enchantment: 10
+  price: 7000
+  max-level: 10 
+- name: Bane of Athropods
+  enchantment: 11
+  price: 7000
+  max-level: 10 
+- name: Knockback
+  enchantment: 12
+  price: 7000
+  max-level: 2
+- name: Fire Aspect
+  enchantment: 13
+  price: 7000
+  max-level: 4
+- name: Looting
+  enchantment: 14
+  price: 7000
+  max-level: 4
+- name: Efficiency
+  enchantment: 15
+  price: 8000
+  max-level: 20
+- name: Silk Touch
+  enchantment: 16
+  price: 7000
+  max-level: 4
+- name: Unbreaking
+  enchantment: 17
+  price: 7000
+  max-level: 15
+- name: Fortune
+  enchantment: 18
+  price: 10000
+  max-level: 10
+- name: Power
+  enchantment: 19
+  price: 7000
+  max-level: 5
+- name: Punch
+  enchantment: 20
+  price: 7000
+  max-level: 10
+- name: Flame
+  enchantment: 21
+  price: 7000
+  max-level: 4
+- name: Infinity
+  enchantment: 22
+  price: 7000
+  max-level: 2
+- name: Luck of the Sea
+  enchantment: 23
+  price: 7000
+  max-level: 10
+- name: Lure
+  enchantment: 24
+  price: 7000
+  max-level: 10
+...

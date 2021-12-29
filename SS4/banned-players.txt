@@ -1,0 +1,8 @@
+# Updated 09/16/19 17:49 by PocketMine-MP 3.9.4
+# victim name | ban date | banned by | banned until | reason
+
+knmknerprogamer|2019-08-29 14:39:55 +0700|CONSOLE|Forever|
+godofheaven|2019-08-29 14:40:15 +0700|CONSOLE|Forever|
+nnoobpvp2k3|2019-08-29 14:40:58 +0700|CONSOLE|Forever|
+eginhw|2019-08-31 20:07:45 +0700|LonMongManh69|Forever|
+cuongpro1234|2019-09-16 17:49:06 +0700|CONSOLE|Forever|

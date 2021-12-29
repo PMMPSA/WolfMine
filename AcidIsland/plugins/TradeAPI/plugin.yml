@@ -1,0 +1,8 @@
+name: TradeAPI
+version: 2
+main: TradeSytems\AmGM
+api: 2.0.0
+author: AmGM
+commands:
+ trade:
+  description: Hjhj

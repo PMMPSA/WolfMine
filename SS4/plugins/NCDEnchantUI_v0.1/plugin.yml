@@ -1,0 +1,12 @@
+---
+name: NCDEnchantUI
+main: NCDEnchantUI\Main
+version: "0.1"
+api: [3.0.0]
+load: POSTWORLD
+author: Nờ Cờ Dờ (NCD)
+
+permissions:
+  buyec.command.enchant:
+    default: true
+...

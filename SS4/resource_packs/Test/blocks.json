@@ -1,0 +1,76 @@
+{
+  "format_version": [ 1, 1, 0 ],
+
+  "sand": {
+    "isotropic": false,
+    "textures": "sand",
+    "brightness_gamma": 0.55,
+    "sound": "sand"
+ 
+},
+"sandstone": {
+  "isotropic": {
+    "up": false,
+    "down": false
+  },
+  "textures": {
+    "up": "sandstone_top",
+    "down": "sandstone_bottom",
+    "side": "sandstone_side"
+  },
+  "brightness_gamma": 0.70,
+  "sound": "stone"
+},
+"red_sandstone": {
+  "isotropic": {
+    "up": false,
+    "down": false
+  },
+  "textures": {
+    "up": "redsandstone_top",
+    "down": "redsandstone_bottom",
+    "side": "redsandstone_side"
+  },
+  "brightness_gamma": 0.70,
+  "sound": "stone"
+},
+  "obsidian": {
+    "isotropic": false,
+    "textures": "obsidian",
+    "brightness_gamma": 2.00,
+    "sound": "stone"
+  },
+  "farmland": {
+    "textures": {
+      "up": "farmland",
+      "down": "dirt",
+      "side": "farmland"
+    },
+    "sound": "gravel"
+  }, /*"fence": {
+    "textures": {
+      "up": "fence_top",
+      "down": "fence_top",
+      "north": "fence",
+      "south": "fence",
+      "west": "fence",
+      "east": "fence"
+    },
+    "sound": "wood"
+  }, */
+  "netherrack": {
+    "isotropic": false,
+    "textures": "netherrack",
+    "sound": "stone"
+  },
+  "magma": {
+    "isotropic": false,
+    "textures": "magma",
+    "sound": "stone"
+  },
+  "glowstone": {
+    "isotropic": false,
+    "textures": "glowstone",
+    "sound": "glass"
+}
+}

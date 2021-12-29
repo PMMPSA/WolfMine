@@ -1,0 +1,9 @@
+name: MuaSung
+main: MS\main
+version: 1.0.0
+author: NguyenDongQuy
+api: 3.0.0
+description: Mua Sungcommands:
+  hangcam:
+   description: "Hệ Thống Mua Súng"
+   default: true

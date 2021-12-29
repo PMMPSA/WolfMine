@@ -1,0 +1,59 @@
+---
+#Dont Change this
+version: "0.4"
+#EnchantUI Version 0.4
+Title: "§eBuyCE§c ❖ §bShop"
+Button: "§e➼§a {NAME} §b-§e Giá:§f {PRICE}§e Points."
+slider-title: "§e➼§a§l Cấp độ:§r"
+messages:
+  label: "§e➼§a Bạn phải trả§b {PRICE} §aPoints§e cho mỗi một cấp độ"
+  not-enough-money: "§e➼§c Bạn không có đủ tiền!"
+  paid-success: "§e➼§a Bạn đã phù phép thành công§e {NAME} §acấp§e {LEVEL} §avới giá§e {PRICE} Points"
+  hold-item: "§e➼§c Vui lòng cầm đồ vật có thể phù phép"
+  no-perm: "§e➼§c Bạn không có quyền để thực hiện lệnh này"
+shop:
+- name: Driller (Máy Khoan) (Tools)
+  enchantment: Driller
+  price: 20
+  max-level: 5
+- name: Blind (Gây Mù) (Wepons)
+  enchantment: Blind
+  price: 20
+  max-level: 5
+- name: Wither (Khô Héo) (Wepons)
+  enchantment: Wither
+  price: 20
+  max-level: 5
+- name: Poison (Độc) (Wepons)
+  enchantment: Poison
+  price: 20
+  max-level: 5
+- name: Lightning (Sấm Sét) (Wepons)
+  enchantment: Lightnight
+  price: 20
+  max-level: 5
+- name: Jetpack (Giày Bay) (Boots)
+  enchantment: Jetpack
+  price: 30
+  max-level: 3
+- name: Stomp (Dậm Chân) (Boots)
+  enchantment: Stomp
+  price: 20
+  max-level: 5
+- name: Lumberjack (Gỗ Xẻ) (Axe)
+  enchantment: Lumberjack
+  price: 20
+  max-level: 5
+- name: Volley (Bắn Nhiều Tên) (Bow)
+  enchantment: Volley
+  price: 20
+  max-level: 5
+- name: Witherskull (Sọ Khô Héo) (Bow)
+  enchantment: Witherskull
+  price: 20
+  max-level: 5
+- name: Autorepair (Sửa Đồ Tự Động) (Damageable)
+  enchantment: Autorepair
+  price: 20
+  max-level: 5
+...

@@ -1,0 +1,5 @@
+name: ItemCommand20
+main: ItemCommand\ItemCommand
+version: 1.0
+api: [1.12.0]
+author: Matrix

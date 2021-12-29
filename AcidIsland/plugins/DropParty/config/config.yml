@@ -1,0 +1,28 @@
+---
+World: LB
+Time: 20
+Duration: 300
+Message.Started: §bLễ hội§6 drop đã bắt đầu tại hub
+Message.Ended: §bLễ hội§6 drop đã kết thúc
+Message.Countdown: §aLễ hội §bdrop§c sẽ bắt đầu trong §a{time}§b phút
+Popup.Enabled: true
+Popup.Message: §bVật phẩm§c đang rơi ra từ phía §6Beacon
+Coordinates:
+  X: 193
+  "Y": 139
+  Z: -739
+Items:
+- 57
+- 42
+- 22
+- 41
+- 130
+- 18
+- 5
+- 17
+- 388
+- 89
+- 138
+- 121
+- 276
+...

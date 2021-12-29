@@ -1,0 +1,528 @@
+---
+Pickaxe:
+  Stone: true
+  Granite: false
+  Polished Granite: false
+  Diorite: false
+  Polished Diorite: false
+  Andesite: false
+  Polished Andesite: false
+  Cobblestone: false
+  Gold Ore: true
+  Iron Ore: true
+  Coal Ore: true
+  Lapis Lazuli Ore: true
+  Lapis Lazuli Block: false
+  Sandstone: false
+  Chiseled Sandstone: false
+  Smooth Sandstone: false
+  Gold Block: false
+  Iron Block: false
+  Double Stone Slab: false
+  Double Sandstone Slab: false
+  Double Wooden Slab: false
+  Double Cobblestone Slab: false
+  Double Brick Slab: false
+  Double Stone Brick Slab: false
+  Double Quartz Slab: false
+  Double Nether Brick Slab: false
+  Double Upper Stone Slab: false
+  Double Upper Sandstone Slab: false
+  Double Upper Wooden Slab: false
+  Double Upper Cobblestone Slab: false
+  Double Upper Brick Slab: false
+  Double Upper Stone Brick Slab: false
+  Double Upper Quartz Slab: false
+  Double Upper Nether Brick Slab: false
+  Stone Slab: false
+  Sandstone Slab: false
+  Wooden Slab: false
+  Cobblestone Slab: false
+  Brick Slab: false
+  Stone Brick Slab: false
+  Quartz Slab: false
+  Nether Brick Slab: false
+  Upper Stone Slab: false
+  Upper Sandstone Slab: false
+  Upper Wooden Slab: false
+  Upper Cobblestone Slab: false
+  Upper Brick Slab: false
+  Upper Stone Brick Slab: false
+  Upper Quartz Slab: false
+  Upper Nether Brick Slab: false
+  Bricks: false
+  Moss Stone: false
+  Obsidian: true
+  Monster Spawner: false
+  Diamond Ore: true
+  Diamond Block: false
+  Furnace: false
+  Burning Furnace: false
+  Cobblestone Stairs: false
+  Stone Pressure Plate: false
+  Iron Door: false
+  Redstone Ore: true
+  Glowing Redstone Ore: true
+  Stone Button: false
+  Ice: false
+  Netherrack: false
+  Glowstone: false
+  Stone Bricks: false
+  Mossy Stone Bricks: false
+  Cracked Stone Bricks: false
+  Chiseled Stone Bricks: false
+  Iron Bars: false
+  Brick Stairs: false
+  Stone Brick Stairs: false
+  Nether Bricks: false
+  Nether Brick Fence: false
+  Nether Brick Stairs: false
+  Enchanting Table: false
+  Brewing Stand: false
+  End Stone: false
+  Dragon Egg: false
+  Sandstone Stairs: false
+  Emerald Ore: true
+  Ender Chest: false
+  Emerald Block: false
+  Cobblestone Wall: false
+  Mossy Cobblestone Wall: false
+  Granite Wall: false
+  Diorite Wall: false
+  Andesite Wall: false
+  Sandstone Wall: false
+  Brick Wall: false
+  Stone Brick Wall: false
+  Mossy Stone Brick Wall: false
+  Nether Brick Wall: false
+  End Stone Brick Wall: false
+  Prismarine Wall: false
+  Red Sandstone Wall: false
+  Red Nether Brick Wall: false
+  Unknown Wall: false
+  Anvil: false
+  Slightly Damaged Anvil: false
+  Very Damaged Anvil: false
+  Weighted Pressure Plate Light: false
+  Weighted Pressure Plate Heavy: false
+  Redstone Block: false
+  Nether Quartz Ore: true
+  Hopper: false
+  Quartz Block: false
+  Chiseled Quartz Block: false
+  Quartz Pillar: false
+  Quartz Stairs: false
+  White Stained Clay: false
+  Orange Stained Clay: false
+  Magenta Stained Clay: false
+  Light Blue Stained Clay: false
+  Yellow Stained Clay: false
+  Lime Stained Clay: false
+  Pink Stained Clay: false
+  Gray Stained Clay: false
+  Light Gray Stained Clay: false
+  Cyan Stained Clay: false
+  Purple Stained Clay: false
+  Blue Stained Clay: false
+  Brown Stained Clay: false
+  Green Stained Clay: false
+  Red Stained Clay: false
+  Black Stained Clay: false
+  Iron Trapdoor: false
+  Prismarine: false
+  Dark Prismarine: false
+  Prismarine Bricks: false
+  Hardened Clay: false
+  Coal Block: false
+  Packed Ice: false
+  Red Sandstone: false
+  Chiseled Red Sandstone: false
+  Smooth Red Sandstone: false
+  Red Sandstone Stairs: false
+  Double Red Sandstone Slab: false
+  Double Purpur Slab: false
+  Double Prismarine Slab: false
+  Double Dark Prismarine Slab: false
+  Double Prismarine Bricks Slab: false
+  Double Mossy Cobblestone Slab: false
+  Double Smooth Sandstone Slab: false
+  Double Red Nether Brick Slab: false
+  Double Upper Red Sandstone Slab: false
+  Double Upper Purpur Slab: false
+  Double Upper Prismarine Slab: false
+  Double Upper Dark Prismarine Slab: false
+  Double Upper Prismarine Bricks Slab: false
+  Double Upper Mossy Cobblestone Slab: false
+  Double Upper Smooth Sandstone Slab: false
+  Double Upper Red Nether Brick Slab: false
+  Red Sandstone Slab: false
+  Purpur Slab: false
+  Prismarine Slab: false
+  Dark Prismarine Slab: false
+  Prismarine Bricks Slab: false
+  Mossy Cobblestone Slab: false
+  Smooth Sandstone Slab: false
+  Red Nether Brick Slab: false
+  Upper Red Sandstone Slab: false
+  Upper Purpur Slab: false
+  Upper Prismarine Slab: false
+  Upper Dark Prismarine Slab: false
+  Upper Prismarine Bricks Slab: false
+  Upper Mossy Cobblestone Slab: false
+  Upper Smooth Sandstone Slab: false
+  Upper Red Nether Brick Slab: false
+  Purpur Block: false
+  Chiseled Purpur: false
+  Purpur Pillar: false
+  Purpur Stairs: false
+  Undyed Shulker Box: false
+  End Stone Bricks: false
+  Magma Block: false
+  Red Nether Bricks: false
+  Bone Block: false
+  White Shulker Box: false
+  Orange Shulker Box: false
+  Magenta Shulker Box: false
+  Light Blue Shulker Box: false
+  Yellow Shulker Box: false
+  Lime Shulker Box: false
+  Pink Shulker Box: false
+  Gray Shulker Box: false
+  Light Gray Shulker Box: false
+  Cyan Shulker Box: false
+  Purple Shulker Box: false
+  Blue Shulker Box: false
+  Brown Shulker Box: false
+  Green Shulker Box: false
+  Red Shulker Box: false
+  Black Shulker Box: false
+  Purple Glazed Terracotta: false
+  White Glazed Terracotta: false
+  Orange Glazed Terracotta: false
+  Magenta Glazed Terracotta: false
+  Light Blue Glazed Terracotta: false
+  Yellow Glazed Terracotta: false
+  Lime Glazed Terracotta: false
+  Pink Glazed Terracotta: false
+  Grey Glazed Terracotta: false
+  Light Grey Glazed Terracotta: false
+  Cyan Glazed Terracotta: false
+  Blue Glazed Terracotta: false
+  Brown Glazed Terracotta: false
+  Green Glazed Terracotta: false
+  Red Glazed Terracotta: false
+  Black Glazed Terracotta: false
+  White Concrete: false
+  Orange Concrete: false
+  Magenta Concrete: false
+  Light Blue Concrete: false
+  Yellow Concrete: false
+  Lime Concrete: false
+  Pink Concrete: false
+  Gray Concrete: false
+  Light Gray Concrete: false
+  Cyan Concrete: false
+  Purple Concrete: false
+  Blue Concrete: false
+  Brown Concrete: false
+  Green Concrete: false
+  Red Concrete: false
+  Black Concrete: false
+  Stonecutter: false
+  Glowing Obsidian: false
+  Nether Reactor Core: true
+  Active Nether Reactor Core: true
+  Used Nether Reactor Core: true
+  Portal: false
+  Cauldron: false
+  Shulker Box: false
+  Frosted Ice: false
+  Magmawalker Obsidian: true
+  Dispenser: false
+  Dropper: false
+  Observer: false
+Shovel:
+  Grass: true
+  Dirt: false
+  Coarse Dirt: false
+  Sand: false
+  Red Sand: false
+  Gravel: false
+  Farmland: false
+  Snow Layer: false
+  Snow Block: false
+  Clay Block: false
+  Soul Sand: false
+  Mycelium: false
+  Grass Path: false
+  White Concrete Powder: false
+  Orange Concrete Powder: false
+  Magenta Concrete Powder: false
+  Light Blue Concrete Powder: false
+  Yellow Concrete Powder: false
+  Lime Concrete Powder: false
+  Pink Concrete Powder: false
+  Gray Concrete Powder: false
+  Light Gray Concrete Powder: false
+  Cyan Concrete Powder: false
+  Purple Concrete Powder: false
+  Blue Concrete Powder: false
+  Brown Concrete Powder: false
+  Green Concrete Powder: false
+  Red Concrete Powder: false
+  Black Concrete Powder: false
+  Podzol: false
+Axe:
+  Oak Wood Planks: false
+  Spruce Wood Planks: false
+  Birch Wood Planks: false
+  Jungle Wood Planks: false
+  Acacia Wood Planks: false
+  Dark Oak Wood Planks: false
+  Oak Wood: true
+  Spruce Wood: true
+  Birch Wood: true
+  Jungle Wood: true
+  Noteblock: false
+  Bookshelf: false
+  Oak Stairs: false
+  Chest: false
+  Crafting Table: false
+  Sign Post: false
+  Oak Door: false
+  Ladder: false
+  Wall Sign: false
+  Wooden Pressure Plate: false
+  Jukebox: false
+  Oak Fence: false
+  Spruce Fence: false
+  Birch Fence: false
+  Jungle Fence: false
+  Acacia Fence: false
+  Dark Oak Fence: false
+  Pumpkin: false
+  Jack o'Lantern: false
+  Wooden Trapdoor: false
+  Brown Mushroom Block: false
+  Red Mushroom Block: false
+  Melon Block: false
+  Vines: false
+  Oak Fence Gate: false
+  Cocoa Block: false
+  Spruce Stairs: false
+  Birch Stairs: false
+  Jungle Stairs: false
+  Wooden Button: false
+  Trapped Chest: false
+  Daylight Sensor: false
+  Double Oak Wooden Slab: false
+  Double Spruce Wooden Slab: false
+  Double Birch Wooden Slab: false
+  Double Jungle Wooden Slab: false
+  Double Acacia Wooden Slab: false
+  Double Dark Oak Wooden Slab: false
+  Double  Wooden Slab: false
+  Double Upper Oak Wooden Slab: false
+  Double Upper Spruce Wooden Slab: false
+  Double Upper Birch Wooden Slab: false
+  Double Upper Jungle Wooden Slab: false
+  Double Upper Acacia Wooden Slab: false
+  Double Upper Dark Oak Wooden Slab: false
+  Double Upper  Wooden Slab: false
+  Oak Wooden Slab: false
+  Spruce Wooden Slab: false
+  Birch Wooden Slab: false
+  Jungle Wooden Slab: false
+  Acacia Wooden Slab: false
+  Dark Oak Wooden Slab: false
+  Upper Oak Wooden Slab: false
+  Upper Spruce Wooden Slab: false
+  Upper Birch Wooden Slab: false
+  Upper Jungle Wooden Slab: false
+  Upper Acacia Wooden Slab: false
+  Upper Dark Oak Wooden Slab: false
+  Acacia Wood: true
+  Dark Oak Wood: true
+  Acacia Stairs: false
+  Dark Oak Stairs: false
+  Standing Banner: false
+  Wall Banner: false
+  Spruce Fence Gate: false
+  Birch Fence Gate: false
+  Jungle Fence Gate: false
+  Dark Oak Fence Gate: false
+  Acacia Fence Gate: false
+  Spruce Door: false
+  Birch Door: false
+  Jungle Door: false
+  Acacia Door: false
+  Dark Oak Door: false
+  Note Block: false
+Hand:
+  Oak Sapling: false
+  Spruce Sapling: false
+  Birch Sapling: false
+  Jungle Sapling: false
+  Acacia Sapling: false
+  Dark Oak Sapling: false
+  Bedrock: false
+  Water: false
+  Still Water: false
+  Lava: false
+  Still Lava: false
+  Sponge: false
+  Glass: false
+  Bed Block: false
+  Powered Rail: false
+  Detector Rail: false
+  Dandelion: false
+  Poppy: false
+  Blue Orchid: false
+  Allium: false
+  Azure Bluet: false
+  Red Tulip: false
+  Orange Tulip: false
+  White Tulip: false
+  Pink Tulip: false
+  Oxeye Daisy: false
+  Brown Mushroom: false
+  Red Mushroom: false
+  TNT: false
+  Torch: false
+  Fire Block: false
+  Wheat Block: false
+  Rail: false
+  Lever: false
+  Unlit Redstone Torch: false
+  Redstone Torch: false
+  Cactus: false
+  Sugarcane: false
+  Nether Portal: false
+  Cake: false
+  Invisible Bedrock: false
+  Stone Monster Egg: false
+  Cobblestone Monster Egg: false
+  Stone Brick Monster Egg: false
+  Mossy Stone Brick Monster Egg: false
+  Cracked Stone Brick Monster Egg: false
+  Chiseled Stone Brick Monster Egg: false
+  Infested Block: false
+  Glass Pane: false
+  Pumpkin Stem: false
+  Melon Stem: false
+  Lily Pad: false
+  Nether Wart: false
+  End Portal: false
+  End Portal Frame: false
+  Redstone Lamp: false
+  Lit Redstone Lamp: false
+  Activator Rail: false
+  Tripwire Hook: false
+  Tripwire: false
+  Beacon: false
+  Flower Pot: false
+  Carrot Block: false
+  Potato Block: false
+  Mob Head: false
+  White Stained Glass Pane: false
+  Orange Stained Glass Pane: false
+  Magenta Stained Glass Pane: false
+  Light Blue Stained Glass Pane: false
+  Yellow Stained Glass Pane: false
+  Lime Stained Glass Pane: false
+  Pink Stained Glass Pane: false
+  Gray Stained Glass Pane: false
+  Light Gray Stained Glass Pane: false
+  Cyan Stained Glass Pane: false
+  Purple Stained Glass Pane: false
+  Blue Stained Glass Pane: false
+  Brown Stained Glass Pane: false
+  Green Stained Glass Pane: false
+  Red Stained Glass Pane: false
+  Black Stained Glass Pane: false
+  Slime Block: false
+  Sea Lantern: false
+  Hay Bale: false
+  White Carpet: false
+  Orange Carpet: false
+  Magenta Carpet: false
+  Light Blue Carpet: false
+  Yellow Carpet: false
+  Lime Carpet: false
+  Pink Carpet: false
+  Gray Carpet: false
+  Light Gray Carpet: false
+  Cyan Carpet: false
+  Purple Carpet: false
+  Blue Carpet: false
+  Brown Carpet: false
+  Green Carpet: false
+  Red Carpet: false
+  Black Carpet: false
+  Sunflower: false
+  Lilac: false
+  Rose Bush: false
+  Peony: false
+  Item Frame: false
+  End Rod: false
+  Nether Wart Block: false
+  White Stained Glass: false
+  Orange Stained Glass: false
+  Magenta Stained Glass: false
+  Light Blue Stained Glass: false
+  Yellow Stained Glass: false
+  Lime Stained Glass: false
+  Pink Stained Glass: false
+  Gray Stained Glass: false
+  Light Gray Stained Glass: false
+  Cyan Stained Glass: false
+  Purple Stained Glass: false
+  Blue Stained Glass: false
+  Brown Stained Glass: false
+  Green Stained Glass: false
+  Red Stained Glass: false
+  Black Stained Glass: false
+  Beetroot Block: false
+  Dragon Egg: false
+  Redstone Wire: false
+  Unpowered Repeater: false
+  Powered Repeater: false
+  Command Block: false
+  Light Weighted Pressure Plate: false
+  Heavy Weighted Pressure Plate: false
+  Unpowered Comparator: false
+  Powered Comparator: false
+  Command Block Repeating: false
+  Command Block Chain: false
+Shears:
+  Oak Leaves: true
+  Spruce Leaves: true
+  Birch Leaves: true
+  Jungle Leaves: true
+  Dead Shrub: false
+  Tall Grass: false
+  Fern: false
+  Dead Bush: false
+  White Wool: false
+  Orange Wool: false
+  Magenta Wool: false
+  Light Blue Wool: false
+  Yellow Wool: false
+  Lime Wool: false
+  Pink Wool: false
+  Gray Wool: false
+  Light Gray Wool: false
+  Cyan Wool: false
+  Purple Wool: false
+  Blue Wool: false
+  Brown Wool: false
+  Green Wool: false
+  Red Wool: false
+  Black Wool: false
+  Acacia Leaves: true
+  Dark Oak Leaves: true
+  Double Tallgrass: false
+  Large Fern: false
+Sword:
+  Cobweb: false
+...

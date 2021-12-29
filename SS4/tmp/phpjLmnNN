@@ -1,0 +1,5526 @@
+<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI;
+
+use jasonwynn10\VanillaEntityAI\block\MonsterSpawner;
+use jasonwynn10\VanillaEntityAI\block\Pumpkin;
+use jasonwynn10\VanillaEntityAI\command\DifficultyCommand;
+use jasonwynn10\VanillaEntityAI\command\SummonCommand;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Blaze;
+use jasonwynn10\VanillaEntityAI\entity\hostile\CaveSpider;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Creeper;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Drowned;
+use jasonwynn10\VanillaEntityAI\entity\hostile\ElderGuardian;
+use jasonwynn10\VanillaEntityAI\entity\hostile\EnderDragon;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Enderman;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Endermite;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Ghast;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Guardian;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Husk;
+use jasonwynn10\VanillaEntityAI\entity\hostile\MagmaCube;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Shulker;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Silverfish;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Skeleton;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Slime;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Spider;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Stray;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Vindicator;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Witch;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Wither;
+use jasonwynn10\VanillaEntityAI\entity\hostile\WitherSkeleton;
+use jasonwynn10\VanillaEntityAI\entity\hostile\Zombie;
+use jasonwynn10\VanillaEntityAI\entity\hostile\ZombieHorse;
+use jasonwynn10\VanillaEntityAI\entity\hostile\ZombiePigman;
+use jasonwynn10\VanillaEntityAI\entity\hostile\ZombieVillager;
+use jasonwynn10\VanillaEntityAI\entity\neutral\Item;
+use jasonwynn10\VanillaEntityAI\entity\passive\Bat;
+use jasonwynn10\VanillaEntityAI\entity\passive\Chicken;
+use jasonwynn10\VanillaEntityAI\entity\passive\Cow;
+use jasonwynn10\VanillaEntityAI\entity\passive\Dolphin;
+use jasonwynn10\VanillaEntityAI\entity\passive\Donkey;
+use jasonwynn10\VanillaEntityAI\entity\passive\Horse;
+use jasonwynn10\VanillaEntityAI\entity\passive\Llama;
+use jasonwynn10\VanillaEntityAI\entity\passive\Mooshroom;
+use jasonwynn10\VanillaEntityAI\entity\passive\Mule;
+use jasonwynn10\VanillaEntityAI\entity\passive\Ocelot;
+use jasonwynn10\VanillaEntityAI\entity\passive\Parrot;
+use jasonwynn10\VanillaEntityAI\entity\passive\Pig;
+use jasonwynn10\VanillaEntityAI\entity\passive\Rabbit;
+use jasonwynn10\VanillaEntityAI\entity\passive\Sheep;
+use jasonwynn10\VanillaEntityAI\entity\passive\SkeletonHorse;
+use jasonwynn10\VanillaEntityAI\entity\passive\Squid;
+use jasonwynn10\VanillaEntityAI\entity\passive\Villager;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\IronGolem;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\PolarBear;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\SnowGolem;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Wolf;
+use jasonwynn10\VanillaEntityAI\task\DespawnTask;
+use jasonwynn10\VanillaEntityAI\task\HostileSpawnTask;
+use jasonwynn10\VanillaEntityAI\task\InhabitedChunkCounter;
+use jasonwynn10\VanillaEntityAI\task\PassiveSpawnTask;
+use jasonwynn10\VanillaEntityAI\tile\MobSpawner;
+use pocketmine\block\BlockFactory;
+use pocketmine\entity\Entity;
+use pocketmine\item\Armor;
+use pocketmine\item\Book;
+use pocketmine\item\Bow;
+use pocketmine\item\Durable;
+use pocketmine\item\enchantment\Enchantment;
+use pocketmine\item\enchantment\EnchantmentInstance;
+use pocketmine\item\FishingRod;
+use pocketmine\item\ItemIds;
+use pocketmine\item\SpawnEgg;
+use pocketmine\item\Sword;
+use pocketmine\item\TieredTool;
+use pocketmine\item\Tool;
+use pocketmine\level\format\Chunk;
+use pocketmine\level\Level;
+use pocketmine\plugin\PluginBase;
+use pocketmine\timings\TimingsHandler;
+use pocketmine\utils\Config;
+
+class EntityAI extends PluginBase {
+	/** @var string[][] $entities */
+	protected static $entities = [
+		Chicken::class => ['Chicken', 'minecraft:chicken'],
+		Cow::class => ['Cow', 'minecraft:cow'],
+		Pig::class => ['Pig', 'minecraft:pig'],
+		Sheep::class => ['sheep', 'minecraft:sheep'],
+		Wolf::class => ['Wolf', 'minecraft:wolf'],
+		Villager::class => ['Villager', 'minecraft:villager'],
+		Mooshroom::class => ['Mooshroom', 'minecraft:mooshroom'],
+		Squid::class => ['Squid', 'minecraft:squid'],
+		Rabbit::class => ['Rabbit', 'minecraft:rabbit'],
+		Bat::class => ['Bat', 'minecraft:bat'],
+		IronGolem::class => ['IronGolem', 'minecraft:irongolem'],
+		SnowGolem::class => ['SnowGolem', 'minecraft:snowgolem'],
+		Ocelot::class => ['Ocelot', 'minecraft:ocelot'],
+		Horse::class => ['Horse', 'minecraft:horse'],
+		Donkey::class => ['Donkey', 'minecraft:donkey'],
+		Mule::class => ['Mule', 'minecraft:mule'],
+		SkeletonHorse::class => ['SkeletonHorse', 'minecraft:skeletonhorse'],
+		ZombieHorse::class => ['ZombieHorse', 'minecraft:zombiehorse'],
+		PolarBear::class => ['PolarBear', 'minecraft:polarbear'],
+		Llama::class => ['Llama', 'minecraft:llama'],
+		Parrot::class => ['Parrot', 'minecraft:parrot'],
+		Dolphin::class => ['Dolphin', 'minecraft:dolphin'],
+		Zombie::class => ['Zombie', 'minecraft:zombie'],
+		Creeper::class => ['Creeper', 'minecraft:creeper'],
+		Skeleton::class => ['Skeleton', 'minecraft:skeleton'],
+		Spider::class => ['Spider', 'minecraft:spider'],
+		ZombiePigman::class => ['PigZombie', 'minecraft:pigzombie'],
+		Slime::class => ['Slime', 'minecraft:slime'],
+		Enderman::class => ['Enderman', 'minecraft:enderman'],
+		Silverfish::class => ['Silverfish', 'minecraft:silverfish'],
+		CaveSpider::class => ['CaveSpider', 'minecraft:cavespider'],
+		Ghast::class => ['Ghast', 'minecraft:ghast'],
+		MagmaCube::class => ['MagmaCube', 'minecraft:magmacube'],
+		Blaze::class => ['Blaze', 'minecraft:blaze'],
+		ZombieVillager::class => ['ZombieVillager', 'minecraft:zombievillager'],
+		Witch::class => ['Witch', 'minecraft:witch'],
+		Stray::class => ['Stray', 'minecraft:stray'],
+		Husk::class => ['Husk', 'minecraft:husk'],
+		WitherSkeleton::class => ['WitherSkeleton', 'minecraft:witherskeleton'],
+		Guardian::class => ['Guardian', 'minecraft:guardian'],
+		ElderGuardian::class => ['ElderGuardian', 'minecraft:elderguardian'],
+		//NPC
+		Wither::class => ['Wither', 'minecraft:wither'],
+		EnderDragon::class => ['EnderDragon', 'minecraft:enderdragon'],
+		Shulker::class => ['Shulker', 'minecraft:shulker'],
+		Endermite::class => ['Endermite', 'minecraft:endermite'],
+		//Learn to code mascot
+		Vindicator::class => ['Vindicator', 'minecraft:vindicator'],
+		//
+		//ArmorStand::class => [],
+		//TripodCamera::class => [],
+		// player
+		Item::class => ['Item', 'minecraft:item'],
+		//TNT::class => [],
+		//FallingBlock::class => [],
+		//MovingBlock::class => [],
+		//ExperienceBottle::class => [],
+		//ExperienceOrb::class => [],
+		//EyeOfEnder::class => [],
+		//EnderCrystal::class => ['EnderCrystal', 'minecraft:ender_crystal'],
+		//FireworksRocket::class => ['FireworksRocket',	'minecraft:fireworks_rocket'],
+		//Trident::class => ['Thrown Trident', 'minecraft:thrown_trident'],
+		//
+		//ShulkerBullet::class => [],
+		//FishingHook::class => ['FishingHook', 'minecraft:fishinghook'],
+		//chalkboard
+		//DragonFireball::class => [],
+		//Arrow::class => [],
+		//Snowball::class => [],
+		//Egg::class => [],
+		//Painting::class => [],
+		//Minecart::class => ['Minecart', 'minecraft:minecart'],
+		//LargeFireball::class => [],
+		//SplashPotion::class => [],
+		//EnderPearl::class => [],
+		//LeashKnot::class => [],
+		//WitherSkull::class => [],
+		//Boat::class => [],
+		//DangerousWitherSkull::class => [],
+		//Lightning::class => [],
+		//Fireball::class => [],
+		//AreaEffectCloud::class => [],
+		//HopperMinecart::class => [],
+		//TNTMinecart::class => [],
+		//ChestMinecart::class => [],
+		//
+		//CommandBlockMinecart::class => [],
+		//LingeringPotion::class => [],
+		//LlamaSpit::class => [],
+		//EvocationFang::class => [],
+		//Evoker::class => [],
+		//Vex::class => [],
+		//ice bomb
+		//balloon
+		//pufferfish
+		//salmon
+		Drowned::class => ['Drowned', 'minecraft:drowned'],
+		//tropical fish
+		//fish
+	];
+	/** @var self|null $instance */
+	private static $instance;
+	/** @var int[] $chunkCounter */
+	public static $chunkCounter = [];
+	/** @var Config $counter */
+	private $counter;
+
+	/**
+	 * @return self
+	 */
+	public static function getInstance(): self {
+		return self::$instance;
+	}
+
+	public function onLoad(): void {
+		self::$instance = $this;
+		TimingsHandler::setEnabled();
+		$this->counter = new Config($this->getDataFolder()."counter.json", Config::JSON);
+		self::$chunkCounter = $this->counter->getAll();
+		$this->getLogger()->debug("Chunk Counter Data Loaded");
+	}
+
+	public function onEnable(): void {
+		BlockFactory::registerBlock(new Pumpkin(), true);
+		BlockFactory::registerBlock(new MonsterSpawner(), true);
+		$this->getLogger()->debug("Registered Blocks");
+		/** @noinspection PhpUnhandledExceptionInspection */
+		MobSpawner::registerTile(MobSpawner::class, [MobSpawner::MOB_SPAWNER, "minecraft:mob_spawner"]);
+		$this->getLogger()->debug("Registered Spawner Tile");
+		foreach(self::$entities as $class => $saveNames) {
+			Entity::registerEntity($class, true, $saveNames);
+			$this->getLogger()->debug("Entity Registered: ".$saveNames[1]);
+
+			if(!in_array($class, [
+				EnderDragon::class,
+				Wither::class,
+				ElderGuardian::class,
+				Endermite::class,
+				Item::class,
+				SnowGolem::class,
+				IronGolem::class
+			])) {
+				$item = new SpawnEgg(constant($class."::NETWORK_ID"));
+				$this->getLogger()->debug("Registered Item: ".$item->__toString());
+				if(!\pocketmine\item\Item::isCreativeItem($item)) {
+					\pocketmine\item\Item::addCreativeItem($item);
+				}
+			}
+		}
+		$server = $this->getServer();
+		$server->getCommandMap()->register("pocketmine", new SummonCommand("summon"));
+		$server->getCommandMap()->register("pocketmine", new DifficultyCommand("difficulty"));
+		$this->getLogger()->debug("Commands registered");
+		new EntityListener($this);
+
+		$properties = new Config($server->getDataPath()."server.properties", Config::PROPERTIES, [
+			"motd" => \pocketmine\NAME . " Server",
+			"server-port" => 19132,
+			"white-list" => false,
+			"announce-player-achievements" => true,
+			"spawn-protection" => 16,
+			"max-players" => 20,
+			"spawn-animals" => false, // TODO: default to true once task lag is fixed
+			"spawn-mobs" => false, // TODO: default to true once task lag is fixed
+			"gamemode" => 0,
+			"force-gamemode" => false,
+			"hardcore" => false,
+			"pvp" => true,
+			"difficulty" => 1,
+			"generator-settings" => "",
+			"level-name" => "world",
+			"level-seed" => "",
+			"level-type" => "DEFAULT",
+			"enable-query" => true,
+			"enable-rcon" => false,
+			"rcon.password" => substr(base64_encode(random_bytes(20)), 3, 10),
+			"auto-save" => true,
+			"view-distance" => 8,
+			"xbox-auth" => true,
+			"language" => "eng"
+		]);
+		if(!$properties->exists("spawn-animals")) {
+			$properties->set("spawn-animals", false); // TODO: default to true once task lag is fixed
+		}
+		if(!$properties->exists("spawn-mobs")) {
+			$properties->set("spawn-mobs", false); // TODO: default to true once task lag is fixed
+		}
+		if($properties->hasChanged()){
+			$properties->save();
+		}
+		if($server->getConfigBool("spawn-mobs", false)) {
+			$this->getScheduler()->scheduleRepeatingTask(new HostileSpawnTask(), 1);
+		}
+		if($server->getConfigBool("spawn-animals", false)) {
+			$this->getScheduler()->scheduleRepeatingTask(new PassiveSpawnTask(), 20);
+		}
+		if($server->getConfigBool("spawn-mobs", false) or $server->getConfigBool("spawn-animals", false)) { // TODO: default to true once task lag is fixed
+			$this->getScheduler()->scheduleRepeatingTask(new DespawnTask(), 1);
+		}
+		$this->getLogger()->debug("Server Property Values Confirmed");
+
+		$this->getScheduler()->scheduleRepeatingTask(new InhabitedChunkCounter(), 20 * 60 * 60);
+	}
+
+	public function onDisable() {
+		$this->counter->setAll(self::$chunkCounter);
+		$this->counter->save();
+	}
+
+	/**
+	 * @return string[][]
+	 */
+	public static function getEntities() : array {
+		return self::$entities;
+	}
+
+	/**
+	 * @param Level $level
+	 * @param Chunk $chunk
+	 *
+	 * @return float
+	 */
+	public function getClumpedRegionalDifficulty(Level $level, Chunk $chunk): float {
+		$regionalDifficulty = $this->getRegionalDifficulty($level, $chunk);
+		if($regionalDifficulty < 2.0) {
+			$result = 0.0;
+		}elseif($regionalDifficulty > 4.0) {
+			$result = 1.0;
+		}else {
+			$result = ($regionalDifficulty - 2.0) / 2.0;
+		}
+		return $result;
+	}
+
+	/**
+	 * @param Level $level
+	 * @param Chunk $chunk
+	 *
+	 * @return float
+	 */
+	public function getRegionalDifficulty(Level $level, Chunk $chunk): float {
+		$totalPlayTime = 0;
+		foreach($level->getPlayers() as $player) {
+			$time = (microtime(true) - $player->creationTime);
+			$hours = 0;
+			if($time >= 3600) {
+				$hours = floor(($time % (3600 * 24)) / 3600);
+			}
+			$totalPlayTime += $hours;
+		}
+		if($totalPlayTime > 21) {
+			$totalTimeFactor = 0.25;
+		}elseif($totalPlayTime < 20) {
+			$totalTimeFactor = 0;
+		}else {
+			$totalTimeFactor = (($totalPlayTime * 20 * 60 * 60) - 72000) / 5760000;
+		}
+		$chunkInhabitedTime = self::$chunkCounter[Level::chunkHash($chunk->getX(), $chunk->getZ()).":".$level->getFolderName()] ?? 0;
+		if($chunkInhabitedTime > 50) {
+			$chunkFactor = 1;
+		}else {
+			$chunkFactor = ($chunkInhabitedTime * 20 * 60 * 60) / 3600000;
+		}
+		if($level->getDifficulty() !== Level::DIFFICULTY_HARD) {
+			$chunkFactor *= 3 / 4;
+		}
+		$phaseTime = $level->getTime() / Level::TIME_FULL;
+		while($phaseTime > 5)
+			$phaseTime -= 5; // TODO: find better method
+		$moonPhase = 1.0;
+		switch($phaseTime) {
+			case 1:
+				$moonPhase = 1.0;
+			break;
+			case 2:
+				$moonPhase = 0.75;
+			break;
+			case 3:
+				$moonPhase = 0.5;
+			break;
+			case 4:
+				$moonPhase = 0.25;
+			break;
+			case 5:
+				$moonPhase = 0.0;
+			break;
+		}
+		if($moonPhase / 4 > $totalTimeFactor) {
+			$chunkFactor += $totalTimeFactor;
+		}else {
+			$chunkFactor += $moonPhase / 4;
+		}
+		if($level->getDifficulty() === Level::DIFFICULTY_EASY) {
+			$chunkFactor /= 2;
+		}
+		$regionalDifficulty = 0.75 + $totalTimeFactor + $chunkFactor;
+		if($level->getDifficulty() === Level::DIFFICULTY_NORMAL) {
+			$regionalDifficulty *= 2;
+		}
+		if($level->getDifficulty() === Level::DIFFICULTY_HARD) {
+			$regionalDifficulty *= 3;
+		}
+		return $regionalDifficulty;
+	}
+
+	/**
+	 * @param int $experienceLevel
+	 * @param \pocketmine\item\Item $item
+	 *
+	 * @return EnchantmentInstance
+	 */
+	public function getRandomEnchantment(int $experienceLevel, \pocketmine\item\Item $item): EnchantmentInstance {
+		$return = new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::SHARPNESS)); // default
+		if($experienceLevel <= 8) {
+			$bookShelves = 0;
+		}elseif($experienceLevel <= 9) {
+			$bookShelves = 1;
+		}elseif($experienceLevel <= 11) {
+			$bookShelves = 2;
+		}elseif($experienceLevel <= 12) {
+			$bookShelves = 3;
+		}elseif($experienceLevel <= 14) {
+			$bookShelves = 4;
+		}elseif($experienceLevel <= 15) {
+			$bookShelves = 5;
+		}elseif($experienceLevel <= 17) {
+			$bookShelves = 6;
+		}elseif($experienceLevel <= 18) {
+			$bookShelves = 7;
+		}elseif($experienceLevel <= 20) {
+			$bookShelves = 8;
+		}elseif($experienceLevel <= 21) {
+			$bookShelves = 9;
+		}elseif($experienceLevel <= 23) {
+			$bookShelves = 10;
+		}elseif($experienceLevel <= 24) {
+			$bookShelves = 11;
+		}elseif($experienceLevel <= 26) {
+			$bookShelves = 12;
+		}elseif($experienceLevel <= 27) {
+			$bookShelves = 13;
+		}elseif($experienceLevel <= 29) {
+			$bookShelves = 14;
+		}elseif($experienceLevel <= 30) {
+			$bookShelves = 15;
+		}else {
+			$bookShelves = 15;
+		}
+		if($item instanceof TieredTool) {
+			switch($item->getTier()) {
+				case TieredTool::TIER_WOODEN:
+					$enchantability = 15;
+				break;
+				case TieredTool::TIER_STONE:
+					$enchantability = 5;
+				break;
+				case TieredTool::TIER_IRON:
+					$enchantability = 14;
+				break;
+				case TieredTool::TIER_GOLD:
+					$enchantability = 22;
+				break;
+				case TieredTool::TIER_DIAMOND:
+					$enchantability = 10;
+				break;
+				default:
+					$enchantability = 14; // default to iron
+				break;
+			}
+		}elseif($item instanceof Tool) {
+			$enchantability = 14; // default to iron
+		}elseif($item instanceof FishingRod) {
+			$enchantability = 14; // default to iron
+		}elseif($item instanceof Armor) {
+			if($item->getId() === ItemIds::LEATHER_BOOTS or $item->getId() === ItemIds::LEATHER_LEGGINGS or $item->getId() === ItemIds::LEATHER_CHESTPLATE or $item->getId() === ItemIds::LEATHER_HELMET) {
+				$enchantability = 15;
+			}elseif($item->getId() === ItemIds::CHAIN_BOOTS or $item->getId() === ItemIds::CHAIN_LEGGINGS or $item->getId() === ItemIds::CHAIN_CHESTPLATE or $item->getId() === ItemIds::CHAIN_HELMET) {
+				$enchantability = 12;
+			}elseif($item->getId() === ItemIds::IRON_BOOTS or $item->getId() === ItemIds::IRON_LEGGINGS or $item->getId() === ItemIds::IRON_CHESTPLATE or $item->getId() === ItemIds::IRON_HELMET) {
+				$enchantability = 9;
+			}elseif($item->getId() === ItemIds::GOLD_BOOTS or $item->getId() === ItemIds::GOLD_LEGGINGS or $item->getId() === ItemIds::GOLD_CHESTPLATE or $item->getId() === ItemIds::GOLD_HELMET) {
+				$enchantability = 25;
+			}elseif($item->getId() === ItemIds::DIAMOND_BOOTS or $item->getId() === ItemIds::DIAMOND_LEGGINGS or $item->getId() === ItemIds::DIAMOND_CHESTPLATE or $item->getId() === ItemIds::DIAMOND_HELMET) {
+				$enchantability = 10;
+			}else {
+				$enchantability = 9; // default to iron
+			}
+		}elseif($item instanceof Book) {
+			$enchantability = 1;
+		}else {
+			throw new \RuntimeException("Cannot enchant that item");
+		}
+		$baseEnchantmentLevel = (mt_rand(1, 8) + floor($bookShelves / 2) + mt_rand(0, $bookShelves));
+		$topSlotEnchantmentLevel = max($baseEnchantmentLevel / 3, 1);
+		$middleSlotEnchantmentLevel = ($baseEnchantmentLevel * 2) / 3 + 1;
+		$bottomSlotEnchantmentLevel = max($baseEnchantmentLevel, $bookShelves * 2);
+		$modifiedEnchantmentLevel = $baseEnchantmentLevel + mt_rand(0, $enchantability / 4) + mt_rand(0, $enchantability / 4) + 1;
+		$randomEnchantability = 1 + mt_rand(($enchantability / 2) / 2 + 1, (($enchantability / 2) / 2 + 1) - 1) + mt_rand(($enchantability / 2) / 2 + 1, (($enchantability / 2) / 2 + 1) - 1);
+		switch(mt_rand(1, 3)) {
+			default:
+			case 1:
+				$chosenEnchantmentLevel = $topSlotEnchantmentLevel;
+			break;
+			case 2:
+				$chosenEnchantmentLevel = $middleSlotEnchantmentLevel;
+			break;
+			case 3:
+				$chosenEnchantmentLevel = $bottomSlotEnchantmentLevel;
+			break;
+		}
+		$totalLevel = $chosenEnchantmentLevel + $randomEnchantability;
+		$randomBonus = 1 + (lcg_value() + lcg_value() - 1) * 0.15;
+		$finalLevel = (int)($totalLevel * $randomBonus + 0.5);
+		if($finalLevel < 1) {
+			$finalLevel = 1;
+		}
+		$enchantments = [];
+		if($item instanceof Sword or $item instanceof Book) {
+			$enchantments[Enchantment::SHARPNESS] = 10;
+			$enchantments[Enchantment::BANE_OF_ARTHROPODS] = 5;
+			$enchantments[Enchantment::KNOCKBACK] = 5;
+			$enchantments[Enchantment::SMITE] = 5;
+			$enchantments[Enchantment::FIRE_ASPECT] = 2;
+			$enchantments[Enchantment::LOOTING] = 2;
+		}
+		if(($item instanceof Tool and !$item instanceof Sword) or $item instanceof Book) {
+			$enchantments[Enchantment::EFFICIENCY] = 10;
+			$enchantments[Enchantment::FORTUNE] = 2;
+			$enchantments[Enchantment::SILK_TOUCH] = 1;
+		}
+		if($item instanceof Armor or $item instanceof Book) {
+			$enchantments[Enchantment::PROTECTION] = 10;
+			$enchantments[Enchantment::BINDING] = 1;
+			$enchantments[Enchantment::FIRE_PROTECTION] = 5;
+			$enchantments[Enchantment::PROJECTILE_PROTECTION] = 5;
+			$enchantments[Enchantment::BLAST_PROTECTION] = 2;
+			$enchantments[Enchantment::THORNS] = 1;
+			if($item->getId() === ItemIds::LEATHER_BOOTS or $item->getId() === ItemIds::CHAIN_BOOTS or $item->getId() === ItemIds::IRON_BOOTS or $item->getId() === ItemIds::GOLD_BOOTS or $item->getId() === ItemIds::DIAMOND_BOOTS) {
+				$enchantments[Enchantment::FEATHER_FALLING] = 5;
+				$enchantments[Enchantment::FROST_WALKER] = 2;
+				$enchantments[Enchantment::DEPTH_STRIDER] = 2;
+			}elseif($item->getId() === ItemIds::LEATHER_HELMET or $item->getId() === ItemIds::CHAIN_HELMET or $item->getId() === ItemIds::IRON_HELMET or $item->getId() === ItemIds::GOLD_HELMET or $item->getId() === ItemIds::DIAMOND_HELMET) {
+				$enchantments[Enchantment::RESPIRATION] = 2;
+				$enchantments[Enchantment::AQUA_AFFINITY] = 2;
+			}
+		}
+		if($item instanceof Bow or $item instanceof Book) {
+			$enchantments[Enchantment::POWER] = 10;
+			$enchantments[Enchantment::FLAME] = 2;
+			$enchantments[Enchantment::PUNCH] = 2;
+			$enchantments[Enchantment::INFINITY] = 1;
+		}
+		if($item instanceof FishingRod or $item instanceof Book) {
+			$enchantments[Enchantment::LUCK_OF_THE_SEA] = 2;
+			$enchantments[Enchantment::LURE] = 2;
+		}
+		if($item instanceof Durable or $item instanceof Book) {
+			$enchantments[Enchantment::UNBREAKING] = 5;
+			$enchantments[Enchantment::MENDING] = 2;
+		}
+		$enchantments[Enchantment::VANISHING] = 1;
+		$enchantments = array_filter($enchantments, function($id) { // TODO: remove when all enchantments implemented
+			return Enchantment::getEnchantment($id) !== null;
+		}, ARRAY_FILTER_USE_KEY); // filter unregistered enchantments
+		$totalWeight = 0;
+		foreach($enchantments as $weight) {
+			$totalWeight += $weight;
+		}
+		$random = mt_rand(1, $totalWeight);
+		foreach($enchantments as $id => $weight) {
+			if($random - $weight <= 0) {
+				$return = new EnchantmentInstance(Enchantment::getEnchantment($id));
+				$return->setLevel($finalLevel);
+				break;
+			}
+		}
+		// TODO: filter valid enchantments based on $modifiedEnchantmentLevel https://minecraft.gamepedia.com/Enchanting/Levels
+		return $return;
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\block;
+
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\SnowGolem;
+use pocketmine\block\Block;
+use pocketmine\block\Snow;
+use pocketmine\entity\Entity;
+use pocketmine\item\Item;
+use pocketmine\math\Vector3;
+use pocketmine\Player;
+
+class Pumpkin extends \pocketmine\block\Pumpkin {
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
+		if(($block1 = $this->getSide(Vector3::SIDE_DOWN, 1)) instanceof Snow and ($block2 = $this->getSide(Vector3::SIDE_DOWN, 2)) instanceof Snow) {
+			$this->level->setBlock($this, Block::get(Block::AIR));
+			$this->level->setBlock($block1, Block::get(Block::AIR));
+			$this->level->setBlock($block2, Block::get(Block::AIR));
+			$entity = Entity::createEntity(SnowGolem::NETWORK_ID, $this->level, SnowGolem::createBaseNBT($block2->add(0.5,0,0.5)));
+			$entity->spawnToAll();
+			return false;
+		}elseif(($block1 = $this->getSide(Vector3::SIDE_NORTH, 1)) instanceof Snow and ($block2 = $this->getSide(Vector3::SIDE_NORTH, 2)) instanceof Snow) {
+			$this->level->setBlock($this, Block::get(Block::AIR));
+			$this->level->setBlock($block1, Block::get(Block::AIR));
+			$this->level->setBlock($block2, Block::get(Block::AIR));
+			$entity = Entity::createEntity(SnowGolem::NETWORK_ID, $this->level, SnowGolem::createBaseNBT($this->add(0.5,0,0.5)));
+			$entity->spawnToAll();
+			return false;
+		}elseif(($block1 = $this->getSide(Vector3::SIDE_EAST, 1)) instanceof Snow and ($block2 = $this->getSide(Vector3::SIDE_EAST, 2)) instanceof Snow) {
+			$this->level->setBlock($this, Block::get(Block::AIR));
+			$this->level->setBlock($block1, Block::get(Block::AIR));
+			$this->level->setBlock($block2, Block::get(Block::AIR));
+			$entity = Entity::createEntity(SnowGolem::NETWORK_ID, $this->level, SnowGolem::createBaseNBT($this->add(0.5,0,0.5)));
+			$entity->spawnToAll();
+			return false;
+		}elseif(($block1 = $this->getSide(Vector3::SIDE_SOUTH, 1)) instanceof Snow and ($block2 = $this->getSide(Vector3::SIDE_SOUTH, 2)) instanceof Snow) {
+			$this->level->setBlock($this, Block::get(Block::AIR));
+			$this->level->setBlock($block1, Block::get(Block::AIR));
+			$this->level->setBlock($block2, Block::get(Block::AIR));
+			$entity = Entity::createEntity(SnowGolem::NETWORK_ID, $this->level, SnowGolem::createBaseNBT($this->add(0.5,0,0.5)));
+			$entity->spawnToAll();
+			return false;
+		}elseif(($block1 = $this->getSide(Vector3::SIDE_WEST, 1)) instanceof Snow and ($block2 = $this->getSide(Vector3::SIDE_WEST, 2)) instanceof Snow) {
+			$this->level->setBlock($this, Block::get(Block::AIR));
+			$this->level->setBlock($block1, Block::get(Block::AIR));
+			$this->level->setBlock($block2, Block::get(Block::AIR));
+			$entity = Entity::createEntity(SnowGolem::NETWORK_ID, $this->level, SnowGolem::createBaseNBT($this->add(0.5,0,0.5)));
+			$entity->spawnToAll();
+			return false;
+		}
+
+		return parent::place($item, $blockReplace, $blockClicked, $face, $clickVector, $player);
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\block;
+
+use jasonwynn10\VanillaEntityAI\tile\MobSpawner;
+use pocketmine\block\Block;
+use pocketmine\item\Item;
+use pocketmine\item\SpawnEgg;
+use pocketmine\math\Vector3;
+use pocketmine\Player;
+
+class MonsterSpawner extends \pocketmine\block\MonsterSpawner {
+	/**
+	 * @return bool
+	 */
+	public function canBeActivated() : bool {
+		return true;
+	}
+
+	/**
+	 * @param Item $item
+	 * @param Player|null $player
+	 *
+	 * @return bool
+	 */
+	public function onActivate(Item $item, Player $player = null) : bool {
+		if($player instanceof Player and $item instanceof SpawnEgg) {
+			$t = $this->getLevel()->getTile($this);
+			if($t instanceof MobSpawner) {
+				$spawner = $t;
+			}else {
+				/** @var MobSpawner $spawner */
+				$spawner = MobSpawner::createTile(MobSpawner::MOB_SPAWNER, $this->getLevel(), MobSpawner::createNBT($this));
+			}
+			$spawner->setEntityId($item->getDamage());
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @param Item $item
+	 * @param Block $blockReplace
+	 * @param Block $blockClicked
+	 * @param int $face
+	 * @param Vector3 $clickVector
+	 * @param Player|null $player
+	 *
+	 * @return bool
+	 */
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool {
+		if($item->getDamage() > 9) {
+			$this->meta = 0;
+			$return = parent::place($item, $blockReplace, $blockClicked, $face, $clickVector, $player);
+			/** @var MobSpawner $tile */
+			$tile = MobSpawner::createTile(MobSpawner::MOB_SPAWNER, $this->getLevel(), MobSpawner::createNBT($this));
+			$tile->setEntityId($item->getDamage());
+		}else {
+			$return = parent::place($item, $blockReplace, $blockClicked, $face, $clickVector, $player);
+		}
+		return $return;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getLightLevel() : int {
+		return 3;
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\tile;
+
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\EntityAI;
+use pocketmine\entity\Entity;
+use pocketmine\entity\EntityIds;
+use pocketmine\entity\Living;
+use pocketmine\level\Level;
+use pocketmine\level\Position;
+use pocketmine\math\AxisAlignedBB;
+use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\nbt\tag\FloatTag;
+use pocketmine\nbt\tag\IntTag;
+use pocketmine\nbt\tag\ShortTag;
+use pocketmine\tile\Spawnable;
+
+class MobSpawner extends Spawnable {
+	public const IS_MOVABLE = "isMovable"; // ByteTag
+	public const DELAY = "Delay"; // ShortTag
+	public const MAX_NEARBY_ENTITIES = "MaxNearbyEntities"; // ShortTag
+	public const MAX_SPAWN_DELAY = "MaxSpawnDelay"; // ShortTag
+	public const MIN_SPAWN_DELAY = "MinSawnDelay"; // ShortTag
+	public const REQUIRED_PLAYER_RANGE = "RequiredPlayerRange"; // ShortTag
+	public const SPAWN_COUNT = "SpawnCount"; // ShortTag
+	public const SPAWN_RANGE = "SpawnRange"; // ShortTag
+	public const ENTITY_ID = "EntityId"; // IntTag
+	public const DISPLAY_ENTITY_HEIGHT = "DisplayEntityHeight"; // FloatTag
+	public const DISPLAY_ENTITY_SCALE = "DisplayEntityScale"; // FloatTag
+	public const DISPLAY_ENTITY_WIDTH = "DisplayEntityWidth"; // FloatTag
+	/** @var int $spawnRange */
+	protected $spawnRange = 4;
+	/** @var int $maxNearbyEntities */
+	protected $maxNearbyEntities = 6;
+	/** @var int $requiredPlayerRange */
+	protected $requiredPlayerRange = 16;
+	/** @var int $delay */
+	protected $delay = -1;
+	/** @var int $minSpawnDelay */
+	protected $minSpawnDelay = 200;
+	/** @var int $maxSpawnDelay */
+	protected $maxSpawnDelay = 800;
+	/** @var int $spawnCount */
+	protected $spawnCount = 4;
+	/** @var AxisAlignedBB|null $spawnArea */
+	protected $spawnArea;
+	/** @var bool $isMovable */
+	protected $isMovable = false;
+	/** @var int $entityId */
+	protected $entityId = -1;
+	/** @var float $displayHeight */
+	protected $displayHeight = 0.9;
+	/** @var float $displayScale */
+	protected $displayScale = 0.5;
+	/** @var float $displayWidth */
+	protected $displayWidth = 0.3;
+
+	/**
+	 * @return bool
+	 */
+	public function onUpdate() : bool {
+		if($this->isClosed() or $this->entityId < EntityIds::CHICKEN) { // TODO: are there entities with ids less than 10?
+			return false;
+		}
+		if(--$this->delay === 0) {
+			$this->delay = mt_rand($this->minSpawnDelay, $this->maxSpawnDelay);
+			$valid = false;
+			foreach($this->level->getPlayers() as $player) {
+				if($this->distance($player) <= $this->requiredPlayerRange) {
+					$valid = true;
+					break;
+				}
+			}
+			foreach(EntityAI::getEntities() as $class => $arr) {
+				if($class instanceof CreatureBase and $class::NETWORK_ID === $this->entityId) {
+					if($valid and count(self::getAreaEntities($this->spawnArea, $this->level, $class)) < $this->maxNearbyEntities) {
+						$spawned = 0;
+						while($spawned < $this->spawnCount) {
+							$entity = $class::spawnFromSpawner($this->getRandomSpawnPos());
+							if($entity !== null) {
+								$spawned++;
+							}
+						}
+					}
+				}
+			}
+		}elseif($this->delay === -1) {
+			$this->delay = mt_rand($this->minSpawnDelay, $this->maxSpawnDelay);
+			$this->entityId = mt_rand(EntityIds::CHICKEN, EntityIds::FISH);
+			$this->onChanged();
+		}
+		$this->scheduleUpdate();
+		return true;
+	}
+
+	/**
+	 * @param AxisAlignedBB $bb
+	 * @param Level $level
+	 * @param string $type
+	 *
+	 * @return array
+	 */
+	protected static function getAreaEntities(AxisAlignedBB $bb, Level $level, string $type = Living::class) {
+		$nearby = [];
+		$minX = ((int)floor($bb->minX)) >> 4; // TODO: check if this is right
+		$maxX = ((int)floor($bb->maxX)) >> 4;
+		$minZ = ((int)floor($bb->minZ)) >> 4;
+		$maxZ = ((int)floor($bb->maxZ)) >> 4;
+		for($x = $minX; $x <= $maxX; ++$x) {
+			for($z = $minZ; $z <= $maxZ; ++$z) {
+				foreach($level->getChunkEntities($x, $z) as $entity) {
+					/** @var Entity|null $entity */
+					if($entity instanceof $type and $entity->boundingBox->intersectsWith($bb)) {
+						$nearby[] = $entity;
+					}
+				}
+			}
+		}
+		return $nearby;
+	}
+
+	/**
+	 * Returns a randomized position within the spawner spawn range
+	 *
+	 * @return Position returns valid y coordinate if found
+	 */
+	protected function getRandomSpawnPos() : Position {
+		$x = mt_rand($this->spawnArea->minX, $this->spawnArea->maxX);
+		$y = mt_rand($this->spawnArea->minY, $this->spawnArea->maxY);
+		$z = mt_rand($this->spawnArea->minZ, $this->spawnArea->maxZ);
+		return new Position($x + 0.5, $y, $z + 0.5, $this->level);
+	}
+
+	/**
+	 * Reads additional data from the CompoundTag on tile creation.
+	 *
+	 * @param CompoundTag $nbt
+	 */
+	protected function readSaveData(CompoundTag $nbt) : void {
+		if($nbt->hasTag(self::ENTITY_ID, IntTag::class)) {
+			$this->entityId = $nbt->getInt(self::ENTITY_ID);
+		}
+		if($nbt->hasTag(self::SPAWN_COUNT, ShortTag::class)) {
+			$this->spawnCount = $nbt->getShort(self::SPAWN_COUNT);
+		}
+		if($nbt->hasTag(self::SPAWN_RANGE, ShortTag::class)) {
+			$this->spawnRange = $nbt->getShort(self::SPAWN_RANGE);
+		}
+		$this->spawnArea = new AxisAlignedBB($this->x - $this->spawnRange, $this->y - 1, $this->z - $this->spawnRange, $this->x + $this->spawnRange, $this->y + 1, $this->z + $this->spawnRange);
+		if($nbt->hasTag(self::DELAY, ShortTag::class)) {
+			$this->delay = $nbt->getShort(self::DELAY);
+		}
+		if($nbt->hasTag(self::MIN_SPAWN_DELAY, ShortTag::class)) {
+			$this->minSpawnDelay = $nbt->getShort(self::MIN_SPAWN_DELAY);
+		}
+		if($nbt->hasTag(self::MAX_SPAWN_DELAY, ShortTag::class)) {
+			$this->maxSpawnDelay = $nbt->getShort(self::MAX_SPAWN_DELAY);
+		}
+		if($nbt->hasTag(self::MAX_NEARBY_ENTITIES, ShortTag::class)) {
+			$this->maxNearbyEntities = $nbt->getShort(self::MAX_NEARBY_ENTITIES);
+		}
+		if($nbt->hasTag(self::REQUIRED_PLAYER_RANGE, ShortTag::class)) {
+			$this->requiredPlayerRange = $nbt->getShort(self::REQUIRED_PLAYER_RANGE);
+		}
+		if($nbt->hasTag(self::DISPLAY_ENTITY_HEIGHT, FloatTag::class)) {
+			$this->displayHeight = $nbt->getFloat(self::DISPLAY_ENTITY_HEIGHT);
+		}
+		if($nbt->hasTag(self::DISPLAY_ENTITY_WIDTH, FloatTag::class)) {
+			$this->displayHeight = $nbt->getFloat(self::DISPLAY_ENTITY_WIDTH);
+		}
+		if($nbt->hasTag(self::DISPLAY_ENTITY_SCALE, FloatTag::class)) {
+			$this->displayHeight = $nbt->getFloat(self::DISPLAY_ENTITY_SCALE);
+		}
+	}
+
+	/**
+	 * Writes additional save data to a CompoundTag, not including generic things like ID and coordinates.
+	 *
+	 * @param CompoundTag $nbt
+	 */
+	protected function writeSaveData(CompoundTag $nbt) : void {
+		$this->addAdditionalSpawnData($nbt);
+	}
+
+	/**
+	 * An extension to getSpawnCompound() for
+	 * further modifying the generic tile NBT.
+	 *
+	 * @param CompoundTag $nbt
+	 */
+	protected function addAdditionalSpawnData(CompoundTag $nbt) : void {
+		$nbt->setByte(self::IS_MOVABLE, (int)$this->isMovable);
+		$nbt->setShort(self::DELAY, $this->delay);
+		$nbt->setShort(self::MAX_NEARBY_ENTITIES, $this->maxNearbyEntities);
+		$nbt->setShort(self::MAX_SPAWN_DELAY, $this->maxSpawnDelay);
+		$nbt->setShort(self::MIN_SPAWN_DELAY, $this->minSpawnDelay);
+		$nbt->setShort(self::REQUIRED_PLAYER_RANGE, $this->requiredPlayerRange);
+		$nbt->setShort(self::SPAWN_COUNT, $this->spawnCount);
+		$nbt->setShort(self::SPAWN_RANGE, $this->spawnRange);
+		$nbt->setInt(self::ENTITY_ID, $this->entityId);
+		$nbt->setFloat(self::DISPLAY_ENTITY_HEIGHT, $this->displayHeight);
+		$nbt->setFloat(self::DISPLAY_ENTITY_WIDTH, $this->displayWidth);
+		$nbt->setFloat(self::DISPLAY_ENTITY_SCALE, $this->displayScale);
+		$this->scheduleUpdate();
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getEntityId() : int {
+		return $this->entityId;
+	}
+
+	/**
+	 * @param int $eid
+	 *
+	 * @return MobSpawner
+	 */
+	public function setEntityId(int $eid) : MobSpawner {
+		$this->entityId = $eid;
+		$this->delay = mt_rand($this->minSpawnDelay, $this->maxSpawnDelay);
+		$this->onChanged();
+		$this->scheduleUpdate();
+		return $this;
+	}
+
+	/**
+	 * @param int $minDelay
+	 *
+	 * @return MobSpawner
+	 */
+	public function setMinSpawnDelay(int $minDelay) : MobSpawner {
+		if($minDelay < $this->maxSpawnDelay and !($minDelay < -0x8000 or $minDelay > 0x7fff)) {
+			$this->minSpawnDelay = $minDelay;
+		}
+		return $this;
+	}
+
+	/**
+	 * @param int $maxDelay
+	 *
+	 * @return MobSpawner
+	 */
+	public function setMaxSpawnDelay(int $maxDelay) : MobSpawner {
+		if($this->minSpawnDelay < $maxDelay and $maxDelay !== 0 and !($maxDelay < -0x8000 or $maxDelay > 0x7fff)) {
+			$this->maxSpawnDelay = $maxDelay;
+		}
+		return $this;
+	}
+
+	/**
+	 * @param int $delay
+	 *
+	 * @return MobSpawner
+	 */
+	public function setSpawnDelay(int $delay) : MobSpawner {
+		if($delay < $this->maxSpawnDelay and $delay > $this->minSpawnDelay and !($delay < -0x8000 or $delay > 0x7fff)) {
+			$this->delay = $delay;
+		}
+		return $this;
+	}
+
+	/**
+	 * @param int $range
+	 *
+	 * @return MobSpawner
+	 */
+	public function setRequiredPlayerRange(int $range) : MobSpawner {
+		if($range < 0) {
+			$range = 0;
+		}
+		$this->requiredPlayerRange = $range;
+		return $this;
+	}
+
+	/**
+	 * @param int $count
+	 *
+	 * @return MobSpawner
+	 */
+	public function setMaxNearbyEntities(int $count) : MobSpawner {
+		$this->maxNearbyEntities = $count;
+		return $this;
+	}
+
+	/**
+	 * @param bool $isMovable
+	 *
+	 * @return MobSpawner
+	 */
+	public function setMovable(bool $isMovable = true) : MobSpawner {
+		$this->isMovable = $isMovable;
+		return $this;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isMovable() : bool {
+		return $this->isMovable;
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\AnimalBase;
+use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
+
+class Chicken extends AnimalBase {
+	public const NETWORK_ID = self::CHICKEN;
+	public $width = 1;
+	public $height = 0.8;
+
+	public function initEntity() : void {
+		$this->setMaxHealth(4);
+		parent::initEntity();
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+		// TODO: spawn egg item every 5-10 mins
+		// TODO: follow seeds
+	}
+
+	/**
+	 * @return Item[]
+	 */
+	public function getDrops() : array {
+		$drops = parent::getDrops();
+		if(!$this->isBaby()) {
+			if($this->isOnFire()) {
+				$drops[] = ItemFactory::get(Item::COOKED_CHICKEN, 0, mt_rand(1, 3));
+			}else{
+				$drops[] = ItemFactory::get(Item::CHICKEN, 0, mt_rand(1, 3));
+			}
+		}
+		$drops[] = ItemFactory::get(Item::FEATHER, 0, mt_rand(0, 2));
+		return $drops;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getXpDropAmount() : int {
+		$exp = parent::getXpDropAmount();
+		if(!$this->isBaby()) {
+			$exp += mt_rand(1, 3);
+			return $exp;
+		}
+		return $exp;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Chicken";
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+use pocketmine\entity\Ageable;
+use pocketmine\event\entity\EntityDamageEvent;
+
+abstract class AnimalBase extends CreatureBase implements Ageable {
+	use AgeableTrait, PanicableTrait;
+	/** @var int $growTime */
+	protected $growTime = 200;
+
+	public function initEntity() : void {
+		parent::initEntity();
+	}
+
+	/**
+	 * @param EntityDamageEvent $source
+	 */
+	public function attack(EntityDamageEvent $source) : void {
+		$this->setPanic();
+		parent::attack($source);
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		if($this->growTime -= $tickDiff <= 0) {
+			$this->setBaby(false);
+		}
+		// TODO: normal animal movements
+		return parent::entityBaseTick($tickDiff);
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+use pocketmine\block\Block;
+use pocketmine\block\BlockIds;
+use pocketmine\entity\Creature;
+use pocketmine\entity\Entity;
+use pocketmine\level\Position;
+use pocketmine\math\AxisAlignedBB;
+use pocketmine\math\Vector3;
+use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\timings\Timings;
+
+abstract class CreatureBase extends Creature implements Linkable, Collidable, Lookable {
+	use SpawnableTrait, CollisionCheckingTrait, LinkableTrait;
+	/** @var float $speed */
+	protected $speed = 1.0;
+	/** @var float $stepHeight */
+	protected $stepHeight = 1.0;
+	/** @var Position|null $target */
+	protected $target = null;
+	/** @var bool $persistent */
+	protected $persistent = false;
+	/** @var int $moveTime */
+	protected $moveTime = 0;
+	/** @var int $idleTime */
+	protected $idleTime = 0;
+
+	/**
+	 * Returns the Vector3 side number right of the specified one
+	 *
+	 * @param int $side 0-5 one of the Vector3::SIDE_* constants
+	 *
+	 * @return int
+	 *
+	 * @throws \InvalidArgumentException if an invalid side is supplied
+	 */
+	public static function getRightSide(int $side) : int {
+		if($side >= 0 and $side <= 5) {
+			return $side ^ 0x03; // TODO: right now it gives the opposite side...
+		}
+		throw new \InvalidArgumentException("Invalid side $side given to getRightSide");
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		return null;
+	}
+
+	public function initEntity() : void {
+		parent::initEntity();
+	}
+
+	public function lookAround() : void {
+		$entities = $this->level->getNearbyEntities($this->boundingBox->expandedCopy(8,2,8), $this);
+		$entities = array_filter($entities,function(Entity $entity){
+			if($entity->isAlive() or !$entity->isFlaggedForDespawn() and $entity instanceof Player) {
+				return true;
+			}
+			return false;
+		});
+		$yaw = $this->yaw;
+		$pitch = $this->pitch;
+		if(!empty($entities) and mt_rand(1,3) === 1) {
+			/** @var Player $player */
+			$player = $entities[array_rand($entities)];
+			$this->lookAt($player->asVector3()->add(0, $player->height));
+		}else{
+			// rotate the entity: 0 degrees is south and increases clockwise
+			$yaw = mt_rand(0, 1) ? $yaw + mt_rand(15, 45) : $yaw - mt_rand(15, 45);
+			if($yaw > 360){
+				$yaw = 360;
+			}else if($yaw < 0){
+				$yaw = 0;
+			}
+			// 0 degrees is horizontal, -90 is up, 90 is down. but 90 degrees looks very silly - so 60 degrees is completely ok
+			$pitch = mt_rand(0, 1) ? $pitch + mt_rand(10, 20) : $pitch - mt_rand(10, 20);
+			if($pitch > 60){
+				$pitch = 60;
+			}else if($pitch < -60){
+				$pitch = -60;
+			}
+		}
+
+		$this->setRotation($yaw, $pitch);
+	}
+
+	/**
+	 * @param float $dx
+	 * @param float $dy
+	 * @param float $dz
+	 */
+	public function move(float $dx, float $dy, float $dz) : void {
+		$this->blocksAround = null;
+		Timings::$entityMoveTimer->startTiming();
+		$movX = $dx;
+		$movY = $dy;
+		$movZ = $dz;
+		if($this->keepMovement) {
+			$this->boundingBox->offset($dx, $dy, $dz);
+		}else {
+			$this->ySize *= 0.4;
+			$axisalignedbb = clone $this->boundingBox;
+			$list = $this->level->getCollisionCubes($this, $this->boundingBox->addCoord($dx, $dy, $dz), false);
+			foreach($list as $bb) {
+				$dy = $bb->calculateYOffset($this->boundingBox, $dy);
+			}
+			$this->boundingBox->offset(0, $dy, 0);
+			$fallingFlag = ($this->onGround or ($dy != $movY and $movY < 0));
+			foreach($list as $bb) {
+				$dx = $bb->calculateXOffset($this->boundingBox, $dx);
+			}
+			$this->boundingBox->offset($dx, 0, 0);
+			foreach($list as $bb) {
+				$dz = $bb->calculateZOffset($this->boundingBox, $dz);
+			}
+			$this->boundingBox->offset(0, 0, $dz);
+			if($this->stepHeight > 0 and $fallingFlag and $this->ySize < 0.05 and ($movX != $dx or $movZ != $dz)) {
+				$cx = $dx;
+				$cy = $dy;
+				$cz = $dz;
+				$dx = $movX;
+				$dy = $this->stepHeight;
+				$dz = $movZ;
+				$axisalignedbb1 = clone $this->boundingBox;
+				$this->boundingBox->setBB($axisalignedbb);
+				$list = $this->level->getCollisionCubes($this, $this->boundingBox->addCoord($dx, $dy, $dz), false);
+				foreach($list as $bb) {
+					$dy = $bb->calculateYOffset($this->boundingBox, $dy);
+				}
+				$this->boundingBox->offset(0, $dy, 0);
+				foreach($list as $bb) {
+					$dx = $bb->calculateXOffset($this->boundingBox, $dx);
+				}
+				$this->boundingBox->offset($dx, 0, 0);
+				foreach($list as $bb) {
+					$dz = $bb->calculateZOffset($this->boundingBox, $dz);
+				}
+				$this->boundingBox->offset(0, 0, $dz);
+				if(($cx ** 2 + $cz ** 2) >= ($dx ** 2 + $dz ** 2)) {
+					$dx = $cx;
+					$dy = $cy;
+					$dz = $cz;
+					$this->boundingBox->setBB($axisalignedbb1);
+				}else {
+					$block = $this->level->getBlock($this->getSide(Vector3::SIDE_DOWN));
+					$blockBB = $block->getBoundingBox() ?? new AxisAlignedBB($block->x, $block->y, $block->z, $block->x + 1, $block->y + 1, $block->z + 1);
+					$this->ySize += $blockBB->maxY - $blockBB->minY;
+				}
+			}
+		}
+		$this->x = ($this->boundingBox->minX + $this->boundingBox->maxX) / 2;
+		$this->y = $this->boundingBox->minY - $this->ySize;
+		$this->z = ($this->boundingBox->minZ + $this->boundingBox->maxZ) / 2;
+		$this->checkChunks();
+		$this->checkBlockCollision();
+		$this->checkGroundState($movX, $movY, $movZ, $dx, $dy, $dz);
+		$this->updateFallState($dy, $this->onGround);
+		if($movX != $dx) {
+			$this->motion->x = 0;
+		}
+		if($movY != $dy) {
+			$this->motion->y = 0;
+		}
+		if($movZ != $dz) {
+			$this->motion->z = 0;
+		}
+		//TODO: vehicle collision events (first we need to spawn them!)
+		Timings::$entityMoveTimer->stopTiming();
+	}
+
+	/**
+	 * @param Entity $entity
+	 *
+	 * @return bool
+	 */
+	public function hasLineOfSight(Entity $entity) : bool {
+		$distance = (int) $this->add(0, $this->eyeHeight)->distance($entity);
+		if($distance > 1) {
+			$blocksBetween = $this->getLineOfSight($distance, 0, [
+				BlockIds::AIR => BlockIds::AIR,
+				BlockIds::WATER => BlockIds::WATER,
+				BlockIds::LAVA => BlockIds::LAVA
+			]);
+			return empty(array_filter($blocksBetween, function(Block $block) {
+				return !in_array($block->getId(), [BlockIds::AIR, BlockIds::WATER, BlockIds::LAVA]);
+			}));
+		}
+		return true;
+	}
+
+	/**
+	 * @return Position|null
+	 */
+	public function getTarget() : ?Position {
+		return $this->target;
+	}
+
+	/**
+	 * @param Position|null $target
+	 *
+	 * @return CreatureBase
+	 */
+	public function setTarget(?Position $target) : self {
+		$this->target = $target;
+		if($target instanceof Entity or is_null($target)) {
+			$this->setTargetEntity($target);
+		}
+		return $this;
+	}
+
+	/**
+	 * @return float
+	 */
+	public function getSpeed() : float {
+		return $this->speed;
+	}
+
+	/**
+	 * @param float $speed
+	 *
+	 * @return CreatureBase
+	 */
+	public function setSpeed(float $speed) : self {
+		$this->speed = $speed;
+		return $this;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isPersistent() : bool {
+		return $this->persistent;
+	}
+
+	/**
+	 * @param bool $persistent
+	 *
+	 * @return CreatureBase
+	 */
+	public function setPersistence(bool $persistent) : self {
+		$this->persistent = $persistent;
+		return $this;
+	}
+
+	/**
+	 * @param Player $player
+	 */
+	public function onPlayerLook(Player $player) : void {
+		// TODO: Implement onPlayerLook() method.
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+	}
+
+	/**
+	 * @param Block $block
+	 */
+	public function onCollideWithBlock(Block $block) : void {
+	}
+
+	public function push(AxisAlignedBB $source) : void {
+		$base = 0.15;
+		$x = ($source->minX + $source->maxX) / 2;
+		$z = ($source->minZ + $source->maxZ) / 2;
+		$f = sqrt($x * $x + $z * $z);
+		if($f <= 0) {
+			return;
+		}
+		$f = 1 / $f;
+		$motion = clone $this->motion;
+		$motion->x /= 2;
+		$motion->z /= 2;
+		$motion->x += $x * $f * $base;
+		$motion->z += $z * $f * $base;
+		$this->setMotion($motion);
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+trait SpawnableTrait {
+	protected $spawnLight = 7; // default to monsters
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		$nbt = self::createBaseNBT($spawnPos);
+		if(isset($spawnData)) {
+			$nbt = $spawnData->merge($nbt);
+			$nbt->setInt("id", self::NETWORK_ID);
+		}
+		/** @var CreatureBase $entity */
+		$entity = self::createEntity(self::NETWORK_ID, $spawnPos->level, $nbt);
+		// TODO: work on logic here more
+		if(!$spawnPos->isValid() or count($entity->getBlocksAround()) > 1 or (($entity instanceof MonsterBase and $entity->level->getFullLight($entity) > $entity->spawnLight) or ($entity instanceof AnimalBase and $entity->level->getFullLight($entity) < $entity->spawnLight))) {
+			$entity->flagForDespawn();
+			return null;
+		}else {
+			$entity->spawnToAll();
+			return $entity;
+		}
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getSpawnLight() : int {
+		return $this->spawnLight;
+	}
+
+	/**
+	 * @param int $spawnLight
+	 *
+	 * @return SpawnableTrait
+	 */
+	public function setSpawnLight(int $spawnLight) : SpawnableTrait {
+		$this->spawnLight = $spawnLight;
+		return $this;
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+trait CollisionCheckingTrait {
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		$this->checkNearEntities();
+		return parent::entityBaseTick($tickDiff);
+	}
+
+	protected function checkNearEntities() {
+		// TODO: better method/logic
+		foreach($this->level->getNearbyEntities($this->boundingBox, $this) as $entity) {
+			if(!$entity->isAlive() or $entity->isFlaggedForDespawn()) {
+				continue;
+			}
+			$entity->scheduleUpdate();
+			if($entity instanceof Collidable and $this instanceof Collidable) {
+				if($this->getBoundingBox()->intersectsWith($entity->getBoundingBox())) {
+					$entity->push($this->getBoundingBox());
+				}
+				$entity->onCollideWithEntity($this);
+				$this->onCollideWithEntity($entity);
+			}
+		}
+	}
+
+	public function onUpdate(int $currentTick) : bool {
+		return parent::onUpdate($currentTick);
+	}
+
+	protected function checkBlockCollision() : void {
+		$vector = $this->temporalVector->setComponents(0, 0, 0);
+		foreach($this->getBlocksAround() as $block) {
+			$block->onEntityCollide($this);
+			$this->onCollideWithBlock($block);
+			$block->addVelocityToEntity($this, $vector);
+		}
+		if($vector->lengthSquared() > 0) {
+			$vector = $vector->normalize();
+			$d = 0.014;
+			$this->motion->x += $vector->x * $d;
+			$this->motion->y += $vector->y * $d;
+			$this->motion->z += $vector->z * $d;
+		}
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+use pocketmine\entity\Entity;
+use pocketmine\network\mcpe\protocol\SetEntityLinkPacket;
+use pocketmine\network\mcpe\protocol\types\EntityLink;
+
+trait LinkableTrait {
+	/** @var Entity|Linkable $link */
+	protected $link;
+
+	/**
+	 * @return Entity|Linkable|null
+	 */
+	public function getLink() : ?Linkable {
+		return $this->link;
+	}
+
+	/**
+	 * @param Entity|Linkable|null $entity
+	 *
+	 * @return Entity|Linkable
+	 */
+	public function setLink(?Linkable $entity) : Linkable {
+		$this->link = $entity;
+		$entity->setLink($this);
+		$viewers = $this->getViewers();
+		if($entity !== null) {
+			$link = new EntityLink();
+			$link->fromEntityUniqueId = $this->getId();
+			$link->type = EntityLink::TYPE_RIDER;
+			$link->toEntityUniqueId = $entity->getId();
+			$link->immediate = true;
+			if($entity instanceof Player) {
+				$pk = new SetEntityLinkPacket();
+				$pk->link = $link;
+				$entity->dataPacket($pk);
+				$link_2 = new EntityLink();
+				$link_2->fromEntityUniqueId = $entity->getId();
+				$link_2->type = EntityLink::TYPE_RIDER;
+				$link_2->toEntityUniqueId = 0;
+				$link_2->immediate = true;
+				$pk = new SetEntityLinkPacket();
+				$pk->link = $link_2;
+				$entity->dataPacket($pk);
+				unset($viewers[$entity->getLoaderId()]);
+			}
+		}else{
+			$link = new EntityLink();
+			$link->fromEntityUniqueId = $this->getId();
+			$link->type = EntityLink::TYPE_RIDER;
+			$link->toEntityUniqueId = $entity->getId();
+			$link->immediate = true;
+			if($entity instanceof Player) {
+				$pk = new SetEntityLinkPacket();
+				$pk->link = $link;
+				$entity->dataPacket($pk);
+				$link_2 = new EntityLink();
+				$link_2->fromEntityUniqueId = $entity->getId();
+				$link_2->type = EntityLink::TYPE_RIDER;
+				$link_2->toEntityUniqueId = 0;
+				$link_2->immediate = true;
+				$pk = new SetEntityLinkPacket();
+				$pk->link = $link_2;
+				$entity->dataPacket($pk);
+				unset($viewers[$entity->getLoaderId()]);
+			}
+		}
+		return $this;
+	}
+
+	public function unlink() : bool {
+		$this->link->setLink(null);
+		$this->link = null;
+
+		$viewers = $this->getViewers();
+		$entity = $this->link;
+		$link = new EntityLink();
+		$link->fromEntityUniqueId = $this->getId();
+		$link->type = EntityLink::TYPE_RIDER;
+		$link->toEntityUniqueId = $entity->getId();
+		$link->immediate = true;
+		if($entity instanceof Player) {
+			$pk = new SetEntityLinkPacket();
+			$pk->link = $link;
+			$entity->dataPacket($pk);
+			$link_2 = new EntityLink();
+			$link_2->fromEntityUniqueId = $entity->getId();
+			$link_2->type = EntityLink::TYPE_RIDER;
+			$link_2->toEntityUniqueId = 0;
+			$link_2->immediate = true;
+			$pk = new SetEntityLinkPacket();
+			$pk->link = $link_2;
+			$entity->dataPacket($pk);
+			unset($viewers[$entity->getLoaderId()]);
+		}
+		return true;
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+use pocketmine\entity\Entity;
+
+interface Linkable {
+	/**
+	 * @return Entity|Linkable|null
+	 */
+	public function getLink() : ?Linkable;
+
+	/**
+	 * @param Linkable|null $entity
+	 *
+	 * @return Entity|Linkable
+	 */
+	public function setLink(?Linkable $entity) : Linkable;
+
+	/**
+	 * @return bool
+	 */
+	public function unlink() : bool;
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+use pocketmine\block\Block;
+use pocketmine\entity\Entity;
+use pocketmine\math\AxisAlignedBB;
+
+interface Collidable {
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void;
+
+	/**
+	 * @param Block $block
+	 */
+	public function onCollideWithBlock(Block $block) : void;
+
+	/**
+	 * @param AxisAlignedBB $source
+	 */
+	public function push(AxisAlignedBB $source) : void;
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+
+interface Lookable {
+
+	/**
+	 * @param Player $player
+	 */
+	public function onPlayerLook(Player $player) : void;
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+trait AgeableTrait {
+	/** @var bool $baby */
+	protected $baby = false;
+
+	public function initEntity() : void {
+		if($this->getGenericFlag(self::DATA_FLAG_BABY)) {
+			$this->setBaby();
+		}
+		parent::initEntity();
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isBaby() : bool {
+		return $this->baby;
+	}
+
+	/**
+	 * @param bool $baby
+	 *
+	 * @return self
+	 */
+	public function setBaby(bool $baby = true) : self {
+		$this->baby = $baby;
+		$this->setGenericFlag(self::DATA_FLAG_BABY, $baby);
+		$this->setSprinting();
+		$this->setScale($baby ? 0.5 : 1);
+		return $this;
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+trait PanicableTrait {
+	/** @var int $panicTime */
+	protected $panicTime = 100;
+	/** @var bool $inPanic */
+	protected $inPanic = false;
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		if($this->panicTime -= $tickDiff <= 0) {
+			$this->setPanic(false);
+		}
+		return parent::entityBaseTick($tickDiff);
+	}
+
+	/**
+	 * @param bool $panic
+	 */
+	public function setPanic(bool $panic = true) : void {
+		$this->setSprinting($panic);
+		$this->inPanic = $panic;
+		if($panic) {
+			$this->moveTime = 0;
+		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isInPanic() : bool {
+		return $this->inPanic;
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\AnimalBase;
+use jasonwynn10\VanillaEntityAI\entity\Interactable;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+use pocketmine\entity\Entity;
+use pocketmine\entity\EntityIds;
+use pocketmine\item\Bucket;
+use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
+use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
+
+class Cow extends AnimalBase implements Interactable {
+	public const NETWORK_ID = self::COW;
+	public $width = 1.5;
+	public $height = 1.2;
+
+	public function initEntity() : void {
+		$this->setMaxHealth(10);
+		parent::initEntity();
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	public function onUpdate(int $currentTick) : bool {
+		if($this->closed){
+			return false;
+		}
+		$tickDiff = $currentTick - $this->lastUpdate;
+		if($this->attackTime > 0) {
+			$this->move($this->motion->x * $tickDiff, $this->motion->y, $this->motion->z * $tickDiff);
+			$this->motion->y -= 0.2 * $tickDiff;
+			$this->updateMovement();
+			return parent::onUpdate($currentTick);
+		}
+		return parent::onUpdate($currentTick);
+	}
+
+	/**
+	 * @return Item[]
+	 */
+	public function getDrops() : array {
+		$drops = parent::getDrops();
+		if(!$this->isBaby()) {
+			if($this->isOnFire()) {
+				$drops[] = ItemFactory::get(Item::COOKED_BEEF, 0, mt_rand(1, 3));
+			}else{
+				$drops[] = ItemFactory::get(Item::RAW_BEEF, 0, mt_rand(1, 3));
+			}
+			$drops[] = ItemFactory::get(Item::LEATHER, 0, mt_rand(0, 2));
+			return $drops;
+		}else {
+			return $drops;
+		}
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getXpDropAmount() : int {
+		$exp = parent::getXpDropAmount();
+		if(!$this->isBaby()) {
+			$exp += mt_rand(1, 3);
+			return $exp;
+		}
+		return $exp;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Cow";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+
+	public function onPlayerLook(Player $player) : void {
+		$hand = $player->getInventory()->getItemInHand();
+		if($hand instanceof Bucket and $hand->getDamage() === 0) { // check for empty bucket
+			$this->getDataPropertyManager()->setString(Entity::DATA_INTERACTIVE_TAG, "Milk");
+		}
+	}
+
+	public function onPlayerInteract(Player $player) : void {
+		$hand = $player->getInventory()->getItemInHand();
+		if($hand instanceof Bucket and $hand->getDamage() === 0) { // check for empty bucket
+			$item = ItemFactory::get(Item::BUCKET, 1);
+			if($player->isSurvival()){
+				if($hand->getCount() === 0){
+					$player->getInventory()->setItemInHand($item);
+				}else{
+					$player->getInventory()->setItemInHand($hand);
+					$player->getInventory()->addItem($item);
+				}
+			}else{
+				$player->getInventory()->addItem($item);
+			}
+			$this->level->broadcastLevelSoundEvent($player, LevelSoundEventPacket::SOUND_MILK, 0, EntityIds::PLAYER, $this->isBaby());
+		}
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+
+interface Interactable {
+	public function onPlayerInteract(Player $player) : void;
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\AnimalBase;
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\Interactable;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+use jasonwynn10\VanillaEntityAI\item\Saddle;
+use pocketmine\entity\Entity;
+use pocketmine\entity\Rideable;
+use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
+
+class Pig extends AnimalBase implements Collidable, Interactable, Rideable {
+	public const NETWORK_ID = self::PIG;
+	public $width = 1.5;
+	public $height = 1.0;
+
+	private $saddled = false;
+
+	public function initEntity() : void {
+		$this->setMaxHealth(10);
+		parent::initEntity();
+
+		if((bool)$this->namedtag->getByte("Saddle", 0)) {
+			$this->setSaddled(true);
+		}
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff);
+		// TODO: follow carrots within 8 blocks
+	}
+
+	/**
+	 * @return Item[]
+	 */
+	public function getDrops() : array {
+		$drops = parent::getDrops();
+		if(!$this->isBaby()) {
+			if($this->isOnFire()) {
+				$drops[] = ItemFactory::get(Item::COOKED_PORKCHOP, 0, mt_rand(1, 3));
+			}else{
+				$drops[] = ItemFactory::get(Item::PORKCHOP, 0, mt_rand(1, 3));
+			}
+			if(!empty($this->getArmorInventory()->getContents())) {
+				$drops = array_merge($drops, $this->getArmorInventory()->getContents());
+			}
+		}
+		return $drops;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getXpDropAmount() : int {
+		$exp = parent::getXpDropAmount();
+		if(!$this->isBaby()) {
+			$exp += mt_rand(1, 3);
+			return $exp;
+		}
+		return $exp;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Pig";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+
+	public function onPlayerLook(Player $player) : void {
+		$hand = $player->getInventory()->getItemInHand();
+		if(!$this->isBaby() and $hand->getId() instanceof Saddle) {
+			$this->getDataPropertyManager()->setString(Entity::DATA_INTERACTIVE_TAG, "Saddle");
+		}
+	}
+
+	public function onPlayerInteract(Player $player) : void {
+		// TODO: Implement onPlayerInteract() method.
+	}
+
+	/**
+	 * @param bool $saddled
+	 *
+	 * @return self
+	 */
+	public function setSaddled(bool $saddled) : self {
+		$this->saddled = $saddled;
+		$this->namedtag->setByte("Saddle", (int)$saddled);
+		$this->setGenericFlag(self::DATA_FLAG_SADDLED, $saddled);
+		return $this;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isSaddled() : bool {
+		return $this->saddled;
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\data\ColorToMeta;
+use jasonwynn10\VanillaEntityAI\entity\AnimalBase;
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\Interactable;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+use pocketmine\entity\Entity;
+use pocketmine\entity\EntityIds;
+use pocketmine\item\Dye;
+use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
+use pocketmine\item\Shears;
+use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
+
+class Sheep extends AnimalBase implements Collidable, Interactable {
+	public const NETWORK_ID = self::SHEEP;
+	public $width = 1.2;
+	public $height = 0.6;
+	private $colorMeta = ColorToMeta::WHITE;
+	private $sheared = false;
+
+	public function initEntity() : void {
+		$this->setMaxHealth(8);
+		parent::initEntity();
+
+		if((bool)$this->namedtag->getByte("Sheared", 0)) {
+			$this->setSheared(true);
+		}else {
+			$this->setSheared(false);
+		}
+
+		$chance = mt_rand(1, 1000);
+		if($chance <= 50) {
+			$colorMeta = ColorToMeta::LIGHT_GRAY;
+		}elseif($chance >= 51 and $chance <= 100) {
+			$colorMeta = ColorToMeta::GRAY;
+		}elseif($chance >= 101 and $chance <= 150) {
+			$colorMeta = ColorToMeta::BLACK;
+		}elseif($chance >= 151 and $chance <= 180) {
+			$colorMeta = ColorToMeta::BROWN;
+		}elseif($chance >= 181 and $chance <= 183) {
+			$colorMeta = ColorToMeta::PINK;
+		}else {
+			$colorMeta = ColorToMeta::WHITE;
+		}
+		if($this->namedtag->getByte("Color", ColorToMeta::WHITE) !== null)
+			$colorMeta = $this->namedtag->getByte("Color", ColorToMeta::WHITE);
+		$this->setColor($colorMeta);
+		if(mt_rand(1, 100) <= 5) {
+			$this->setBaby(true);
+		}
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		// TODO: eat grass to recover wool
+		// TODO: Sheep follow players holding wheat within 8 blocks
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		$drops = parent::getDrops();
+		if(!$this->isBaby()) {
+			if($this->isOnFire()) {
+				$drops[] = ItemFactory::get(Item::COOKED_MUTTON, 0, mt_rand(1, 3));
+			}else {
+				$drops[] = ItemFactory::get(Item::MUTTON, 0, mt_rand(1, 3));
+			}
+			if($this->isSheared()) {
+				return $drops;
+			}
+			$drops[] = ItemFactory::get(Item::WOOL, $this->colorMeta);
+			return $drops;
+		}else {
+			return $drops;
+		}
+	}
+
+	public function getXpDropAmount() : int {
+		if(!$this->isBaby()) {
+			return mt_rand(1, 3);
+		}
+		return parent::getXpDropAmount();
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Sheep";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+
+	public function onPlayerLook(Player $player) : void {
+		$hand = $player->getInventory()->getItemInHand();
+		if(!$this->isBaby() and $hand instanceof Shears and !$this->sheared) {
+			$this->getDataPropertyManager()->setString(Entity::DATA_INTERACTIVE_TAG, "Shear");
+		}
+		if($hand instanceof Dye and !$this->sheared) {
+			$this->getDataPropertyManager()->setString(Entity::DATA_INTERACTIVE_TAG, "Dye");
+		}
+	}
+
+	public function onPlayerInteract(Player $player) : void {
+		$hand = $player->getInventory()->getItemInHand();
+		if(!$this->isBaby() and $hand instanceof Shears and !$this->sheared) {
+			$this->shear();
+			$hand->applyDamage(1);
+			$player->getInventory()->setItemInHand($hand);
+			$this->level->broadcastLevelSoundEvent($player, LevelSoundEventPacket::SOUND_SHEAR, 0, EntityIds::PLAYER);
+		}
+		if($hand instanceof Dye and !$this->sheared) {
+			$this->setColor($hand->pop()->getDamage());
+			$player->getInventory()->setItemInHand($hand);
+		}
+	}
+
+	/**
+	 * @return Sheep
+	 */
+	public function shear() : self {
+		$this->level->dropItem($this, ItemFactory::get(Item::WOOL, $this->colorMeta, mt_rand(1, 3)));
+		$this->setSheared(true);
+		return $this;
+	}
+
+	/**
+	 * @param bool $sheared
+	 *
+	 * @return Sheep
+	 */
+	public function setSheared(bool $sheared = true) : self {
+		$this->sheared = $sheared;
+		$this->setGenericFlag(self::DATA_FLAG_SHEARED, $sheared);
+		$this->namedtag->setByte("Sheared", (int)$sheared);
+		return $this;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isSheared() : bool {
+		return $this->sheared;
+	}
+
+	/**
+	 * @param int $colorMeta
+	 *
+	 * @return Sheep
+	 */
+	public function setColor(int $colorMeta) : self {
+		if($colorMeta >= 0 and $colorMeta <= 15) {
+			$this->colorMeta = $colorMeta;
+			$this->getDataPropertyManager()->setPropertyValue(self::DATA_COLOUR, self::DATA_TYPE_BYTE, $colorMeta);
+			$this->namedtag->setByte("Color", $colorMeta);
+		}else {
+			throw new \OutOfRangeException("Meta value provided is out of range 0 - 15");
+		}
+		return $this;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getColor() : int {
+		return $this->colorMeta;
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passiveaggressive;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use pocketmine\entity\Entity;
+
+class Wolf extends CreatureBase implements Collidable {
+	public const NETWORK_ID = self::WOLF;
+	public $width = 1.2;
+	public $height = 0.969;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Wolf";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\AgeableTrait;
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\Interactable;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+use pocketmine\block\Block;
+use pocketmine\entity\Entity;
+use pocketmine\math\AxisAlignedBB;
+
+class Villager extends \pocketmine\entity\Villager implements Collidable, Interactable {
+	use AgeableTrait, CollisionCheckingTrait;
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+
+	public function onCollideWithBlock(Block $block) : void {
+		// TODO: Implement onCollideWithBlock() method.
+	}
+
+	/**
+	 * @param AxisAlignedBB $source
+	 */
+	public function push(AxisAlignedBB $source) : void {
+		// TODO: Implement push() method.
+	}
+
+	public function onPlayerInteract(Player $player) : void {
+		// TODO: Implement onPlayerInteract() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+use pocketmine\entity\Entity;
+use pocketmine\entity\EntityIds;
+use pocketmine\item\Bowl;
+use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
+use pocketmine\item\Shears;
+use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
+
+class Mooshroom extends Cow {
+	public const NETWORK_ID = self::MOOSHROOM;
+	public $width = 1.781;
+	public $height = 1.875;
+
+
+	public function initEntity() : void {
+		parent::initEntity();
+
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+		// TODO: Sheep follow players holding wheat within 8 blocks
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Mooshroom";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO:
+	}
+
+	public function onPlayerLook(Player $player) : void {
+		$hand = $player->getInventory()->getItemInHand();
+		if(!$this->isBaby() and $hand instanceof Shears) {
+			$this->getDataPropertyManager()->setString(Entity::DATA_INTERACTIVE_TAG, "Shear");
+		}
+		if(!$this->isBaby() and $hand instanceof Bowl) {
+			$this->getDataPropertyManager()->setString(Entity::DATA_INTERACTIVE_TAG, "Mushroom Stew");
+		}
+		parent::onPlayerLook($player);
+	}
+
+	public function onPlayerInteract(Player $player) : void {
+		$hand = $player->getInventory()->getItemInHand();
+		if(!$this->isBaby() and $hand instanceof Shears) {
+			$this->shear();
+			$hand->applyDamage(1);
+			$player->getInventory()->setItemInHand($hand);
+			$this->level->broadcastLevelSoundEvent($player, LevelSoundEventPacket::SOUND_SHEAR, 0, EntityIds::PLAYER);
+		}
+		if(!$this->isBaby() and $hand instanceof Bowl) {
+			$hand = ItemFactory::get(Item::MUSHROOM_STEW);
+			$player->getInventory()->setItemInHand($hand);
+		}
+		parent::onPlayerInteract($player);
+	}
+
+	public function shear() : self {
+		$this->level->dropItem($this, ItemFactory::get(Item::RED_MUSHROOM, 0, 5));
+		$cow = Cow::createEntity("Cow", $this->level, Cow::createBaseNBT($this, $this->motion, $this->yaw, $this->pitch));
+		if($cow !== null) {
+			$this->level->addEntity($cow);
+			$this->flagForDespawn();
+			$cow->spawnToAll();
+		}
+		return $this;
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use pocketmine\event\entity\EntityDamageByEntityEvent;
+use pocketmine\event\entity\EntityDamageEvent;
+
+class Squid extends \pocketmine\entity\Squid {
+	/**
+	 * @param EntityDamageEvent $source
+	 */
+	public function attack(EntityDamageEvent $source) : void{
+		if($source instanceof EntityDamageByEntityEvent and !$this->isUnderwater()) {
+			$knockback = $source->getKnockBack();
+			$source->setKnockBack($knockback * 0.85);
+		}
+		parent::attack($source);
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getXpDropAmount() : int {
+		$exp = parent::getXpDropAmount();
+		if(!$this->isBaby()) {
+			$exp += mt_rand(1, 3);
+			return $exp;
+		}
+		return $exp;
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\AnimalBase;
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use pocketmine\entity\Entity;
+
+class Rabbit extends AnimalBase implements Collidable {
+	public const NETWORK_ID = self::RABBIT;
+	public $width = 0.4;
+	public $height = 0.5;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Rabbit";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\AnimalBase;
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use pocketmine\entity\Entity;
+
+class Bat extends AnimalBase implements Collidable {
+	public const NETWORK_ID = self::BAT;
+	public $width = 0.484;
+	public $height = 0.5;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	public function getName() : string {
+		return "Bat";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passiveaggressive;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use pocketmine\entity\Entity;
+
+class IronGolem extends CreatureBase implements Collidable {
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Iron Golem";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passiveaggressive;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\Interactable;
+use pocketmine\block\Lava;
+use pocketmine\block\Water;
+use pocketmine\entity\Entity;
+use pocketmine\item\Item;
+use pocketmine\item\Shears;
+
+class SnowGolem extends CreatureBase implements Collidable, Interactable {
+	public const NETWORK_ID = self::SNOW_GOLEM;
+	public $width = 1.281;
+	public $height = 1.875;
+
+	public function initEntity() : void {
+		if($this->namedtag->getByte("Pumpkin", 1, true) === 1)
+			$this->setPumpkin(true);
+		else
+			$this->setPumpkin(false);
+		$this->setTarget(null);
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		$biome = $this->level->getBiome($this->getFloorX(), $this->getFloorZ());
+		if($biome->getTemperature() > 1)
+			$this->setOnFire(200);
+
+		if($this->level->getBlockLightAt($this->getFloorX(), $this->getFloorY(), $this->getFloorZ()) >= 14 or
+		   $this->level->getBlock($this, true, false) instanceof Water or
+		   $this->level->getBlock($this, true, false) instanceof Lava) { // TODO: check weather
+			$this->setOnFire(200);
+		}
+		// TODO: only make snow in biomes with less than 0.8 temp
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return [Item::get(Item::SNOWBALL, 0, mt_rand(0, 15))];
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Snow Golem";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+
+	/**
+	 * @param Player $player
+	 */
+	public function onPlayerLook(Player $player) : void {
+		if($player->getInventory()->getItemInHand() instanceof Shears) {
+			$this->getDataPropertyManager()->setString(Entity::DATA_INTERACTIVE_TAG, "Shear"); // Don't show button anymore
+		}
+	}
+
+	/**
+	 * @param Player $player
+	 */
+	public function onPlayerInteract(Player $player) : void {
+		if($player->getInventory()->getItemInHand() instanceof Shears) {
+			$this->setPumpkin(false);
+		}
+	}
+
+	/**
+	 * @param bool $wearing
+	 *
+	 * @return SnowGolem
+	 */
+	public function setPumpkin(bool $wearing = true) : self {
+		$this->namedtag->setByte("Pumpkin", (int)$wearing);
+		$this->setDataFlag(self::DATA_FLAGS, self::DATA_FLAG_SHEARED, !$wearing);
+		return $this;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function hasPumpkin() : bool {
+		return (bool) $this->namedtag->getByte("Pumpkin", 1, true);
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\AnimalBase;
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\Interactable;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+use pocketmine\entity\Entity;
+
+class Ocelot extends AnimalBase implements Collidable, Interactable {
+	public const NETWORK_ID = self::OCELOT;
+	public $width = 0.8;
+	public $height = 0.8;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Ocelot";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+
+	public function onPlayerInteract(Player $player) : void {
+		// TODO: Implement onPlayerInteract() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\AnimalBase;
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use pocketmine\entity\Entity;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Horse extends AnimalBase implements Collidable {
+	use CollisionCheckingTrait;
+	public const NETWORK_ID = self::HORSE;
+	public $width = 1.3;
+	public $height = 1.5;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Horse";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\AnimalBase;
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use pocketmine\entity\Entity;
+
+class Donkey extends AnimalBase implements Collidable {
+	public const NETWORK_ID = self::DONKEY;
+	public $width = 1.2;
+	public $height = 1.562;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Donkey";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\Interactable;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+
+class Mule extends Donkey implements Interactable {
+	public const NETWORK_ID = self::MULE;
+	public $width = 1.2;
+	public $height = 1.562;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Mule";
+	}
+
+	public function onPlayerInteract(Player $player) : void {
+		// TODO: Implement onPlayerInteract() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use pocketmine\entity\Entity;
+
+class SkeletonHorse extends CreatureBase implements Collidable {
+	public const NETWORK_ID = self::SKELETON_HORSE;
+	public $width = 1.3;
+	public $height = 1.5;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Skeleton Horse";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class ZombieHorse extends MonsterBase {
+	public const NETWORK_ID = self::ZOMBIE_HORSE;
+	public $width = 1.3;
+	public $height = 1.5;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Zombie Horse";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+use pocketmine\entity\Entity;
+use pocketmine\event\entity\EntityDamageByEntityEvent;
+use pocketmine\event\entity\EntityDamageEvent;
+use pocketmine\level\Level;
+use pocketmine\level\Position;
+
+abstract class MonsterBase extends CreatureBase {
+	public function initEntity() : void {
+		parent::initEntity();
+	}
+
+	/**
+	 * @param EntityDamageEvent $source
+	 */
+	public function attack(EntityDamageEvent $source) : void {
+		if($source instanceof EntityDamageByEntityEvent) {
+			$this->setTarget($source->getDamager());
+		}
+		parent::attack($source);
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		$hasUpdate = false;
+		if($this->level->getDifficulty() <= Level::DIFFICULTY_PEACEFUL) {
+			$this->flagForDespawn();
+		}
+		if($this->target === null) {
+			foreach($this->hasSpawned as $player) {
+				if($player->isSurvival() and $this->distance($player) <= 16 and $this->hasLineOfSight($player)) {
+					$this->target = $player;
+					$hasUpdate = true;
+				}
+			}
+		}elseif($this->target instanceof Player) {
+			if($this->target->isCreative() or !$this->target->isAlive() or $this->distance($this->target) > 16 or !$this->hasLineOfSight($this->target)) {
+				$this->target = null;
+			}
+		}elseif($this->target instanceof CreatureBase) {
+			if(!$this->target->isAlive() or $this->distance($this->target) > 16 or !$this->hasLineOfSight($this->target)) {
+				$this->target = null;
+			}
+		}
+		return parent::entityBaseTick($tickDiff) ? true : $hasUpdate;
+	}
+
+	/**
+	 * @param Position|null $target
+	 *
+	 * @return bool
+	 */
+	protected function isTargetValid(?Position $target) : bool {
+		if($target instanceof Entity) {
+			if($target instanceof Player) {
+				return !$target->isFlaggedForDespawn() and !$target->isClosed() and $target->isValid() and $target->isAlive() and $target->isSurvival();
+			}
+			return !$target->isFlaggedForDespawn() and !$target->isClosed() and $target->isValid() and $target->isAlive();
+		}else {
+			return $target !== null and $target->isValid();
+		}
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passiveaggressive;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use pocketmine\entity\Entity;
+
+class PolarBear extends CreatureBase implements Collidable {
+	public const NETWORK_ID = self::POLAR_BEAR;
+	public $width = 1.3;
+	public $height = 1.4;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Polar Bear";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\AnimalBase;
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\Interactable;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+use pocketmine\entity\Entity;
+
+class Llama extends AnimalBase implements Collidable, Interactable {
+	public const NETWORK_ID = self::LLAMA;
+	public $width = 0.9;
+	public $height = 1.87;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Llama";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+
+	public function onPlayerInteract(Player $player) : void {
+		// TODO: Implement onPlayerInteract() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\AnimalBase;
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\Interactable;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+use pocketmine\entity\Entity;
+
+class Parrot extends AnimalBase implements Collidable, Interactable {
+	public const NETWORK_ID = self::PARROT;
+	public $width = 0.5;
+	public $height = 0.9;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Parrot";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+
+	public function onPlayerInteract(Player $player) : void {
+		// TODO: Implement onPlayerInteract() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\passive;
+
+use jasonwynn10\VanillaEntityAI\entity\AnimalBase;
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use pocketmine\entity\Entity;
+
+class Dolphin extends AnimalBase implements Collidable {
+	public const NETWORK_ID = self::DOLPHIN;
+	public $width = 1.0;
+	public $height = 1.0;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Dolphin";
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\AgeableTrait;
+use jasonwynn10\VanillaEntityAI\entity\ClimbingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\InventoryHolder;
+use jasonwynn10\VanillaEntityAI\entity\ItemHolderTrait;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use jasonwynn10\VanillaEntityAI\EntityAI;
+use pocketmine\block\Water;
+use pocketmine\entity\Ageable;
+use pocketmine\entity\Entity;
+use pocketmine\entity\EntityIds;
+use pocketmine\event\entity\EntityDamageByEntityEvent;
+use pocketmine\event\entity\EntityDamageEvent;
+use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
+use pocketmine\level\biome\Biome;
+use pocketmine\level\Level;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\network\mcpe\protocol\EntityEventPacket;
+use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
+use pocketmine\network\mcpe\protocol\TakeItemEntityPacket;
+use pocketmine\Player;
+
+class Zombie extends MonsterBase implements Ageable, InventoryHolder {
+	use ItemHolderTrait, AgeableTrait, ClimbingTrait;
+	public const NETWORK_ID = self::ZOMBIE;
+	public $width = 0.6;
+	public $height = 1.95;
+	/** @var int */
+	protected $attackDelay;
+	/** @var float $speed */
+	protected $speed = 1.2;
+
+	public function initEntity() : void {
+		if(mt_rand(1, 100) < 6) {
+			$this->setBaby();
+			if(mt_rand(1, 100) <= 15) {
+				// TODO: zombie jockey
+			}else {
+				// TODO: check nearby chickens
+			}
+		}
+		if(mt_rand(1, 100) >= 80) {
+			if((bool) mt_rand(0, 1)) {
+				$this->equipRandomItems();
+			}else {
+				$this->equipRandomArmour();
+			}
+		}
+		parent::initEntity();
+	}
+
+	public function equipRandomItems() : void {
+		//TODO random enchantments and random item (iron sword or iron shovel or iron axe)
+	}
+
+	public function equipRandomArmour() : void {
+		//TODO random enchantments and random armour
+	}
+
+	public function attack(EntityDamageEvent $source) : void {
+		if($source->getCause() === EntityDamageEvent::CAUSE_DROWNING and $this->getHealth() - $source->getFinalDamage() <= 0) {
+			/** @var Drowned|null $entity */
+			$entity = self::createEntity(self::DROWNED, $this->level, Drowned::createBaseNBT($this, $this->motion, $this->yaw, $this->pitch));
+			$entity->setMainHandItem($this->mainHand);
+			$entity->setOffHandItem($this->offHand);
+			$this->level->addEntity($entity);
+			$this->level->broadcastLevelSoundEvent($this, LevelSoundEventPacket::SOUND_CONVERT_TO_DROWNED, 0, EntityIds::ZOMBIE, $this->isBaby());
+		}
+		// TODO: 10% chance to resist knockback.
+		parent::attack($source);
+	}
+
+	public function onUpdate(int $currentTick) : bool {
+		if($this->isFlaggedForDespawn() or $this->closed) {
+			return false;
+		}
+		if($this->attackTime > 0) {
+			return parent::onUpdate($currentTick);
+		}else {
+			if($this->moveTime <= 0 and $this->isTargetValid($this->target) and !$this->target instanceof Entity) {
+				$x = $this->target->x - $this->x;
+				$y = $this->target->y - $this->y;
+				$z = $this->target->z - $this->z;
+				$diff = abs($x) + abs($z);
+				if($diff > 0) {
+					$this->motion->x = $this->speed * 0.15 * ($x / $diff);
+					$this->motion->z = $this->speed * 0.15 * ($z / $diff);
+					$this->yaw = rad2deg(-atan2($x / $diff, $z / $diff)); // TODO: desync head with body when AI improves
+				}
+				$this->pitch = $y == 0 ? 0 : rad2deg(-atan2($y, sqrt($x * $x + $z * $z)));
+				if($this->distance($this->target) <= 0) {
+					$this->target = null;
+				}
+			}elseif($this->target instanceof Entity and $this->isTargetValid($this->target)) {
+				$this->moveTime = 0;
+				$x = $this->target->x - $this->x;
+				$y = $this->target->y - $this->y;
+				$z = $this->target->z - $this->z;
+				$diff = abs($x) + abs($z);
+				if($diff > 0) {
+					$this->motion->x = $this->speed * 0.15 * ($x / $diff);
+					$this->motion->z = $this->speed * 0.15 * ($z / $diff);
+					$this->yaw = rad2deg(-atan2($x / $diff, $z / $diff)); // TODO: desync head with body when AI improves
+				}
+				$this->pitch = $y == 0 ? 0 : rad2deg(-atan2($y, sqrt($x * $x + $z * $z)));
+			}elseif($this->moveTime <= 0) {
+				$this->moveTime = 100;
+				// TODO: random target position
+			}
+		}
+		return parent::onUpdate($currentTick);
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		$hasUpdate = parent::entityBaseTick($tickDiff);
+		if($this->moveTime > 0) {
+			$this->moveTime -= $tickDiff;
+		}
+		$time = $this->getLevel()->getTime() % Level::TIME_FULL;
+		if(!$this->isOnFire() and ($time < Level::TIME_NIGHT or $time > Level::TIME_SUNRISE) and $this->level->getBlockSkyLightAt($this->getFloorX(), $this->getFloorY(), $this->getFloorZ()) >= 15) {
+			$this->setOnFire(2);
+		}
+		if($this->isOnFire() and $this->level->getBlock($this, true, false) instanceof Water) { // TODO: check weather
+			$this->extinguish();
+		}
+		$this->attackDelay += $tickDiff;
+		return $hasUpdate;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		$drops = [
+			ItemFactory::get(Item::ROTTEN_FLESH, 0, mt_rand(0, 2))
+		];
+		if(mt_rand(0, 199) < 5) {
+			switch(mt_rand(0, 2)) {
+				case 0:
+					$drops[] = ItemFactory::get(Item::IRON_INGOT, 0, 1);
+				break;
+				case 1:
+					$drops[] = ItemFactory::get(Item::CARROT, 0, 1);
+				break;
+				case 2:
+					$drops[] = ItemFactory::get(Item::POTATO, 0, 1);
+				break;
+			}
+		}
+		if($this->dropAll) {
+			$drops = array_merge($drops, $this->armorInventory->getContents());
+		}elseif(mt_rand(1, 100) <= 8.5) {
+			if(!empty($this->armorInventory->getContents())) {
+				$drops[] = $this->armorInventory->getContents()[array_rand($this->armorInventory->getContents())];
+			}
+		}
+		return $drops;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getXpDropAmount() : int {
+		if($this->baby) {
+			$exp = 12;
+		}else {
+			$exp = 5;
+		}
+		foreach($this->getArmorInventory()->getContents() as $piece)
+			$exp += mt_rand(1, 3);
+		return $exp;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Zombie";
+	}
+
+	/**
+	 * @param Player $player
+	 */
+	public function onCollideWithPlayer(Player $player) : void {
+		if($this->target === $player and $this->attackDelay > 10) {
+			$this->attackDelay = 0;
+			$damage = 2;
+			switch($this->getLevel()->getDifficulty()) {
+				case Level::DIFFICULTY_EASY:
+					$damage = 2;
+				break;
+				case Level::DIFFICULTY_NORMAL:
+					$damage = 3;
+				break;
+				case Level::DIFFICULTY_HARD:
+					$damage = 4;
+			}
+			if($this->mainHand !== null) {
+				$damage = $this->mainHand->getAttackPoints();
+			}
+			$pk = new EntityEventPacket();
+			$pk->entityRuntimeId = $this->id;
+			$pk->event = EntityEventPacket::ARM_SWING;
+			$this->server->broadcastPacket($this->hasSpawned, $pk);
+			$player->attack(new EntityDamageByEntityEvent($this, $player, EntityDamageByEntityEvent::CAUSE_ENTITY_ATTACK, $damage));
+		}
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		$nbt = self::createBaseNBT($spawnPos);
+		if(isset($spawnData)) {
+			$nbt = $spawnData->merge($nbt);
+			$nbt->setInt("id", self::NETWORK_ID);
+		}
+		if($spawnPos->level->getBiomeId($spawnPos->x, $spawnPos->z) === Biome::DESERT and mt_rand(1, 100) > 80) {
+			/** @var Husk $entity */
+			$entity = self::createEntity(Husk::NETWORK_ID, $spawnPos->level, $nbt);
+		}else {
+			/** @var self $entity */
+			$entity = self::createEntity(self::NETWORK_ID, $spawnPos->level, $nbt);
+		}
+		// TODO: work on logic here more
+		if(!$spawnPos->isValid() or count($entity->getBlocksAround()) > 1 or $spawnPos->level->getFullLight($spawnPos) > $entity->spawnLight) {
+			$entity->flagForDespawn();
+			return null;
+		}else {
+			$entity->spawnToAll();
+			return $entity;
+		}
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		if($this->target === $entity and $this->attackDelay > 10) {
+			$this->attackDelay = 0;
+			$damage = 2;
+			switch($this->getLevel()->getDifficulty()) {
+				case Level::DIFFICULTY_EASY:
+					$damage = 2;
+				break;
+				case Level::DIFFICULTY_NORMAL:
+					$damage = 3;
+				break;
+				case Level::DIFFICULTY_HARD:
+					$damage = 4;
+			}
+			if($this->mainHand !== null) {
+				$damage = $this->mainHand->getAttackPoints();
+			}
+			$pk = new EntityEventPacket();
+			$pk->entityRuntimeId = $this->id;
+			$pk->event = EntityEventPacket::ARM_SWING;
+			$this->server->broadcastPacket($this->hasSpawned, $pk);
+			$entity->attack(new EntityDamageByEntityEvent($this, $entity, EntityDamageByEntityEvent::CAUSE_ENTITY_ATTACK, $damage));
+		}
+		if($entity instanceof \jasonwynn10\VanillaEntityAI\entity\neutral\Item) {
+			if($entity->getPickupDelay() > 0 or !$this instanceof InventoryHolder or $this->level->getDifficulty() <= Level::DIFFICULTY_EASY) {
+				return;
+			}
+			$chance = EntityAI::getInstance()->getRegionalDifficulty($this->level, $this->chunk);
+			if($chance < 50) {
+				return;
+			}
+			$item = $entity->getItem();
+			if(!$this->checkItemValueToMainHand($item) and !$this->checkItemValueToOffHand($item)) {
+				return;
+			}
+			$pk = new TakeItemEntityPacket();
+			$pk->eid = $this->getId();
+			$pk->target = $entity->getId();
+			$this->server->broadcastPacket($this->getViewers(), $pk);
+			$this->setDropAll();
+			$this->setPersistence(true);
+			if($this->checkItemValueToMainHand($item)) {
+				$this->mainHand = clone $item;
+			}elseif($this->checkItemValueToOffHand($item)) {
+				$this->offHand = clone $item;
+			}
+		}
+	}
+
+	/**
+	 * @param Item $item
+	 *
+	 * @return bool
+	 */
+	public function checkItemValueToMainHand(Item $item) : bool {
+		// TODO: Implement checkItemValueToMainHand() method.
+		return true;
+	}
+
+	/**
+	 * @param Item $item
+	 *
+	 * @return bool
+	 */
+	public function checkItemValueToOffHand(Item $item) : bool {
+		// TODO: Implement checkItemValueToOffHand() method.
+		return true;
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
+use pocketmine\nbt\NBT;
+use pocketmine\nbt\tag\ListTag;
+use pocketmine\network\mcpe\protocol\MobEquipmentPacket;
+use pocketmine\network\mcpe\protocol\types\ContainerIds;
+use pocketmine\Player;
+
+trait ItemHolderTrait {
+	/** @var Item|null $mainHand */
+	protected $mainHand;
+	/** @var Item|null $offHand */
+	protected $offHand;
+	/** @var bool $dropAll */
+	protected $dropAll = false;
+
+	public function initEntity() : void {
+		if($this->namedtag->hasTag("Mainhand", ListTag::class)) {
+			$this->mainHand = Item::nbtDeserialize($this->namedtag->getListTag("Mainhand")->first());
+		}
+		if($this->namedtag->hasTag("Offhand", ListTag::class)) {
+			$this->offHand = Item::nbtDeserialize($this->namedtag->getListTag("Offhand")->first());
+		}
+		if($this->namedtag->hasTag("Armor", ListTag::class)) {
+			foreach($this->namedtag->getListTag("Armor")->getValue() as $tag)
+				$items[] = Item::nbtDeserialize($tag);
+			$this->getArmorInventory()->setContents($items);
+		}
+		parent::initEntity();
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isDropAll() : bool {
+		return $this->dropAll;
+	}
+
+	/**
+	 * @param bool $dropAll
+	 *
+	 * @return ItemHolderTrait
+	 */
+	public function setDropAll(bool $dropAll = true) {
+		$this->dropAll = $dropAll;
+		return $this;
+	}
+
+	/**
+	 * @return Item[]
+	 */
+	public function getDrops() : array {
+		$drops = parent::getDrops();
+		if($this->dropAll) {
+			$drops[] = $this->mainHand ?? ItemFactory::get(Item::AIR);
+			$drops[] = $this->offHand ?? ItemFactory::get(Item::AIR);
+		}elseif(mt_rand(1, 1000) <= 85) {
+			$drops[] = $this->mainHand ?? ItemFactory::get(Item::AIR);
+			// TODO: Should the offhand drop here too?
+		}
+		return $drops;
+	}
+
+	/**
+	 * @return null|Item
+	 */
+	public function getMainHand() : ?Item {
+		return $this->mainHand;
+	}
+
+	/**
+	 * @param Item $mainHand
+	 *
+	 * @return ItemHolderTrait
+	 */
+	public function setMainHandItem(?Item $mainHand) : ItemHolderTrait {
+		$this->mainHand = $mainHand;
+		$pk = new MobEquipmentPacket();
+		$pk->entityRuntimeId = $this->getId();
+		$pk->item = $this->mainHand ?? ItemFactory::get(Item::AIR);
+		$pk->inventorySlot = $pk->hotbarSlot = ContainerIds::INVENTORY;
+		foreach($this->getViewers() as $player)
+			$player->dataPacket($pk);
+		return $this;
+	}
+
+	/**
+	 * @return null|Item
+	 */
+	public function getOffHand() : ?Item {
+		return $this->offHand;
+	}
+
+	/**
+	 * @param Item $offHand
+	 *
+	 * @return ItemHolderTrait
+	 */
+	public function setOffHandItem(?Item $offHand) : ItemHolderTrait {
+		$this->offHand = $offHand;
+		$pk = new MobEquipmentPacket();
+		$pk->entityRuntimeId = $this->getId();
+		$pk->item = $this->offHand ?? ItemFactory::get(Item::AIR);
+		$pk->inventorySlot = $pk->hotbarSlot = ContainerIds::OFFHAND;
+		foreach($this->getViewers() as $player)
+			$player->dataPacket($pk);
+		return $this;
+	}
+
+	public function saveNBT() : void {
+		parent::saveNBT();
+		if(isset($this->mainHand)) {
+			$this->namedtag->setTag(new ListTag("Mainhand", [$this->mainHand->nbtSerialize()], NBT::TAG_Compound));
+		}
+		if(isset($this->offHand)) {
+			$this->namedtag->setTag(new ListTag("Offhand", [$this->offHand->nbtSerialize()], NBT::TAG_Compound));
+		}
+	}
+
+	protected function sendSpawnPacket(Player $player) : void {
+		parent::sendSpawnPacket($player);
+		$pk = new MobEquipmentPacket();
+		$pk->entityRuntimeId = $this->getId();
+		$pk->item = $this->mainHand ?? ItemFactory::get(Item::AIR);
+		$pk->inventorySlot = $pk->hotbarSlot = ContainerIds::INVENTORY;
+		$player->dataPacket($pk);
+		$pk = new MobEquipmentPacket();
+		$pk->entityRuntimeId = $this->getId();
+		$pk->item = $this->offHand ?? ItemFactory::get(Item::AIR);
+		$pk->inventorySlot = $pk->hotbarSlot = ContainerIds::OFFHAND;
+		$player->dataPacket($pk);
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+use pocketmine\block\Block;
+use pocketmine\block\Ladder;
+use pocketmine\block\Vine;
+
+trait ClimbingTrait {
+	public function initEntity() : void {
+		$this->setCanClimb();
+		parent::initEntity();
+	}
+
+	public function onCollideWithBlock(Block $block) : void {
+		if($this->canClimbWalls()) {
+			$this->motion->y += 0.5;
+		}
+		if($this->canClimb() and ($block instanceof Ladder or $block instanceof Vine)) {
+			$this->motion->y += 0.5;
+		}
+		parent::onCollideWithBlock($block);
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity;
+
+use pocketmine\item\Item;
+
+interface InventoryHolder {
+	/**
+	 * @return bool
+	 */
+	public function isDropAll() : bool;
+
+	/**
+	 * @param bool $dropAll
+	 */
+	public function setDropAll(bool $dropAll = true);
+
+	public function equipRandomItems() : void;
+
+	public function equipRandomArmour() : void;
+
+	/**
+	 * @param Item $item
+	 *
+	 * @return bool
+	 */
+	public function checkItemValueToMainHand(Item $item) : bool;
+
+	/**
+	 * @param Item $item
+	 *
+	 * @return bool
+	 */
+	public function checkItemValueToOffHand(Item $item) : bool;
+
+	/**
+	 * @return Item|null
+	 */
+	public function getMainHand() : ?Item;
+
+	/**
+	 * @return Item|null
+	 */
+	public function getOffHand() : ?Item;
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\ClimbingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\Interactable;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use jasonwynn10\VanillaEntityAI\entity\neutral\Lightning;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+use pocketmine\entity\Entity;
+use pocketmine\entity\Explosive;
+use pocketmine\event\entity\EntityDamageByEntityEvent;
+use pocketmine\event\entity\EntityDamageEvent;
+use pocketmine\event\entity\ExplosionPrimeEvent;
+use pocketmine\item\FlintSteel;
+use pocketmine\item\Item;
+use pocketmine\level\Explosion;
+use pocketmine\level\Position;
+use pocketmine\math\AxisAlignedBB;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Creeper extends MonsterBase implements Explosive, Interactable {
+	use ClimbingTrait;
+	public const NETWORK_ID = self::CREEPER;
+	public $width = 0.7;
+	public $height = 1.7;
+	protected $bombTime = 30;
+	protected $speed = 0.9;
+	protected $charged = false;
+	private $startExplosion = false;
+	private $ignited = false;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	public function onUpdate(int $currentTick) : bool {
+		if($this->closed) {
+			return false;
+		}
+		if($this->attackTime > 0) {
+			return parent::onUpdate($currentTick);
+		}else {
+			if($this->moveTime <= 0 and $this->isTargetValid($this->target) and !$this->target instanceof Entity) {
+				$x = $this->target->x - $this->x;
+				$y = $this->target->y - $this->y;
+				$z = $this->target->z - $this->z;
+				$diff = abs($x) + abs($z);
+				if($diff > 0) {
+					if(!$this->startExplosion) { // do not move while exploding
+						$this->motion->x = $this->speed * 0.15 * ($x / $diff);
+						$this->motion->z = $this->speed * 0.15 * ($z / $diff);
+					}
+					$this->yaw = rad2deg(-atan2($x / $diff, $z / $diff)); // TODO: desync head with body when AI improves
+				}
+				$this->pitch = $y == 0 ? 0 : rad2deg(-atan2($y, sqrt($x * $x + $z * $z)));
+				if($this->distance($this->target) <= 0) {
+					$this->target = null;
+				}
+			}elseif($this->target instanceof Entity and $this->isTargetValid($this->target)) {
+				$this->moveTime = 0;
+				if($this->target->distance($this) <= 3) {
+					$this->startExplosion = true;
+				}elseif($this->target->distance($this) >= 7) {
+					$this->startExplosion = false;
+				}
+				if(!$this->startExplosion and !$this->ignited) {
+					$this->bombTime = 30;
+					$this->setGenericFlag(self::DATA_FLAG_IGNITED, false);
+				}
+				$x = $this->target->x - $this->x;
+				$y = $this->target->y - $this->y;
+				$z = $this->target->z - $this->z;
+				$diff = abs($x) + abs($z);
+				if($diff > 0) {
+					if(!$this->startExplosion) { // do not move while exploding
+						$this->motion->x = $this->speed * 0.15 * ($x / $diff);
+						$this->motion->z = $this->speed * 0.15 * ($z / $diff);
+					}
+					$this->yaw = rad2deg(-atan2($x / $diff, $z / $diff)); // TODO: desync head with body when AI improves
+				}
+				$this->pitch = $y == 0 ? 0 : rad2deg(-atan2($y, sqrt($x * $x + $z * $z)));
+			}elseif($this->moveTime <= 0) {
+				$this->moveTime = 100;
+				// TODO: random target position
+			}
+		}
+		$tickDiff = $currentTick - $this->lastUpdate;
+		if($this->ignited or $this->startExplosion) {
+			$this->setGenericFlag(self::DATA_FLAG_IGNITED, true);
+			$this->startExplosion = true;
+			$this->bombTime -= $tickDiff;
+			if($this->bombTime <= 0 and $this->isAlive()) {
+				$this->explode();
+				return false;
+			}
+		}else {
+			$this->bombTime += $tickDiff;
+			$this->setGenericFlag(self::DATA_FLAG_IGNITED, false);
+			if($this->bombTime >= 30) {
+				$this->bombTime = 30;
+				$this->startExplosion = false;
+			}
+		}
+		return parent::onUpdate($currentTick);
+	}
+
+	public function explode() {
+		$ev = new ExplosionPrimeEvent($this, $this->charged ? 6 : 3);
+		$ev->call();
+		if(!$ev->isCancelled()) {
+			$explosion = new Explosion($this, $ev->getForce(), $this);
+			$ev->setBlockBreaking(true); // TODO: mob griefing gamerule?
+			if($ev->isBlockBreaking()) {
+				$explosion->explodeA();
+			}
+			$explosion->explodeB();
+		}
+		$this->flagForDespawn();
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		if(isset($this->target)) {
+			$this->speed = 1.2;
+		}else {
+			$this->speed = 0.9;
+		}
+		$hasUpdate = parent::entityBaseTick($tickDiff);
+		if($this->moveTime > 0) {
+			$this->moveTime -= $tickDiff;
+		}
+		return $hasUpdate;
+	}
+
+	/**
+	 * @param Player $player
+	 */
+	public function onPlayerLook(Player $player) : void {
+		if($player->canInteract($this, $player->isCreative() ? 13 : 7) and $player->getInventory()->getItemInHand() instanceof FlintSteel) {
+			$player->getDataPropertyManager()->setString(self::DATA_INTERACTIVE_TAG, "Ignite");
+		}
+	}
+
+	/**
+	 * @param EntityDamageEvent $source
+	 */
+	public function attack(EntityDamageEvent $source) : void {
+		parent::attack($source);
+		if(!$this->target instanceof Player) {
+			if($source instanceof EntityDamageByEntityEvent) {
+				$damager = $source->getDamager();
+				if($damager instanceof Player and $damager->isSurvival() and $this->distance($damager) <= 16 and abs($this->y - $damager->y) <= 4) {
+					$this->target = $damager;
+				}elseif(!$damager instanceof Player and $this->distance($damager) <= 16 and abs($this->y - $damager->y) <= 4) {
+					$this->target = $damager;
+				}
+			}
+		}
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return [Item::get(Item::GUNPOWDER, 0, mt_rand(0, 2))];
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Creeper";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		$width = 0.7;
+		$height = 1.7;
+		$boundingBox = new AxisAlignedBB(0, 0, 0, 0, 0, 0);
+		$halfWidth = $width / 2;
+		$boundingBox->setBounds($spawnPos->x - $halfWidth, $spawnPos->y, $spawnPos->z - $halfWidth, $spawnPos->x + $halfWidth, $spawnPos->y + $height, $spawnPos->z + $halfWidth);
+		// TODO: work on logic here more
+		if(!$spawnPos->isValid() or !$spawnPos->level->getBlock($spawnPos->subtract(0, 1), true, false)->isSolid() or $spawnPos->level->getFullLight($spawnPos) > 7) {
+			return null;
+		}
+		$nbt = self::createBaseNBT($spawnPos);
+		if(isset($spawnData)) {
+			$nbt = $spawnData->merge($nbt);
+			$nbt->setInt("id", self::NETWORK_ID);
+		}
+		/** @var self $entity */
+		$entity = self::createEntity("Creeper", $spawnPos->level, $nbt);
+		return $entity;
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		return parent::spawnFromSpawner($spawnPos, $$spawnData); // TODO: Implement spawnFromSpawner() method.
+	}
+
+	public function onCollideWithEntity(Entity $entity) : void {
+		if($entity instanceof Lightning) {
+			$this->setCharged();
+		}
+	}
+
+	public function ignite() : void {
+		$this->ignited = true;
+		$this->scheduleUpdate();
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isCharged() : bool {
+		return $this->charged;
+	}
+
+	/**
+	 * @param bool $charged
+	 *
+	 * @return Creeper
+	 */
+	public function setCharged(bool $charged = true) : self {
+		$this->charged = $charged;
+		$this->setGenericFlag(self::DATA_FLAG_POWERED, $charged);
+		return $this;
+	}
+
+	/**
+	 * @param Player $player
+	 */
+	public function onPlayerInteract(Player $player) : void {
+		if($player->getInventory()->getItemInHand() instanceof FlintSteel) {
+			$this->ignited = true;
+			$this->scheduleUpdate();
+		}
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\ClimbingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\InventoryHolder;
+use jasonwynn10\VanillaEntityAI\entity\ItemHolderTrait;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use jasonwynn10\VanillaEntityAI\entity\neutral\Arrow;
+use jasonwynn10\VanillaEntityAI\entity\passiveaggressive\Player;
+use jasonwynn10\VanillaEntityAI\EntityAI;
+use pocketmine\block\Water;
+use pocketmine\entity\Entity;
+use pocketmine\entity\projectile\Projectile;
+use pocketmine\event\entity\EntityShootBowEvent;
+use pocketmine\event\entity\ProjectileLaunchEvent;
+use pocketmine\item\Item;
+use pocketmine\level\Level;
+use pocketmine\level\Position;
+use pocketmine\level\sound\LaunchSound;
+use pocketmine\math\Vector3;
+use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\network\mcpe\protocol\TakeItemEntityPacket;
+
+class Skeleton extends MonsterBase implements InventoryHolder {
+	use ItemHolderTrait, ClimbingTrait;
+	public const NETWORK_ID = self::SKELETON;
+	public $width = 0.875;
+	public $height = 2.0;
+	/** @var int */
+	protected $moveTime;
+	/** @var int */
+	protected $attackDelay;
+	/** @var float $speed */
+	protected $speed = 1.0;
+
+	public function initEntity() : void {
+		if(!isset($this->mainHand)) {
+			$this->mainHand = Item::get(Item::BOW);
+		} // TODO: random enchantments
+		// TODO: random armour
+		parent::initEntity();
+	}
+
+	public function onUpdate(int $currentTick) : bool {
+		if($this->isFlaggedForDespawn() or $this->closed) {
+			return false;
+		}
+		if($this->attackTime > 0) {
+			return parent::onUpdate($currentTick);
+		}else {
+			if($this->moveTime <= 0 and $this->isTargetValid($this->target) and !$this->target instanceof Entity) {
+				$x = $this->target->x - $this->x;
+				$y = $this->target->y - $this->y;
+				$z = $this->target->z - $this->z;
+				$diff = abs($x) + abs($z);
+				if($diff > 0) {
+					$this->motion->x = $this->speed * 0.15 * ($x / $diff);
+					$this->motion->z = $this->speed * 0.15 * ($z / $diff);
+					$this->yaw = rad2deg(-atan2($x / $diff, $z / $diff)); // TODO: desync head with body when AI improves
+				}
+				$this->pitch = $y == 0 ? 0 : rad2deg(-atan2($y, sqrt($x * $x + $z * $z)));
+				if($this->distance($this->target) <= 0) {
+					$this->target = null;
+				}
+			}elseif($this->target instanceof Entity and $this->isTargetValid($this->target)) {
+				$this->moveTime = 0;
+				if($this->distance($this->target) <= 16) {
+					if($this->attackDelay > 30 and mt_rand(1, 32) < 4) {
+						$this->attackDelay = 0;
+						$force = 1.2; // TODO: correct speed?
+						$yaw = $this->yaw + mt_rand(-220, 220) / 10;
+						$pitch = $this->pitch + mt_rand(-120, 120) / 10;
+						$nbt = Arrow::createBaseNBT(new Vector3($this->x + (-sin($yaw / 180 * M_PI) * cos($pitch / 180 * M_PI) * 0.5), $this->y + $this->eyeHeight, $this->z + (cos($yaw / 180 * M_PI) * cos($pitch / 180 * M_PI) * 0.5)), new Vector3(), $yaw, $pitch);
+						/** @var Arrow $arrow */
+						$arrow = Arrow::createEntity("Arrow", $this->level, $nbt, $this);
+						$arrow->setPickupMode(Arrow::PICKUP_NONE);
+						$ev = new EntityShootBowEvent($this, Item::get(Item::ARROW, 0, 1), $arrow, $force);
+						$ev->call();
+						$projectile = $ev->getProjectile();
+						if($ev->isCancelled()) {
+							$projectile->flagForDespawn();
+						}elseif($projectile instanceof Projectile) {
+							$launch = new ProjectileLaunchEvent($projectile);
+							$launch->call();
+							if($launch->isCancelled()) {
+								$projectile->flagForDespawn();
+							}else {
+								$projectile->setMotion(new Vector3(-sin($yaw / 180 * M_PI) * cos($pitch / 180 * M_PI) * $ev->getForce(), -sin($pitch / 180 * M_PI) * $ev->getForce(), cos($yaw / 180 * M_PI) * cos($pitch / 180 * M_PI) * $ev->getForce()));
+								$projectile->spawnToAll();
+								$this->level->addSound(new LaunchSound($this), $projectile->getViewers());
+							}
+						}
+					}
+					$target = $this->getSide(self::getRightSide($this->getDirection()));
+					$x = $target->x - $this->x;
+					$z = $target->z - $this->z;
+					$diff = abs($x) + abs($z);
+					if($diff > 0) {
+						$this->motion->x = $this->speed * 0.15 * ($x / $diff);
+						$this->motion->z = $this->speed * 0.15 * ($z / $diff);
+					}
+					$this->lookAt($this->target->add(0, $this->target->eyeHeight));
+				}else {
+					$x = $this->target->x - $this->x;
+					$y = $this->target->y - $this->y;
+					$z = $this->target->z - $this->z;
+					$diff = abs($x) + abs($z);
+					if($diff > 0) {
+						$this->motion->x = $this->speed * 0.15 * ($x / $diff);
+						$this->motion->z = $this->speed * 0.15 * ($z / $diff);
+						$this->yaw = rad2deg(-atan2($x / $diff, $z / $diff)); // TODO: desync head with body when AI improves
+					}
+					$this->pitch = $y == 0 ? 0 : rad2deg(-atan2($y, sqrt($x * $x + $z * $z)));
+				}
+			}elseif($this->moveTime <= 0) {
+				$this->moveTime = 100;
+				// TODO: random target position
+			}
+		}
+		return parent::onUpdate($currentTick);
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		$hasUpdate = parent::entityBaseTick($tickDiff);
+		if($this->moveTime > 0) {
+			$this->moveTime -= $tickDiff;
+		}
+		$time = $this->getLevel()->getTime() % Level::TIME_FULL;
+		if(!$this->isOnFire() and ($time < Level::TIME_NIGHT or $time > Level::TIME_SUNRISE) and $this->level->getBlockSkyLightAt($this->getFloorX(), $this->getFloorY(), $this->getFloorZ()) >= 15) {
+			$this->setOnFire(2);
+		}
+		if($this->isOnFire() and $this->level->getBlock($this, true, false) instanceof Water) { // TODO: check weather
+			$this->extinguish();
+		}
+		$this->attackDelay += $tickDiff;
+		return $hasUpdate;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		$drops = parent::getDrops();
+		if($this->dropAll) {
+			$drops = array_merge($drops, $this->armorInventory->getContents());
+		}elseif(mt_rand(1, 100) <= 8.5) {
+			if(!empty($this->armorInventory->getContents())) {
+				$drops[] = $this->armorInventory->getContents()[array_rand($this->armorInventory->getContents())];
+			}
+		}
+		return $drops;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getXpDropAmount() : int {
+		$exp = 5;
+		foreach($this->getArmorInventory()->getContents() as $piece)
+			$exp += mt_rand(1, 3);
+		return $exp;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function canBreathe() : bool{
+		return true;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Skeleton";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|self
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	public function onCollideWithEntity(Entity $entity) : void {
+		if($entity instanceof \jasonwynn10\VanillaEntityAI\entity\neutral\Item) {
+			if($entity->getPickupDelay() > 0 or !$this instanceof InventoryHolder or $this->level->getDifficulty() <= Level::DIFFICULTY_EASY) {
+				return;
+			}
+			$chance = EntityAI::getInstance()->getRegionalDifficulty($this->level, $this->chunk);
+			if($chance < 50) {
+				return;
+			}
+			$item = $entity->getItem();
+			if(!$this->checkItemValueToMainHand($item) and !$this->checkItemValueToOffHand($item)) {
+				return;
+			}
+			$pk = new TakeItemEntityPacket();
+			$pk->eid = $this->getId();
+			$pk->target = $entity->getId();
+			$this->server->broadcastPacket($this->getViewers(), $pk);
+			$this->setDropAll();
+			$this->setPersistence(true);
+			if($this->checkItemValueToMainHand($item)) {
+				$this->mainHand = clone $item;
+			}elseif($this->checkItemValueToOffHand($item)) {
+				$this->offHand = clone $item;
+			}
+		}
+	}
+
+	/**
+	 * @param Item $item
+	 *
+	 * @return bool
+	 */
+	public function checkItemValueToMainHand(Item $item) : bool {
+		return $this->mainHand === null;
+	}
+
+	/**
+	 * @param Item $item
+	 *
+	 * @return bool
+	 */
+	public function checkItemValueToOffHand(Item $item) : bool {
+		return false;
+	}
+
+	public function equipRandomItems() : void {
+	}
+
+	public function equipRandomArmour() : void {
+		// TODO: random armour chance by difficulty
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\ClimbingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Spider extends MonsterBase {
+	use ClimbingTrait;
+	public const NETWORK_ID = self::SPIDER;
+	public $width = 2.062;
+	public $height = 0.781;
+
+	public function initEntity() : void {
+		$this->setCanClimbWalls();
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Spider";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\AgeableTrait;
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\InventoryHolder;
+use jasonwynn10\VanillaEntityAI\entity\ItemHolderTrait;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Ageable;
+use pocketmine\entity\Entity;
+use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class ZombiePigman extends MonsterBase implements Ageable, Collidable, InventoryHolder {
+	use CollisionCheckingTrait, ItemHolderTrait, AgeableTrait;
+	public const NETWORK_ID = self::ZOMBIE_PIGMAN;
+	public $width = 2.0;
+	public $height = 2.0;
+
+	public function initEntity() : void {
+		$this->mainHand = ItemFactory::get(Item::GOLD_SWORD);
+		parent::initEntity();
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		$drops = parent::getDrops();
+		//TODO chance drop item and armour
+		return $drops;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getXpDropAmount() : int {
+		if($this->isBaby()) {
+			return 12;
+		}
+		$exp = 5;
+		foreach($this->getArmorInventory()->getContents() as $peice)
+			$exp += mt_rand(1, 3);
+		return $exp;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Zombie Pigman";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+
+	public function equipRandomItems() : void {
+		// TODO: Implement equipRandomItems() method.
+	}
+
+	public function equipRandomArmour() : void {
+		// TODO: Implement equipRandomArmour() method.
+	}
+
+	/**
+	 * @param Item $item
+	 *
+	 * @return bool
+	 */
+	public function checkItemValueToMainHand(Item $item) : bool {
+		// TODO: Implement checkItemValueToMainHand() method.
+	}
+
+	/**
+	 * @param Item $item
+	 *
+	 * @return bool
+	 */
+	public function checkItemValueToOffHand(Item $item) : bool {
+		// TODO: Implement checkItemValueToOffHand() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Slime extends MonsterBase implements Collidable {
+	use CollisionCheckingTrait;
+	public const NETWORK_ID = self::SLIME;
+	public $width = 1.2;
+	public $height = 1.2;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Slime";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Enderman extends MonsterBase implements Collidable {
+	use CollisionCheckingTrait;
+	public const NETWORK_ID = self::ENDERMAN;
+	public $width = 1.094;
+	public $height = 2.875;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Enderman";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Silverfish extends MonsterBase implements Collidable {
+	use CollisionCheckingTrait;
+	public const NETWORK_ID = self::SILVERFISH;
+	public $width = 1.094;
+	public $height = 0.438;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Silverfish";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+class CaveSpider extends Spider {
+	public const NETWORK_ID = self::CAVE_SPIDER;
+	public $width = 1.438;
+	public $height = 0.547;
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Cave Spider";
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\entity\Living;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Ghast extends MonsterBase implements Collidable {
+	use CollisionCheckingTrait;
+	public const NETWORK_ID = self::GHAST;
+	public $width = 4.5;
+	public $height = 4.5;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Ghast";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|Living
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class MagmaCube extends Slime {
+	public const NETWORK_ID = self::MAGMA_CUBE;
+	public $width = 1.2;
+	public $height = 1.2;
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Magma Cube";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\level\Position;
+use pocketmine\math\AxisAlignedBB;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Blaze extends MonsterBase implements Collidable {
+	use CollisionCheckingTrait;
+	public const NETWORK_ID = self::BLAZE;
+	public $width = 1.25;
+	public $height = 1.5;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Blaze";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		$width = 1.25;
+		$height = 1.5;
+		$boundingBox = new AxisAlignedBB(0, 0, 0, 0, 0, 0);
+		$halfWidth = $width / 2;
+		$boundingBox->setBounds($spawnPos->x - $halfWidth, $spawnPos->y, $spawnPos->z - $halfWidth, $spawnPos->x + $halfWidth, $spawnPos->y + $height, $spawnPos->z + $halfWidth);
+		// TODO: work on logic here more
+		if($spawnPos->level === null or !empty($spawnPos->level->getCollisionBlocks($boundingBox, true)) or !$spawnPos->level->getBlock($spawnPos->subtract(0, 1), false, false)->isSolid()) {
+			return null;
+		}
+		$nbt = self::createBaseNBT($spawnPos);
+		if(isset($spawnData)) {
+			$nbt = $spawnData->merge($nbt);
+			$nbt->setInt("id", self::NETWORK_ID);
+		}
+		/** @var self $entity */
+		$entity = self::createEntity("Blaze", $spawnPos->level, $nbt);
+		return $entity;
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+class ZombieVillager extends Zombie {
+	public const NETWORK_ID = self::ZOMBIE_VILLAGER;
+	public $width = 1.031;
+	public $height = 2.125;
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Zombie Villager";
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\InventoryHolder;
+use jasonwynn10\VanillaEntityAI\entity\ItemHolderTrait;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\item\Item;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Witch extends MonsterBase implements Collidable, InventoryHolder {
+	use CollisionCheckingTrait, ItemHolderTrait;
+	public const NETWORK_ID = self::WITCH;
+	public $width = 0.6;
+	public $height = 1.95;
+
+	public function initEntity() : void {
+		parent::initEntity();
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		$drops = parent::getDrops();
+		// TODO: chance drop potion
+		return $drops;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getXpDropAmount() : int {
+		return 5;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Witch";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+
+	public function equipRandomItems() : void {
+		// TODO: Implement equipRandomItems() method.
+	}
+
+	public function equipRandomArmour() : void {
+		// TODO: Implement equipRandomArmour() method.
+	}
+
+	/**
+	 * @param Item $item
+	 *
+	 * @return bool
+	 */
+	public function checkItemValueToMainHand(Item $item) : bool {
+		// TODO: Implement checkItemValueToMainHand() method.
+	}
+
+	/**
+	 * @param Item $item
+	 *
+	 * @return bool
+	 */
+	public function checkItemValueToOffHand(Item $item) : bool {
+		// TODO: Implement checkItemValueToOffHand() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+class Stray extends Skeleton {
+	public const NETWORK_ID = self::STRAY;
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Stray";
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+class Husk extends Zombie {
+	public const NETWORK_ID = self::HUSK;
+	public $width = 1.031;
+	public $height = 2.0;
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Husk";
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\InventoryHolder;
+use jasonwynn10\VanillaEntityAI\entity\ItemHolderTrait;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class WitherSkeleton extends MonsterBase implements Collidable, InventoryHolder {
+	use CollisionCheckingTrait, ItemHolderTrait;
+	public const NETWORK_ID = self::WITHER_SKELETON;
+	public $width = 0.875;
+	public $height = 2.0;
+
+	public function initEntity() : void {
+		$this->mainHand = ItemFactory::get(Item::STONE_SWORD);
+		parent::initEntity();
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Wither Skeleton";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+
+	public function equipRandomItems() : void {
+		// TODO: Implement equipRandomItems() method.
+	}
+
+	public function equipRandomArmour() : void {
+		// TODO: Implement equipRandomArmour() method.
+	}
+
+	/**
+	 * @param Item $item
+	 *
+	 * @return bool
+	 */
+	public function checkItemValueToMainHand(Item $item) : bool {
+		// TODO: Implement checkItemValueToMainHand() method.
+	}
+
+	/**
+	 * @param Item $item
+	 *
+	 * @return bool
+	 */
+	public function checkItemValueToOffHand(Item $item) : bool {
+		// TODO: Implement checkItemValueToOffHand() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Guardian extends MonsterBase implements Collidable {
+	use CollisionCheckingTrait;
+	public const NETWORK_ID = self::GUARDIAN;
+	public $width = 1.0; //TODO
+	public $height = 1.0;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Guardian";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+class ElderGuardian extends Guardian {
+	public const NETWORK_ID = self::ELDER_GUARDIAN;
+	public $width = 1.9975;
+	public $height = 1.9975;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Elder Guardian";
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Wither extends MonsterBase implements Collidable {
+	use CollisionCheckingTrait;
+	public const NETWORK_ID = self::WITHER;
+	public $width = 0.9;
+	public $height = 3.5;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Wither";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class EnderDragon extends MonsterBase implements Collidable {
+	use CollisionCheckingTrait;
+	public const NETWORK_ID = self::ENDER_DRAGON;
+	public $width = 2.5;
+	public $height = 1.0;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Ender Dragon";
+	}
+
+	/**
+	 * @return Position|null
+	 */
+	public function getTarget() : ?Position {
+		return $this->target;
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Shulker extends MonsterBase implements Collidable {
+	use CollisionCheckingTrait;
+	public const NETWORK_ID = self::SHULKER;
+	public $width = 1.0;
+	public $height = 1.0;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Shulker";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Endermite extends MonsterBase implements Collidable {
+	use CollisionCheckingTrait;
+	public const NETWORK_ID = self::ENDERMITE;
+	public $width = 0.4;
+	public $height = 0.3;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Endermite";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use jasonwynn10\VanillaEntityAI\entity\CreatureBase;
+use jasonwynn10\VanillaEntityAI\entity\MonsterBase;
+use pocketmine\entity\Entity;
+use pocketmine\level\Position;
+use pocketmine\nbt\tag\CompoundTag;
+
+class Vindicator extends MonsterBase implements Collidable {
+	use CollisionCheckingTrait;
+	public const NETWORK_ID = self::VINDICATOR;
+	public $width = 0.6;
+	public $height = 1.95;
+
+	public function initEntity() : void {
+		parent::initEntity(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @param int $tickDiff
+	 *
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		return parent::entityBaseTick($tickDiff); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getDrops() : array {
+		return parent::getDrops(); // TODO: Change the autogenerated stub
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string {
+		return "Vindicator";
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param CompoundTag|null $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnMob(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnMob() method.
+	}
+
+	/**
+	 * @param Position $spawnPos
+	 * @param null|CompoundTag $spawnData
+	 *
+	 * @return null|CreatureBase
+	 */
+	public static function spawnFromSpawner(Position $spawnPos, ?CompoundTag $spawnData = null) : ?CreatureBase {
+		// TODO: Implement spawnFromSpawner() method.
+	}
+
+	/**
+	 * @param Entity $entity
+	 */
+	public function onCollideWithEntity(Entity $entity) : void {
+		// TODO: Implement onCollideWithEntity() method.
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\neutral;
+
+use jasonwynn10\VanillaEntityAI\entity\Collidable;
+use jasonwynn10\VanillaEntityAI\entity\CollisionCheckingTrait;
+use pocketmine\block\Block;
+use pocketmine\entity\Entity;
+use pocketmine\entity\object\ItemEntity;
+use pocketmine\math\AxisAlignedBB;
+
+class Item extends ItemEntity implements Collidable {
+	use CollisionCheckingTrait;
+
+	public function entityBaseTick(int $tickDiff = 1) : bool {
+		foreach($this->level->getNearbyEntities($this->boundingBox->expandedCopy(0.5,0.5,0.5), $this) as $entity) {
+			if($this->pickupDelay === 0 and $entity instanceof Item and $entity->onGround and $this->motion->equals($entity->getMotion()) and $this->item->equals($entity->getItem()) and ($count = $this->item->getCount() + $entity->getItem()->getCount()) <= $this->item->getMaxStackSize()) {
+				$this->item->setCount($count);
+				$entity->flagForDespawn();
+				foreach($this->getViewers() as $player)
+					$this->sendSpawnPacket($player);
+				break;
+			}
+		}
+		return parent::entityBaseTick($tickDiff);
+	}
+
+	public function onCollideWithEntity(Entity $entity) : void {
+		//TODO: minecart interactions
+	}
+
+	public function onCollideWithBlock(Block $block) : void {
+		// TODO: hoppers, pressure plates, tripwire
+	}
+
+	/**
+	 * @param AxisAlignedBB $source
+	 */
+	public function push(AxisAlignedBB $source) : void { // cannot be pushed
+	}
+}<?php
+declare(strict_types=1);
+namespace jasonwynn10\VanillaEntityAI\entity\hostile;
+
+use jasonwynn10\VanillaEntityAI\entity\AgeableTrait;
+use jasonwynn10\VanillaEntityAI\entity\ClimbingTrait;
+use jasonwynn10\VanillaEntityAI\entity\ItemHolderTrait;
+
+class Drowned extends Zombie {
+	use ItemHolderTrait, AgeableTrait, ClimbingTrait;
+	public const NETWORK_ID = self::DROWNED;
+
+	protected function applyGravity() : void {
+		if(!$this->isUnderwater()) {
+			parent::applyGravity();
+		}
+	}
+}

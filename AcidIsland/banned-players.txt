@@ -1,0 +1,4 @@
+# Updated 02/12/18 04:28 by TerminatorVN 1.0.0-Special
+# victim name | ban date | banned by | banned until | reason
+
+golez_vn|2018-02-12 04:28:01 -0900|HeoGM|Forever|Banned by an operator.

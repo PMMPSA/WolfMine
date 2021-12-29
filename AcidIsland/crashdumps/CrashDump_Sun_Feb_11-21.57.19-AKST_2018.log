@@ -1,0 +1,94 @@
+TerminatorVN Crash Dump Sun Feb 11 21:57:19 AKST 2018
+
+Error: syntax error, unexpected ')'
+File: /plugins/SuperBarOver/src/AmGM/BarMan
+Line: 37
+Type: notice
+
+THIS CRASH WAS CAUSED BY A PLUGIN
+
+Code:
+[28]     }
+[29]     public function tip(){
+[30]         foreach($this->getServer()->getOnlinePlayers() as $player){
+[31]             if($player->isOnline()){
+[32] 	            $name = $player->getName();
+[33] 	$money = $this->EconomyAPI->myMoney($player);
+[34] 	$coin = $this->Coin->myCoin($player);
+[35]     $plot = $this->plot->getPlotByPosition($player->getPosition());
+[36] 	$item = $player->getInventory()->getItemInHand();					
+[37]             $lvowner = $this->Level->getCurrentLevel($plot->owner->getName()));
+[38]     $id = $item->getId();					
+[39]     $meta = $item->getDamage();
+[40]     $level = $this->Level->getCurrentLevel($name);
+[41]     #$rank = $this->PurePerms->UserDataManager->getGroup($player->getPlayer());
+[42]             $fac = $this->FactionPro->getPlayerFaction($name);
+[43]                 $t = $this->getServer()->getTicksPerSecond(); 
+[44]  			   $l = $this->getServer()->getTickUsageAverage();
+[45] $tt = $this->getServer()->getMaxPlayers();
+[46] $ol = count($this->getServer()->getOnlinePlayers());
+[47] 	             $message ="\n                                                                          §c|§b❃§a Thông tin: §6".$name." §c❃\n                                                                          §c|\n                                                                          §c|§6➲§b Số người Online: §a".$ol."/".$tt."\n                                                                          §c|\n                                                                          §c|§6➲§b Số tiền hiện tại: §a".$money."\n                                                                          §c|§6➲§b Số WC hiện tại: §a".$coin."\n                                                                          §c|§6➲§b Bang hội gia nhập: §a".$fac."\n                                                                          §c|§6➲§b Mã vật phẩm: §a".$id.":".$meta."\n                                                                          §c|§6➲§b Level hiện tại: §a".$level."\n                                                                          §c|§6➲§b Hòn đảo đang đứng:§a ".$plot."\n                                                                          §c|§6➲§b Level của chủ đảo:§a ".$lvowner."\n                                                                          §c|§6➲§b Tên chủ đảo: §a".$plot->owner."\n                                                                          §c|\n                                                                          §c|§b❃§a Thông tin: §6".$name." §c❃\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+
+Backtrace:
+#0 (): spl_autoload_call(string AmGM\BarMan)
+#1 /src/pocketmine/plugin/FolderPluginLoader(76): class_exists(string AmGM\BarMan, boolean 1)
+#2 /src/pocketmine/plugin/PluginManager(159): pocketmine\plugin\FolderPluginLoader->loadPlugin(string C:\Users\Wc2018\Desktop\WolfMine\plugins\SuperBarOver)
+#3 /src/pocketmine/plugin/PluginManager(346): pocketmine\plugin\PluginManager->loadPlugin(string C:\Users\Wc2018\Desktop\WolfMine\plugins\SuperBarOver, array Array())
+#4 /src/pocketmine/Server(1889): pocketmine\plugin\PluginManager->loadPlugins(string C:\Users\Wc2018\Desktop\WolfMine\plugins\)
+#5 /src/pocketmine/PocketMine(492): pocketmine\Server->__construct(BaseClassLoader object, pocketmine\utils\MainLogger object, string C:\Users\Wc2018\Desktop\WolfMine\, string C:\Users\Wc2018\Desktop\WolfMine\, string C:\Users\Wc2018\Desktop\WolfMine\plugins\)
+
+TerminatorVN version: 0000000000000000000000000000000000000000 [Protocol 113; API 3.0.1]
+uname -a: Windows NT WIN-VCQUKKDO8FH 6.3 build 9600 (Windows Server 2012 R2 Datacenter Edition) AMD64
+PHP version: 7.0.2
+Zend version: 3.0.0
+OS : WINNT, win
+
+Server uptime: 1 seconds
+Number of loaded worlds: 0
+Players online: 0/20
+
+Loaded plugins:
+AntiSpam 1.3 by xBeastMode for API(s) 
+Broadcaster 1.16 by EvolSoft for API(s) Array
+EconomyAPI 2.0.9 by onebone for API(s) Array
+essentialsTP 1.1.0 by LegendsOfMCPE for API(s) Array
+iProtector 3.1b by LDX for API(s) Array
+NoFrameDrop 1 by  for API(s) Array
+SimpleAuth 1.8.1 by PocketMine Team, shoghicp, awzaw for API(s) Array
+Slapper 1.3.5 by jojoe77777 for API(s) Array
+TapToDo 2.2.1 by Falk for API(s) Array
+TimeCommander 2.1 by LDX for API(s) Array
+VoteReward 3.0.2 by LDX for API(s) Array
+WorldFixer 1 by CreeperFace for API(s) 
+Kitt 1 by  for API(s) 
+AuctionHouse 1 by R4KT, Skull3x, Muqsit for API(s) 
+HealthBarFit 1.3 by 1 for API(s) 
+BlockSniper 1.3.4 by BlockHorizons for API(s) Array
+BlockBoost[PTK] 1.0.0 by  for API(s) 
+Buyec 97 by AmGM for API(s) Array
+CustomEnchants[PTK] 0.2 by PTK-KienPham for API(s) Array
+DonRac[PTK] 2 by PTK-KienPham for API(s) Array
+DropParty 1.0.3 by HotshotHD for API(s) Array
+Enchant[PTK] 2 by PTK-KienPham for API(s) 
+Firework[PTK] 1 by PTK-KienPham for API(s) Array
+FlyText[PTK] 1 by PTK-KienPham for API(s) Array
+GenBuckets 1.0.0 by CortexPE for API(s) Array
+WarClan 9.7 by AmGM for API(s) 
+GiftCode 2 by PTK-KienPham for API(s) Array
+GiftCode-Sapling 2.0.1 by AmGM for API(s) Array
+GiftCodeV4 2.0.4 by PTK-KienPham4 for API(s) Array
+GiftCode[PTK] 2 by PTK-KienPham for API(s) Array
+FactionsPro 1.0 rewrite by PTK-KienPham by Array for API(s) Array
+ItemCommand20 1 by Matrix for API(s) Array
+JoinItems 1 by MaxFreeze for API(s) 
+LevelToMine 0.1 by AmGM-Encode for API(s) Array
+ManyWorlds 2.1.0 by aliuly for API(s) 
+MSpawns 1.5 by EvolSoft for API(s) Array
+MuaVIP 1.3 by WolfMine Team for API(s) 
+ConfigNapThe 2.2 by  for API(s) 
+AutoInv[PTK] 1.0.0 by PTK-KienPham for API(s) Array
+PurePerms 1.4.0 by PTK-KienPham for API(s) Array
+REDNoBreak 0.1 by Adam1609 for API(s) 
+AcidWater 1.1.0BETA by PTK-KienPham for API(s) Array
+SETVIP 2.3 by MCPEVN TEAM for API(s) 
+SlapperRotation 1.0.1 by jojoe77777 for API(s) Array

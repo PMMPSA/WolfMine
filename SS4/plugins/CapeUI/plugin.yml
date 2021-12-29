@@ -1,0 +1,55 @@
+---
+name: CapeUI
+author: SuperStulle007 #Translator : ArutaVM (DVK)
+version: 1.0.0
+description: Cape Plugin!
+main: ArutaVM\CapeUI\Main
+api: 3.0.0
+
+commands:
+  cape:
+    description: Chọn Cape!
+    usage: /cape
+
+permissions:
+  cape.all:
+    description: Cape
+    default: op
+    children:
+      cape.cmd:
+        description: Open CapeUI
+        default: op
+      blue_creeper.cape:
+        description: Blue Creeper Cape Perm.
+        default: op
+      enderman.cape:
+        description: Enderman Cape Perm.
+        default: op
+      energy.cape:
+        description: Energie Cape Perm.
+        default: op
+      fire.cape:
+        description: Fire Cape Perm.
+        default: op
+      red_creeper.cape:
+        description: Red Creeper Cape Perm.
+        default: op
+      turtle.cape:
+        description: Turtle Cape Perm.
+        default: op
+      pickaxe.cape:
+        description: Pickaxe Cape Perm.
+        default: op
+      firework.cape:
+        description: Firework Cape Perm.
+        default: op
+      iron_golem.cape:
+        description: Iron-Golem Cape Perm.
+        default: op
+      king.cape:
+        description: King Cape Perm
+        default: op
+      kimochi.cape:
+        description: Special Cape Perm
+        default: op
+...

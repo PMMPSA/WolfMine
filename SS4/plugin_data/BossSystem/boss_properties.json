@@ -1,0 +1,62 @@
+{
+    "zeus": {
+        "health": {
+            "maxHealth_adult": 100,
+            "healthBarLines_adult": 2,
+            "healthPerBarLine_adult": 1,
+            "maxHealth_baby": 50,
+            "useBar_baby": false,
+            "useBar_adult": true
+        },
+        "drops": {
+            "baby": [
+                {
+                    "id": 264,
+                    "damage": 0,
+                    "count": 64,
+                    "enchantments": [],
+                    "tags": {
+                        "name": "",
+                        "lore": ""
+                    }
+                },
+                {
+                    "id": 265,
+                    "damage": 0,
+                    "count": 64,
+                    "enchantments": [],
+                    "tags": {
+                        "name": "",
+                        "lore": ""
+                    }
+                }
+            ],
+            "adult": [
+                {
+                    "id": 264,
+                    "damage": 0,
+                    "count": 64,
+                    "enchantments": [],
+                    "tags": {
+                        "name": "",
+                        "lore": ""
+                    }
+                },
+                {
+                    "id": 265,
+                    "damage": 0,
+                    "count": 64,
+                    "enchantments": [],
+                    "tags": {
+                        "name": "",
+                        "lore": ""
+                    }
+                }
+            ]
+        },
+        "baby": {
+            "spawn": false,
+            "amount": 3
+        }
+    }
+}

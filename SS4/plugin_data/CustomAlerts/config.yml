@@ -1,0 +1,85 @@
+---
+datetime-format: "H:i:s"
+Motd:
+  update-timeout: 1
+  custom: false
+  message: "&e➻ &e &aWelcome to your server! &n&b[{TOTALPLAYERS}/{MAXPLAYERS}]"
+OutdatedClient:
+  custom: true
+  message: "§d•§e VUI LÒNG NÂNG CẤP LÊN PHIÊN BẢN 1.12§d •"
+OutdatedServer:
+  custom: false
+  message: "&e➻ &cOops! Server outdated!"
+WhitelistedServer:
+  custom: true
+  message: "Máy Chủ Đang Bảo Trì"
+FullServer:
+  custom: true
+  message: "§d•§e Đang xếp hàng đợi.. 101"
+FirstJoin:
+  enable: false
+  message: "&e➻ &a{PLAYER}&d Đã Vào Server Lần Đầu Tiên!"
+Join:
+  hide: false
+  custom: true
+  message: "&d•➻ &b{PLAYER}&e Đã Tham Gia Thành Phố!"
+Quit:
+  hide: false
+  custom: true
+  message: "&d➻ &b{PLAYER}&e Đã Chuyển Thành Phố"
+WorldChange:
+  enable: false
+  message: "&e➻ &a{PLAYER}&e Đã Đi Từ &c{ORIGIN}&e Qua &a{TARGET}"
+Death:
+  hide: false
+  custom: false
+  message: "&e➻ &c{PLAYER} Đã Chết!"
+  death-contact-message:
+    hide: true
+    custom: true
+    message: "&e➻ &cOops! {PLAYER} Bị Giết Bởi {BLOCK}"
+  death-projectile-message:
+    hide: true
+    custom: true
+    message: "&e➻ &c{PLAYER} Bị Bắn Lòi Ruột Bởi {KILLER}"
+  death-suffocation-message:
+    hide: true
+    custom: true
+    message: "&e➻ &c{PLAYER} Đã Tắt Thở Chết :("
+  death-fall-message:
+    hide: true
+    custom: true
+    message: "&e➻ &c{PLAYER} Thể Hiện Nhảy Từ Trên Cao Xuống Vỡ Sọ :D"
+  death-fire-message:
+    hide: true
+    custom: true
+    message: "&e➻ &c{PLAYER} Đã Chết Cháy =))"
+  death-on-fire-message:
+    hide: true
+    custom: true
+    message: "&e➻ &c{PLAYER} Đã Chết Cháy :(("
+  death-lava-message:
+    hide: true
+    custom: true
+    message: "&e➻ &c{PLAYER} Trời Nóng Quá Nên Đã Xuống Lava Tắm Rồi Chết =))"
+  death-drowning-message:
+    hide: true
+    custom: true
+    message: "&e➻ &c{PLAYER} Thể Hiện Mình Biết Bơi Rồi Chết Đuối -.-"
+  death-explosion-message:
+    hide: true
+    custom: true
+    message: "&e➻ &c{PLAYER} Nổ Cái Bùm Vỡ Sọ Luôn!"
+  death-void-message:
+    hide: true
+    custom: true
+    message: "&e➻ &c{PLAYER} Té Xuống Vực Sâu!"
+  death-suicide-message:
+    hide: true
+    custom: true
+    message: "&e➻ &c{PLAYER} Đã Tự Sát, Chia Buồn !"
+  death-magic-message:
+    hide: true
+    custom: true
+    message: "&e➻ &c{PLAYER} Bị Chết Vì Một Phép Thuật Kỳ Dị :D"
+...

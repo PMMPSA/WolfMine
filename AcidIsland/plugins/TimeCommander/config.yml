@@ -1,0 +1,72 @@
+# Config file for TimeCommander by LDX;
+
+# List of commands for the plugin to execute at the given times;
+# Command: Command to execute;
+# Time: Amount of time in minutes between command executions;
+Commands:
+  - Command: openwarp acid
+    Time: 1
+  - Command: gencode-tanthu
+    Time: 1440
+  - Command: clearlag all
+    Time: 60
+  - Command: time set 4800
+    Time: 2
+  - Command: weather clear
+    Time: 2
+    Command: save-all
+    Time: 10
+    Command: join tb
+    Time: 600
+    Command: setgperm Guest thamgia.war
+    Time: 600
+    Command: setgperm Admin thamgia.war
+    Time: 600
+    Command: setgperm Builder thamgia.war
+    Time: 600
+    Command: setgperm Police thamgia.war
+    Time: 600
+    Command: setgperm YT thamgia.war
+    Time: 600
+    Command: setgperm V1 thamgia.war
+    Time: 600
+    Command: setgperm V2 thamgia.war
+    Time: 600
+    Command: setgperm V3 thamgia.war
+    Time: 600
+    Command: setgperm V4 thamgia.war
+    Time: 600
+    Command: setgperm V5 thamgia.war
+    Time: 600
+    Command: setgperm V6 thamgia.war
+    Time: 600
+    Command: setgperm V7 thamgia.war
+    Time: 600
+    Command: setgperm V8 thamgia.war
+    Time: 600
+    Command: unsetgperm Guest thamgia.war
+    Time: 660
+    Command: unsetgperm Admin thamgia.war
+    Time: 660
+    Command: unsetgperm Builder thamgia.war
+    Time: 660
+    Command: unsetgperm Police thamgia.war
+    Time: 660
+    Command: unsetgperm YT thamgia.war
+    Time: 660
+    Command: unsetgperm V1 thamgia.war
+    Time: 660
+    Command: unsetgperm V2 thamgia.war
+    Time: 660
+    Command: unsetgperm V3 thamgia.war
+    Time: 660
+    Command: unsetgperm V4 thamgia.war
+    Time: 660
+    Command: unsetgperm V5 thamgia.war
+    Time: 660
+    Command: unsetgperm V6 thamgia.war
+    Time: 660
+    Command: unsetgperm V7 thamgia.war
+    Time: 660
+    Command: unsetgperm V8 thamgia.war
+    Time: 660

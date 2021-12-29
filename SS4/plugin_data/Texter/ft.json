@@ -1,0 +1,36 @@
+{
+    "City": {
+        "GAMEPLAY": {
+            "Xvec": "-4.5",
+            "Yvec": "104.0",
+            "Zvec": "34.6",
+            "TITLE": "§c•§e===§b GAMEPLAY THÀNH PHỐ§e ===§c•",
+            "TEXT": "§eRoleplay: Bạn hãy đi tìm một Plot May Mắn cho mình\n§cSau đó gõ /p claim để tiến hành mua khu đất đó\n§eSau khi mua xong, bạn có quyền khai thác toàn bộ khoáng sản trên mảnh đất\n§eKhai thác xong bạn có 2 lựa chọn: Đem Bán ở Shop hoặc xây dựng nhà cửa cho mình.\n§c*Mọi Thứ Đều Do Bạn Quyết Định Và Tự Bạn Tạo Nên Lối Chơi*\n§e*Hãy giao tiếp với các NPC để hiểu rõ hơn về Server nhé*",
+            "OWNER": "lonmongmanh69"
+        },
+        "COMMAND": {
+            "Xvec": "-4.6",
+            "Yvec": "104.0",
+            "Zvec": "56.4",
+            "TITLE": "§c•§e===§b LINK/COMMAND THÔNG DỤNG §e===§c•",
+            "TEXT": "§c• §ebit.ly/WolfMine§b để gia nhập Group§c •\n§c•§e bit.ly/WolfMine_Vote§b để Vote cho Máy Chủ \u0026 nhận 1.000.000VNĐ §c•\n§c•§e /muavang§b để tiến hành nạp thẻ (Khuyến Mãi 30%) §c•",
+            "OWNER": "lonmongmanh69"
+        },
+        "LUUY": {
+            "Xvec": "-26.5",
+            "Yvec": "103.0",
+            "Zvec": "34.5",
+            "TITLE": "§c•§e===§b LƯU Ý §e===§c•",
+            "TEXT": "§eThùng Rác là các Block có màu xanh\n§cPhía trên có nắp trắng\n§eĐược đặt xung quanh Thành Phố",
+            "OWNER": "lonmongmanh69"
+        },
+        "TB": {
+            "Xvec": "1.4",
+            "Yvec": "102.0",
+            "Zvec": "29.4",
+            "TITLE": "Khu Vực",
+            "TEXT": "Tổ Chức Sự Kiện",
+            "OWNER": "lonmongmanh69"
+        }
+    }
+}

@@ -1,0 +1,6 @@
+name: WingParticle
+api: [3.0.0-ALPHA7, 3.0.0-ALPHA8, 3.0.0-ALPHA9]
+version: x.x.x-InDev
+load: POSTWORLD
+main: robske_110\PlayerParticles\PlayerParticles
+author: TMK

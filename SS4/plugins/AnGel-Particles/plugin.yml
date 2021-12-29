@@ -1,0 +1,15 @@
+name: Particles
+main: Angel\Main
+version: 1.3
+api: [3.0.1]
+author: "vk.com/eddir"
+commands:
+  op-cmd-getname():
+    default: false
+    description: Get the fire wings
+    permission: firewings.command.angel
+    usage: /angel
+permissions:
+  firewings.command.angel:
+    default: op
+    description: Permission for fire wings

@@ -1,0 +1,4 @@
+# Updated 02/12/18 04:38 by TerminatorVN 1.0.0-Special
+# victim name | ban date | banned by | banned until | reason
+
+14.168.65.54|2018-02-12 04:38:01 -0900|HeoGM|Forever|say goodbye

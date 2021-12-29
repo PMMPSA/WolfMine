@@ -1,0 +1,4 @@
+# Updated 02/12/18 00:43 by TerminatorVN 1.0.0-Special
+# victim name | ban date | banned by | banned until | reason
+
+-7246490141521510127|2018-02-12 00:43:15 -0900|HeoGM|Forever|Banned by an operator.

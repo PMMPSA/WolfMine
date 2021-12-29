@@ -1,0 +1,11 @@
+name: MuaVIP
+version: 1.3
+main: MV\Capi: 2.0.0
+author: WolfMine Teamcommands:
+ muavip:
+  permisson: muavip.command.mua
+permissions:
+ muavip:
+  children:
+   muavip.command.mua:
+   default: true

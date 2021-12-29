@@ -1,0 +1,1209 @@
+<?php
+
+/**
+ * // English
+ *
+ * Texter, the display FloatingTextPerticle plugin for PocketMine-MP
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * This software is distributed under "MIT license".
+ * You should have received a copy of the MIT license
+ * along with this program.  If not, see
+ * < https://opensource.org/licenses/mit-license >.
+ *
+ * ---------------------------------------------------------------------
+ * // 日本語
+ *
+ * TexterはPocketMine-MP向けのFloatingTextPerticleを表示するプラグインです
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * このソフトウェアは"MITライセンス"下で配布されています。
+ * あなたはこのプログラムと共にMITライセンスのコピーを受け取ったはずです。
+ * 受け取っていない場合、下記のURLからご覧ください。
+ * < https://opensource.org/licenses/mit-license >
+ */
+
+declare(strict_types = 1);
+
+namespace tokyo\pmmp\Texter;
+
+use pocketmine\event\Listener;
+use pocketmine\plugin\PluginBase;
+use pocketmine\utils\TextFormat;
+use pocketmine\utils\VersionString;
+use tokyo\pmmp\Texter\libs\tokyo\pmmp\libform\FormApi;
+use tokyo\pmmp\Texter\command\TxtCommand;
+use tokyo\pmmp\Texter\data\ConfigData;
+use tokyo\pmmp\Texter\data\FloatingTextData;
+use tokyo\pmmp\Texter\data\UnremovableFloatingTextData;
+use tokyo\pmmp\Texter\i18n\Lang;
+use tokyo\pmmp\Texter\task\CheckUpdateTask;
+use tokyo\pmmp\Texter\task\PrepareTextsTask;
+
+/**
+ * Class Core
+ * @package tokyo\pmmp\Texter
+ */
+class Core extends PluginBase implements Listener {
+
+  /** @var string */
+  public const PREFIX = "[Texter] ";
+
+  /** @var Core */
+  private static $core;
+  /** @var bool */
+  private static $isUpdater = false;
+
+  public function onLoad(): void {
+    self::$core = $this;
+    $this
+      ->checkOldDirectories()// Rename 2.x.y series files
+      ->loadResources()
+      ->loadLanguage()
+      ->registerCommands()
+      ->prepareTexts()
+      ->checkUpdate();
+  }
+
+  public function onEnable(): void {
+    if ($this->checkPackaged()) {
+      FormApi::register($this);
+      $listener = new EventListener;
+      $this->getServer()->getPluginManager()->registerEvents($listener, $this);
+    }else {
+      $this->getServer()->getPluginManager()->disablePlugin($this);
+    }
+  }
+
+  private function checkOldDirectories(): self {
+    $dir = $this->getDataFolder();
+    if (file_exists("{$dir}crfts.json")) {
+      self::$isUpdater = true;
+      rename("{$dir}crfts.json", "{$dir}uft.json");
+    }
+    if (file_exists("{$dir}fts.json")) {
+      self::$isUpdater = true;
+      rename("{$dir}fts.json", "{$dir}ft.json");
+    }
+    return $this;
+  }
+
+  private function loadResources(): self {
+    $dir = $this->getDataFolder();
+    new ConfigData($this, $dir, "config.yml");
+    new UnremovableFloatingTextData($this, $dir, "uft.json");
+    new FloatingTextData($this, $dir, "ft.json");
+    return $this;
+  }
+
+  private function loadLanguage(): self {
+    new Lang($this);
+    $cl = Lang::fromConsole();
+    $message = $cl->translateString("language.selected", [
+      $cl->getName(),
+      $cl->getLang()
+    ]);
+    $this->getLogger()->info(TextFormat::GREEN . $message);
+    return $this;
+  }
+
+  private function registerCommands(): self {
+    if ($canUse = ConfigData::make()->canUseCommands()) {
+      $map = $this->getServer()->getCommandMap();
+      $commands = [
+        new TxtCommand
+      ];
+      $map->registerAll($this->getName(), $commands);
+      $message = Lang::fromConsole()->translateString("on.load.commands.on");
+    }else {
+      $message = Lang::fromConsole()->translateString("on.load.commands.off");
+    }
+    $this->getLogger()->info(($canUse ? TextFormat::GREEN : TextFormat::RED) . $message);
+    return $this;
+  }
+
+  private function prepareTexts(): self {
+    $prepare = new PrepareTextsTask;
+    $this->getScheduler()->scheduleDelayedRepeatingTask($prepare, 20, 1);
+    return $this;
+  }
+
+  private function checkUpdate(): self {
+    if (ConfigData::make()->checkUpdate()) {
+      try {
+        $this->getServer()->getAsyncPool()->submitTask(new CheckUpdateTask);
+      } catch (\Exception $ex) {
+        $this->getLogger()->warning($ex->getMessage());
+      }
+    }
+    return $this;
+  }
+
+  public function compareVersion(bool $success, ?VersionString $new = null, string $url = "") {
+    $cl = Lang::fromConsole();
+    if ($success) {
+      $current = new VersionString($this->getDescription()->getVersion());
+      switch ($current->compare($new)) {
+        case -1:// new: older
+          $message = $cl->translateString("on.load.version.dev");
+          $this->getLogger()->warning($message);
+          break;
+
+        case 0:// same
+          $message = $cl->translateString("on.load.update.nothing", [
+            $current->getFullVersion()
+          ]);
+          $this->getLogger()->notice($message);
+          break;
+
+        case 1:// new: newer
+          $messages[] = $cl->translateString("on.load.update.available.1", [
+            $new->getFullVersion(),
+            $current->getFullVersion()
+          ]);
+          $messages[] = $cl->translateString("on.load.update.available.2");
+          $messages[] = $cl->translateString("on.load.update.available.3", [
+            $url
+          ]);
+          foreach ($messages as $message) $this->getLogger()->notice($message);
+      }
+    }else {
+      $message = $cl->translateString("on.load.update.offline");
+      $this->getLogger()->notice($message);
+    }
+  }
+
+  private function checkPackaged(): bool {
+    $cl = Lang::fromConsole();
+    if ($this->isPhar()) {
+      if (class_exists("\\tokyo\\pmmp\\Texter\\libs\\tokyo\\pmmp\\libform\\FormApi")) {
+        return true;// PoggitCI
+      }else {
+        $message = $cl->translateString("error.on.enable.not.packaged");
+        $this->getLogger()->critical($message);
+        return false;
+      }
+    }else {
+      if ($this->getServer()->getPluginManager()->getPlugin("DEVirion") !== null) {
+        if (class_exists("\\tokyo\\pmmp\\libform\\FormApi")) {
+          return true;// developer
+        }else {
+          $message = $cl->translateString("error.on.enable.not.found.libform");
+          $this->getLogger()->critical($message);
+          return false;
+        }
+      }else {
+        $message = $cl->translateString("error.on.enable.not.packaged");
+        $this->getLogger()->critical($message);
+        return false;
+      }
+    }
+  }
+
+  /**
+   * @return bool
+   */
+  public static function isUpdater(): bool {
+    return self::$isUpdater;
+  }
+
+  /**
+   * @return Core
+   */
+  public static function get(): Core {
+    return self::$core;
+  }
+}<?php
+
+/**
+ * // English
+ *
+ * Texter, the display FloatingTextPerticle plugin for PocketMine-MP
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * This software is distributed under "MIT license".
+ * You should have received a copy of the MIT license
+ * along with this program.  If not, see
+ * < https://opensource.org/licenses/mit-license >.
+ *
+ * ---------------------------------------------------------------------
+ * // 日本語
+ *
+ * TexterはPocketMine-MP向けのFloatingTextPerticleを表示するプラグインです
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * このソフトウェアは"MITライセンス"下で配布されています。
+ * あなたはこのプログラムと共にMITライセンスのコピーを受け取ったはずです。
+ * 受け取っていない場合、下記のURLからご覧ください。
+ * < https://opensource.org/licenses/mit-license >
+ */
+
+declare(strict_types = 1);
+
+namespace tokyo\pmmp\Texter\data;
+
+use pocketmine\plugin\PluginBase;
+use pocketmine\utils\Config;
+use tokyo\pmmp\Texter\Core;
+use tokyo\pmmp\Texter\i18n\Lang;
+
+/**
+ * Class ConfigData
+ * @package tokyo\pmmp\Texter\data
+ */
+class ConfigData extends Config implements Data {
+
+  /** @var ConfigData */
+  private static $instance;
+
+  public function __construct(PluginBase $plugin, string $path, string $file) {
+    $plugin->saveResource($file, Core::isUpdater());
+    parent::__construct($path.$file, Config::YAML);
+    self::$instance = $this;
+  }
+
+  /**
+   * @return string
+   */
+  public function getLocale(): string {
+    return strtolower($this->get("locale", Lang::FALLBACK));
+  }
+
+  /**
+   * @return bool
+   */
+  public function checkUpdate(): bool {
+    return (bool) $this->get("check.update", true);
+  }
+
+  /**
+   * @return bool
+   */
+  public function canUseCommands(): bool {
+    return (bool) $this->get("can.use.commands", true);
+  }
+
+  /**
+   * @param string $text
+   * @return bool
+   */
+  public function checkCharLimit(string $text): bool {
+    $limit = $this->getCharLimit();
+    if ($limit === -1) {
+      return true;
+    }else {
+      $length = mb_strlen($text);
+      return $limit >= $length;
+    }
+  }
+
+  /**
+   * @return int
+   */
+  public function getCharLimit(): int {
+    return (int) $this->get("char", -1);
+  }
+
+  /**
+   * @param string $text
+   * @return bool
+   */
+  public function checkFeedLimit(string $text): bool {
+    $limit = $this->getFeedLimit();
+    if ($limit === -1)
+      return true;
+    $feed = mb_substr_count($text, "#");
+    return $limit >= $feed;
+  }
+
+  /**
+   * @return int
+   */
+  public function getFeedLimit(): int {
+    return (int) $this->get("feed", -1);
+  }
+
+  /**
+   * @param string $levelName
+   * @return bool
+   */
+  public function checkWorldLimit(string $levelName): bool {
+    if ($this->exists("world")) {
+      $limited = $this->get("world", []);
+      if (is_array($limited)) {
+        $flip = array_flip($limited);
+        return !isset($flip[$levelName]);
+      }
+      if (is_string($limited)) {
+        return $limited !== $levelName;
+      }
+    }
+    return true;// isn't limited
+  }
+
+  /**
+   * @return ConfigData
+   */
+  public static function make(): ConfigData {
+    return self::$instance;
+  }
+}<?php
+
+/**
+ * // English
+ *
+ * Texter, the display FloatingTextPerticle plugin for PocketMine-MP
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * This software is distributed under "MIT license".
+ * You should have received a copy of the MIT license
+ * along with this program.  If not, see
+ * < https://opensource.org/licenses/mit-license >.
+ *
+ * ---------------------------------------------------------------------
+ * // 日本語
+ *
+ * TexterはPocketMine-MP向けのFloatingTextPerticleを表示するプラグインです
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * このソフトウェアは"MITライセンス"下で配布されています。
+ * あなたはこのプログラムと共にMITライセンスのコピーを受け取ったはずです。
+ * 受け取っていない場合、下記のURLからご覧ください。
+ * < https://opensource.org/licenses/mit-license >
+ */
+
+declare(strict_types = 1);
+
+namespace tokyo\pmmp\Texter\data;
+
+/**
+ * Interface Data
+ * @package tokyo\pmmp\Texter\data
+ */
+interface Data {
+
+  /** @var string */
+  public const KEY_NAME = "NAME";
+  public const KEY_LEVEL = "LEVEL";
+  public const KEY_X = "Xvec";
+  public const KEY_Y = "Yvec";
+  public const KEY_Z = "Zvec";
+  public const KEY_TITLE = "TITLE";
+  public const KEY_TEXT = "TEXT";
+
+  /** @var int */
+  public const JSON_OPTIONS = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+
+  /**
+   * @return Data
+   */
+  public static function make();
+}# Texter config file
+
+# set language (en_US or ja_JP)
+locale: en_US
+
+# When set to true, update notification is displayed at startup
+check.update: true
+
+# If you want to disable the command, please set it to false
+can.use.commands: true
+
+# To limit the number of characters, set it to that, if unnecessary, set it to -1
+char: 50
+
+# To limit the number of line feeds, set it to that, if unnecessary, set it to -1
+feed: 3
+
+# Please specify the world name when setting the world where text can not be set up
+world:
+  # ex)
+  # - world
+  # - world-2
+<?php
+
+/**
+ * // English
+ *
+ * Texter, the display FloatingTextPerticle plugin for PocketMine-MP
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * This software is distributed under "MIT license".
+ * You should have received a copy of the MIT license
+ * along with this program.  If not, see
+ * < https://opensource.org/licenses/mit-license >.
+ *
+ * ---------------------------------------------------------------------
+ * // 日本語
+ *
+ * TexterはPocketMine-MP向けのFloatingTextPerticleを表示するプラグインです
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * このソフトウェアは"MITライセンス"下で配布されています。
+ * あなたはこのプログラムと共にMITライセンスのコピーを受け取ったはずです。
+ * 受け取っていない場合、下記のURLからご覧ください。
+ * < https://opensource.org/licenses/mit-license >
+ */
+
+declare(strict_types = 1);
+
+namespace tokyo\pmmp\Texter\data;
+
+use pocketmine\plugin\Plugin;
+use pocketmine\utils\Config;
+
+/**
+ * Class UnremovableFloatingTextData
+ * @package tokyo\pmmp\Texter\data
+ */
+class UnremovableFloatingTextData extends Config implements Data {
+
+  /** @var UnremovableFloatingTextData */
+  private static $instance;
+
+  public function __construct(Plugin $plugin, string $path, string $file) {
+    $plugin->saveResource($file);
+    parent::__construct($path.$file, Config::JSON);
+    $this->enableJsonOption(Data::JSON_OPTIONS);
+    self::$instance = $this;
+  }
+
+  public function getData(): array {
+    $data = [];
+    $ufts = $this->getAll();
+    foreach ($ufts as $levelName => $texts) {
+      foreach ($texts as $textName => $val) {
+        $data[] = [
+          Data::KEY_NAME => (string) $textName,
+          Data::KEY_LEVEL => (string) $levelName,
+          Data::KEY_X => (float) $val[Data::KEY_X],
+          Data::KEY_Y => (float) $val[Data::KEY_Y],
+          Data::KEY_Z => (float) $val[Data::KEY_Z],
+          Data::KEY_TITLE => (string) $val[Data::KEY_TITLE],
+          Data::KEY_TEXT => (string) $val[Data::KEY_TEXT]
+        ];
+      }
+    }
+    return $data;
+  }
+
+  /**
+   * @return UnremovableFloatingTextData
+   */
+  public static function make(): UnremovableFloatingTextData {
+    return self::$instance;
+  }
+}{
+  "world": {
+    "TextName1": {
+      "Xvec": 128,
+      "Yvec": 90,
+      "Zvec": 128,
+      "TITLE": "Title",
+      "TEXT": "Text(New line with #)"
+    },
+    "TextName2": {
+      "Xvec": 128,
+      "Yvec": 90,
+      "Zvec": 130,
+      "TITLE": "Title",
+      "TEXT": "Text(New line with #)"
+    },
+    "TextName3": {
+      "Xvec": 128,
+      "Yvec": 90,
+      "Zvec": 132,
+      "TITLE": "Title",
+      "TEXT": "Text(New line with #)"
+    }
+  }
+}
+<?php
+
+/**
+ * // English
+ *
+ * Texter, the display FloatingTextPerticle plugin for PocketMine-MP
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * This software is distributed under "MIT license".
+ * You should have received a copy of the MIT license
+ * along with this program.  If not, see
+ * < https://opensource.org/licenses/mit-license >.
+ *
+ * ---------------------------------------------------------------------
+ * // 日本語
+ *
+ * TexterはPocketMine-MP向けのFloatingTextPerticleを表示するプラグインです
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * このソフトウェアは"MITライセンス"下で配布されています。
+ * あなたはこのプログラムと共にMITライセンスのコピーを受け取ったはずです。
+ * 受け取っていない場合、下記のURLからご覧ください。
+ * < https://opensource.org/licenses/mit-license >
+ */
+
+declare(strict_types = 1);
+
+namespace tokyo\pmmp\Texter\data;
+
+use pocketmine\level\Level;
+use pocketmine\plugin\Plugin;
+use pocketmine\utils\Config;
+use tokyo\pmmp\Texter\text\FloatingText;
+
+/**
+ * Class FloatingTextData
+ * @package tokyo\pmmp\Texter\data
+ */
+class FloatingTextData extends Config implements Data {
+
+  /** @var string */
+  public const KEY_OWNER = "OWNER";
+
+  /** @var FloatingTextData */
+  private static $instance;
+
+  public function __construct(Plugin $plugin, string $path, string $file) {
+    $plugin->saveResource($file);
+    parent::__construct($path.$file, Config::JSON);
+    $this->enableJsonOption(Data::JSON_OPTIONS);
+    self::$instance = $this;
+  }
+
+  public function saveFtChange(FloatingText $ft): bool {
+    $levelName = $ft->level->getFolderName();
+    $levelFts = $this->get($levelName, []);
+    if (!empty($levelFts)) {
+      $levelFts[$ft->getName()] = $ft->format();
+      $this->set($levelName, $levelFts);
+    }else {
+      $this->set($levelName, [$ft->getName() => $ft->format()]);
+    }
+    $this->save();
+    return true;
+  }
+
+  public function removeFtsByLevel(Level $level): bool {
+    return $this->removeFtsByLevelName($level->getFolderName());
+  }
+
+  public function removeFtsByLevelName(string $levelName): bool {
+    if ($bool = $this->exists($levelName)) {
+      $this->remove($levelName);
+      $this->save();
+    }
+    return $bool;
+  }
+
+  public function removeFtByLevel(Level $level, string $name): void {
+    $this->removeFtByLevelName($level->getFolderName(), $name);
+  }
+
+  public function removeFtByLevelName(string $levelName, string $name): void {
+    if ($bool = $this->exists($levelName)) {
+      if ($bool) {
+        $levelFts = $this->get($levelName);
+        unset($levelFts[$name]);
+        $this->set($levelName, $levelFts);
+        $this->save();
+      }
+    }
+  }
+
+  public function getData(): array {
+    $data = [];
+    $fts = $this->getAll();
+    foreach ($fts as $levelName => $texts) {
+      foreach ($texts as $textName => $val) {
+        $data[] = [
+          Data::KEY_NAME => (string) $textName,
+          Data::KEY_LEVEL => (string) $levelName,
+          Data::KEY_X => (float) $val[Data::KEY_X],
+          Data::KEY_Y => (float) $val[Data::KEY_Y],
+          Data::KEY_Z => (float) $val[Data::KEY_Z],
+          Data::KEY_TITLE => (string) $val[Data::KEY_TITLE],
+          Data::KEY_TEXT => (string) $val[Data::KEY_TEXT],
+          FloatingTextData::KEY_OWNER => (string) $val[FloatingTextData::KEY_OWNER]
+        ];
+      }
+    }
+    return $data;
+  }
+
+  /**
+   * @return FloatingTextData
+   */
+  public static function make(): FloatingTextData {
+    return self::$instance;
+  }
+}{
+}
+<?php
+
+/**
+ * // English
+ *
+ * Texter, the display FloatingTextPerticle plugin for PocketMine-MP
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * This software is distributed under "MIT license".
+ * You should have received a copy of the MIT license
+ * along with this program.  If not, see
+ * < https://opensource.org/licenses/mit-license >.
+ *
+ * ---------------------------------------------------------------------
+ * // 日本語
+ *
+ * TexterはPocketMine-MP向けのFloatingTextPerticleを表示するプラグインです
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * このソフトウェアは"MITライセンス"下で配布されています。
+ * あなたはこのプログラムと共にMITライセンスのコピーを受け取ったはずです。
+ * 受け取っていない場合、下記のURLからご覧ください。
+ * < https://opensource.org/licenses/mit-license >
+ */
+
+declare(strict_types = 1);
+
+namespace tokyo\pmmp\Texter\i18n;
+
+use tokyo\pmmp\Texter\Core;
+use tokyo\pmmp\Texter\data\ConfigData;
+
+/**
+ * Class Lang
+ * @package tokyo\pmmp\Texter\language
+ */
+class Lang {
+
+  /** @var string */
+  public const DIR = "language";
+  public const FALLBACK = "en_us";
+
+  /** @var Lang */
+  private static $instance;
+  /** @var Language[] */
+  private static $language;
+  /** @var string */
+  private static $consoleLang = self::FALLBACK;
+  /** @var string[] */
+  private static $available = [
+    "en_us",
+    "ja_jp"
+  ];
+
+  public function __construct(Core $core) {
+    self::$instance = $this;
+    self::$consoleLang = ConfigData::make()->getLocale();
+    foreach (self::$available as $lang) {
+      $core->saveResource(Lang::DIR . DIRECTORY_SEPARATOR . $lang . ".ini", true);// replace by v3.0.x or v3.1.x
+      $this->register(new Language($lang));
+    }
+  }
+
+  /**
+   * @param Language $language
+   * @return Lang
+   */
+  public function register(Language $language): self {
+    self::$language[$language->getLang()] = $language;
+    return self::$instance;
+  }
+
+  /**
+   * @param string $lang
+   * @return Language
+   */
+  public static function fromLocale(string $lang): Language {
+    $lLang = strtolower($lang);
+    if (isset(self::$language[$lLang])) {
+      return self::$language[$lLang];
+    }else {
+      return self::$language[self::FALLBACK];
+    }
+  }
+
+  /**
+   * @return Language
+   */
+  public static function fromConsole(): Language {
+    return self::fromLocale(self::$consoleLang);
+  }
+
+  /**
+   * @return Lang
+   */
+  public static function get(): self {
+    return self::$instance;
+  }
+}; Language file compatible with Minecraft: Bedrock Edition identifiers
+;
+; A message doesn't need to be there to be shown correctly on the client.
+; Only messages shown in Texter itself need to be here.
+; This language translated by @fuyutsuki
+language.name=English
+language.selected=Selected {%0} ({%1}) as the base language
+
+on.load.commands.on=Commands was set to enabled
+on.load.commands.off=Commands was set to disabled
+on.load.version.dev=This version is under development. There may be many fatal bugs.
+on.load.update.nothing=Latest version: v{%0} / No update needed
+on.load.update.available.1=Latest version: v{%0} / Current version: v{%1}
+on.load.update.available.2=Update is available
+on.load.update.available.3=URL: {%0}
+on.load.update.offline=Because there was a problem with the network, we could not confirm whether there was an update.
+
+on.enable.prepared=Uft: {%0} texts / Ft: {%1} texts have been generated
+on.enable.message={%0} is Enabled
+
+command.txt.description=Manipulate floating texts
+command.txt.usage=/txt <a(dd)|e(dit)|m(ove)|r(emove)|l(ist)>
+command.txt.usage.indent=Please insert §6\# §fif you want line break.
+command.txt.add=/txt a(dd)
+command.txt.add.success=FloatingText: {%0} created
+command.txt.edit=/txt e(dit)
+command.txt.edit.success=FloatingText: edited {%1} on {%0}
+command.txt.move=/txt m(ove)
+command.txt.move.success=FloatingText: moved {%0} to {%1}
+command.txt.remove=/txt r(emove)
+command.txt.remove.success=FloatingText: deleted {%0}
+
+form.ftname=FloatingText name
+form.ftname.unique=FloatingText name(unique)
+form.title=Title
+form.text=Text
+form.add.description=Add a FloatingText with the specified name, title, text to the world.
+form.edit.description=You can edit the title or text of FloatingText with the specified name.
+form.edit.type=Parts to edit
+form.edit.content=Edit contents
+form.move.description=Move the FloatingText with the specified name to the position where you are at.
+form.move.here=your position
+form.remove.description=Delete the FloatingText with the specified name
+form.list.description.1=Lists editable FloatingTexts within 10 blocks of straight line distance from yourself.\nIf not, nothing is displayed.
+form.list.description.2=Specified FloatingText name: {%0}\nPlease select the operation to do for this.
+
+error.on.enable.not.packaged=Please use the phar file downloaded from PoggitCI (https://poggit.pmmp.io/p/Texter).
+error.on.enable.not.found.libform=Can't find the libform in the virions folder. Please download libform and install it correctly.
+error.ftname.not.specified=A FloatingText name is not specified
+error.ftname.exists=A FloatingText with the specified name: {%0} already exists.
+error.ftname.not.exists=No FloatingText with the specified name: {%0} does not exist.
+error.config.limit.char=The number of characters of FloatingText must be less than or equal to {%0}.
+error.config.limit.feed=The number of line feeds of FloatingText must be {%0} times or less.
+error.config.limit.world=World: {%0} is set to disable editing of FloatingText.
+error.permission=You do not have the necessary permission to edit FloatingText.
+error.console=Please run from inside the game
+error.player=Please execute from the console
+<?php
+
+/**
+ * // English
+ *
+ * Texter, the display FloatingTextPerticle plugin for PocketMine-MP
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * This software is distributed under "MIT license".
+ * You should have received a copy of the MIT license
+ * along with this program.  If not, see
+ * < https://opensource.org/licenses/mit-license >.
+ *
+ * ---------------------------------------------------------------------
+ * // 日本語
+ *
+ * TexterはPocketMine-MP向けのFloatingTextPerticleを表示するプラグインです
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * このソフトウェアは"MITライセンス"下で配布されています。
+ * あなたはこのプログラムと共にMITライセンスのコピーを受け取ったはずです。
+ * 受け取っていない場合、下記のURLからご覧ください。
+ * < https://opensource.org/licenses/mit-license >
+ */
+
+declare(strict_types = 1);
+
+namespace tokyo\pmmp\Texter\i18n;
+
+use pocketmine\lang\BaseLang;
+use tokyo\pmmp\Texter\Core;
+
+/**
+ * Class Language - simple wrapper for BaseLang
+ * @package tokyo\pmmp\Texter\language
+ */
+class Language extends BaseLang {
+
+  public function __construct(string $lang) {
+    $path = Core::get()->getDataFolder().Lang::DIR.DIRECTORY_SEPARATOR;
+    parent::__construct($lang, $path, Lang::FALLBACK);
+  }
+}; Language file compatible with Minecraft: Bedrock Edition identifiers
+;
+; A message doesn't need to be there to be shown correctly on the client.
+; Only messages shown in Texter itself need to be here.
+; This language translated by @fuyutsuki
+language.name=日本語
+language.selected={%0} ({%1}) が言語に設定されました
+
+on.load.commands.on=コマンドは使用可能に設定されました
+on.load.commands.off=コマンドは使用不能に設定されました
+on.load.version.dev=このバージョンは開発途中です。多くの致命的バグが存在する可能性があります
+on.load.update.nothing=最新バージョン: v{%0} / アップデートは必要ありません
+on.load.update.available.1=最新バージョン: v{%0} / 現在のバージョン: v{%1}
+on.load.update.available.2=アップデートが利用可能です
+on.load.update.available.3=URL: {%0}
+on.load.update.offline=ネットワークに問題があるため、更新があるか確認できませんでした
+
+on.enable.prepared=Uft: {%0} 個 / Ft: {%1} 個を生成しました
+on.enable.message={%0} が有効になりました
+
+command.txt.description=浮き文字を操作します
+command.txt.usage=/txt <a(dd)|e(dit)|m(ove)|r(emove)|l(ist)>
+command.txt.usage.indent=改行をしたい場合は §6\# §fを挿入してください
+command.txt.add=/txt a(dd)
+command.txt.add.success=浮き文字: {%0} を作成しました
+command.txt.edit=/txt e(dit)
+command.txt.edit.success=浮き文字: {%0} の {%1} を変更しました
+command.txt.move=/txt m(ove)
+command.txt.move.success=浮き文字: {%0} を {%1} に移動しました
+command.txt.remove=/txt r(emove)
+command.txt.remove.success=浮き文字: {%0} を削除しました
+
+form.ftname=浮き文字名
+form.ftname.unique=浮き文字名(一意)
+form.title=タイトル
+form.text=テキスト
+form.add.description=指定した名前、タイトル、テキストを持つ浮き文字をワールドに追加します。
+form.edit.description=指定した名前を持つ浮き文字のタイトルかテキストを編集できます。
+form.edit.type=編集する部位
+form.edit.content=編集内容
+form.move.description=自分のいる位置に指定した名前の浮き文字を移動させます。
+form.move.here=あなたの位置
+form.remove.description=指定した名前の浮き文字を削除します
+form.list.description.1=自分から直線距離10ブロック以内の編集可能な浮き文字をリスト表示します。\n存在しない場合は何も表示されません。
+form.list.description.2=指定された浮き文字名: {%0}\nこの浮き文字に行う操作を選択して下さい。
+
+error.on.enable.not.packaged=PoggitCI(https://poggit.pmmp.io/p/Texter)からダウンロードしたpharファイルをお使いください。
+error.on.enable.not.found.libform=virionsフォルダにlibformが見つかりません。libformをダウンロードし、正しく導入してください。
+error.ftname.not.specified=浮き文字の名前が指定されていません
+error.ftname.exists=指定された名前: {%0} の浮き文字が既に存在します。
+error.ftname.not.exists=指定された名前: {%0} の浮き文字は存在しません。
+error.config.limit.char=浮き文字の文字数は {%0} 以下である必要があります。
+error.config.limit.feed=浮き文字の改行数は {%0} 回以下である必要があります。
+error.config.limit.world=ワールド: {%0} では浮き文字の編集が不可能に設定されています。
+error.permission=浮き文字の編集に必要な権限がありません
+error.console=ゲーム内から実行してください
+error.player=コンソールから実行してください
+<?php
+
+/**
+ * // English
+ *
+ * Texter, the display FloatingTextPerticle plugin for PocketMine-MP
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * This software is distributed under "MIT license".
+ * You should have received a copy of the MIT license
+ * along with this program.  If not, see
+ * < https://opensource.org/licenses/mit-license >.
+ *
+ * ---------------------------------------------------------------------
+ * // 日本語
+ *
+ * TexterはPocketMine-MP向けのFloatingTextPerticleを表示するプラグインです
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * このソフトウェアは"MITライセンス"下で配布されています。
+ * あなたはこのプログラムと共にMITライセンスのコピーを受け取ったはずです。
+ * 受け取っていない場合、下記のURLからご覧ください。
+ * < https://opensource.org/licenses/mit-license >
+ */
+
+declare(strict_types = 1);
+
+namespace tokyo\pmmp\Texter\command;
+
+use pocketmine\command\Command;
+use pocketmine\command\CommandSender;
+use pocketmine\Player;
+use pocketmine\utils\TextFormat;
+use tokyo\pmmp\Texter\command\sub\TxtAdd;
+use tokyo\pmmp\Texter\command\sub\TxtEdit;
+use tokyo\pmmp\Texter\command\sub\TxtList;
+use tokyo\pmmp\Texter\command\sub\TxtMove;
+use tokyo\pmmp\Texter\command\sub\TxtRemove;
+use tokyo\pmmp\Texter\Core;
+use tokyo\pmmp\Texter\data\ConfigData;
+use tokyo\pmmp\Texter\i18n\Lang;
+
+/**
+ * Class TxtCommand
+ * @package tokyo\pmmp\Texter\command
+ */
+class TxtCommand extends Command {
+
+  public function __construct() {
+    $this->setPermission("texter.command.txt");
+    $cl = Lang::fromConsole();
+    $description = $cl->translateString("command.txt.description");
+    $usage = $cl->translateString("command.txt.usage");
+    parent::__construct("txt", $description, $usage);
+  }
+
+  public function execute(CommandSender $sender, string $commandLabel, array $args) {
+    if (Core::get()->isDisabled() || !$this->testPermission($sender)) return false;
+    if ($sender instanceof Player) {
+      $cd = ConfigData::make();
+      $lang = Lang::fromLocale($sender->getLocale());
+      if ($cd->checkWorldLimit($sender->getLevel()->getName())) {
+        if (isset($args[0])) {
+          switch ($args[0]) {
+            case "add":
+            case "a":
+              new TxtAdd($sender);
+              break;
+
+            case "edit":
+            case "e":
+              new TxtEdit($sender);
+              break;
+
+            case "move":
+            case "m":
+              new TxtMove($sender);
+              break;
+
+            case "remove":
+            case "r":
+              new TxtRemove($sender);
+              break;
+
+            case "list":
+            case "l":
+              new TxtList($sender);
+              break;
+
+            default:
+              $message = $lang->translateString("command.txt.usage");
+              $sender->sendMessage(Core::PREFIX . $message);
+              break;
+          }
+        }else {
+          $message = $lang->translateString("command.txt.usage");
+          $sender->sendMessage(Core::PREFIX . $message);
+        }
+      }else {
+        $message = $lang->translateString("error.config.limit.world", [
+          $sender->getLevel()->getName()
+        ]);
+        $sender->sendMessage(TextFormat::RED . Core::PREFIX . $message);
+      }
+    }else {
+      $info = Lang::fromConsole()->translateString("error.console");
+      Core::get()->getLogger()->info(TextFormat::RED.$info);
+    }
+    return true;
+  }
+}<?php
+
+/**
+ * // English
+ *
+ * Texter, the display FloatingTextPerticle plugin for PocketMine-MP
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * This software is distributed under "MIT license".
+ * You should have received a copy of the MIT license
+ * along with this program.  If not, see
+ * < https://opensource.org/licenses/mit-license >.
+ *
+ * ---------------------------------------------------------------------
+ * // 日本語
+ *
+ * TexterはPocketMine-MP向けのFloatingTextPerticleを表示するプラグインです
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * このソフトウェアは"MITライセンス"下で配布されています。
+ * あなたはこのプログラムと共にMITライセンスのコピーを受け取ったはずです。
+ * 受け取っていない場合、下記のURLからご覧ください。
+ * < https://opensource.org/licenses/mit-license >
+ */
+
+declare(strict_types = 1);
+
+namespace tokyo\pmmp\Texter\task;
+
+use pocketmine\level\Position;
+use pocketmine\scheduler\Task;
+use pocketmine\Server;
+use pocketmine\utils\TextFormat;
+use tokyo\pmmp\Texter\Core;
+use tokyo\pmmp\Texter\data\Data;
+use tokyo\pmmp\Texter\data\FloatingTextData;
+use tokyo\pmmp\Texter\data\UnremovableFloatingTextData;
+use tokyo\pmmp\Texter\i18n\Lang;
+use tokyo\pmmp\Texter\text\FloatingText;
+use tokyo\pmmp\Texter\text\UnremovableFloatingText;
+use tokyo\pmmp\Texter\TexterApi;
+
+/**
+ * Class PrepareTextsTask
+ * @package tokyo\pmmp\Texter\task
+ */
+class PrepareTextsTask extends Task {
+
+  /** @var Server */
+  private $server;
+  /** @var array */
+  private $ufts;
+  /** @var int */
+  private $uftsCount = 0;
+  /** @var int */
+  private $uftsMax;
+  /** @var array */
+  private $fts;
+  /** @var int */
+  private $ftsCount = 0;
+  /** @var int */
+  private $ftsMax;
+
+  public function __construct() {
+    $this->server = Server::getInstance();
+    $this->ufts = UnremovableFloatingTextData::make()->getData();
+    $this->uftsMax = count($this->ufts);
+    $this->fts = FloatingTextData::make()->getData();
+    $this->ftsMax = count($this->fts);
+  }
+
+  public function onRun(int $tick) {
+    if ($this->uftsCount === $this->uftsMax) {
+      if ($this->ftsCount === $this->ftsMax) {
+        $this->onSuccess();
+      }else {
+        $data = $this->fts[$this->ftsCount];
+        $textName = $data[Data::KEY_NAME];
+        $loaded = Server::getInstance()->isLevelLoaded($data[Data::KEY_LEVEL]);
+        $canLoad = true;
+        if (!$loaded) $canLoad = $this->server->loadLevel($data[Data::KEY_LEVEL]);
+        if ($canLoad) {
+          $level = $this->server->getLevelByName($data[Data::KEY_LEVEL]);
+          if ($level !== null) {
+            $x = $data[Data::KEY_X];
+            $y = $data[Data::KEY_Y];
+            $z = $data[Data::KEY_Z];
+            $pos = new Position($x, $y, $z, $level);
+            $title = $data[Data::KEY_TITLE];
+            $text = $data[Data::KEY_TEXT];
+            $owner = $data[FloatingTextData::KEY_OWNER];
+            $ft = new FloatingText($textName, $pos, $title, $text, $owner);
+            TexterApi::registerText($ft);
+          }
+        }
+        ++$this->ftsCount;
+      }
+    }else {
+      $data = $this->ufts[$this->uftsCount];
+      $textName = $data[Data::KEY_NAME];
+      $loaded = $this->server->isLevelLoaded($data[Data::KEY_LEVEL]);
+      $canLoad = true;
+      if (!$loaded) $canLoad = $this->server->loadLevel($data[Data::KEY_LEVEL]);
+      if ($canLoad) {
+        $level = $this->server->getLevelByName($data[Data::KEY_LEVEL]);
+        if ($level !== null) {
+          $x = $data[Data::KEY_X];
+          $y = $data[Data::KEY_Y];
+          $z = $data[Data::KEY_Z];
+          $pos = new Position($x, $y, $z, $level);
+          $title = $data[Data::KEY_TITLE];
+          $text = $data[Data::KEY_TEXT];
+          $uft = new UnremovableFloatingText($textName, $pos, $title, $text);
+          TexterApi::registerText($uft);
+        }
+      }
+      ++$this->uftsCount;
+    }
+  }
+
+  private function onSuccess(): void {
+    $plugin = $this->server->getPluginManager()->getPlugin("Texter");
+    if ($plugin !== null && $plugin->isEnabled()) {
+      $message = Lang::fromConsole()->translateString("on.enable.prepared", [
+        count(TexterApi::getUfts(), COUNT_RECURSIVE) - count(TexterApi::getUfts()),
+        count(TexterApi::getFts(), COUNT_RECURSIVE) - count(TexterApi::getFts())
+      ]);
+      $core = Core::get();
+      $core->getLogger()->info(TextFormat::GREEN . $message);
+      $core->getScheduler()->cancelTask($this->getTaskId());
+    }
+  }
+}
+<?php
+
+/**
+ * // English
+ *
+ * Texter, the display FloatingTextPerticle plugin for PocketMine-MP
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * This software is distributed under "MIT license".
+ * You should have received a copy of the MIT license
+ * along with this program.  If not, see
+ * < https://opensource.org/licenses/mit-license >.
+ *
+ * ---------------------------------------------------------------------
+ * // 日本語
+ *
+ * TexterはPocketMine-MP向けのFloatingTextPerticleを表示するプラグインです
+ * Copyright (c) 2018 yuko fuyutsuki < https://github.com/fuyutsuki >
+ *
+ * このソフトウェアは"MITライセンス"下で配布されています。
+ * あなたはこのプログラムと共にMITライセンスのコピーを受け取ったはずです。
+ * 受け取っていない場合、下記のURLからご覧ください。
+ * < https://opensource.org/licenses/mit-license >
+ */
+
+declare(strict_types = 1);
+
+namespace tokyo\pmmp\Texter\task;
+
+use pocketmine\scheduler\AsyncTask;
+use pocketmine\Server;
+use pocketmine\utils\VersionString;
+use tokyo\pmmp\Texter\Core;
+
+/**
+ * CheckUpdateTaskClass
+ */
+class CheckUpdateTask extends AsyncTask {
+
+  public function onRun() {
+    $curl = curl_init();
+    curl_setopt_array($curl, [
+      CURLOPT_URL => "https://api.github.com/repos/fuyutsuki/Texter/releases",
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_USERAGENT => "php_".PHP_VERSION,
+      CURLOPT_SSL_VERIFYPEER => false
+    ]);
+    $json = curl_exec($curl);
+    $errorNo = curl_errno($curl);
+    if ($errorNo) {
+      $error = curl_error($curl);
+      throw new \Exception($error);
+    }
+    curl_close($curl);
+    $data = json_decode($json, true);
+    $this->setResult($data);
+  }
+
+  public function onCompletion(Server $server){
+    $core = Core::get();
+    if ($core->isEnabled()) {
+      $data = $this->getResult();
+      if (isset($data[0])) {
+        $ver = new VersionString($data[0]["name"]);
+        $core->compareVersion(true, $ver, $data[0]["html_url"]);
+      }else {
+        $core->compareVersion(false);
+      }
+    }
+  }
+}

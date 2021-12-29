@@ -1,0 +1,13 @@
+name: JobUI_tungst
+version: 4.0.0
+main: Tungst_jobui\Main
+api: 3.0.0
+author: TungstenVn
+commands:
+ nghe:
+  description: "jobui"
+  default: op
+  permission: job.tungst.ui
+ nghe-tt:
+  description: "job info"
+  default: true

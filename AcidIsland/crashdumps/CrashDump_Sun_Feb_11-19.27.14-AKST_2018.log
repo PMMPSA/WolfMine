@@ -1,0 +1,101 @@
+TerminatorVN Crash Dump Sun Feb 11 19:27:14 AKST 2018
+
+Error: mkdir(): No such file or directory
+File: /plugins/Wand/src/MagicWE/Main
+Line: 44
+Type: E_WARNING
+
+THIS CRASH WAS CAUSED BY A PLUGIN
+BAD PLUGIN : MagicWE v0.2.6
+
+Code:
+[35] 	private $pos1 = [], $pos2 = [], $copy = [], $copypos = [], $undo = [], $redo = [], $wand = [], $schematics = [];
+[36] 	private static $MAX_BUILD_HEIGHT = 1000;
+[37] 
+[38] 	public function onLoad(){
+[39] 		$this->getLogger()->info(TextFormat::GREEN . "MagicWE has been loaded!");
+[40] 	}
+[41] 
+[42] 	public function onEnable(){
+[43] 		$this->saveResource("config.yml");
+[44] 		@mkdir($this->getDataFolder() . "schematics");
+[45] 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
+[46] 		$this->getLogger()->info(TextFormat::GREEN . "MagicWE enabled!");
+[47] 	}
+[48] 
+[49] 	public function onCommand(CommandSender $sender, Command $command, $label, array $args){
+[50] 		if($sender instanceof Player){
+[51] 			switch($command){
+[52] 				case "/pos1":
+[53] 					{
+[54] 						if(!$sender->hasPermission("magicwe.command.pos1")) return;
+
+Backtrace:
+#0 (): pocketmine\Server->crashDump(boolean)
+
+TerminatorVN version: 0000000000000000000000000000000000000000 [Protocol 113; API 3.0.1]
+uname -a: Windows NT WIN-VCQUKKDO8FH 6.3 build 9600 (Windows Server 2012 R2 Datacenter Edition) AMD64
+PHP version: 7.0.2
+Zend version: 3.0.0
+OS : WINNT, win
+
+Server uptime: 34 seconds
+Number of loaded worlds: 2
+Players online: 0/20
+
+Loaded plugins:
+AntiSpam 1.3 by xBeastMode for API(s) 
+Broadcaster 1.16 by EvolSoft for API(s) Array
+EconomyAPI 2.0.9 by onebone for API(s) Array
+essentialsTP 1.1.0 by LegendsOfMCPE for API(s) Array
+iProtector 3.1b by LDX for API(s) Array
+NoFrameDrop 1 by  for API(s) Array
+Slapper 1.3.5 by jojoe77777 for API(s) Array
+TapToDo 2.2.1 by Falk for API(s) Array
+TimeCommander 2.1 by LDX for API(s) Array
+WorldFixer 1 by CreeperFace for API(s) 
+Kitt 1 by  for API(s) 
+AuctionHouse 1 by R4KT, Skull3x, Muqsit for API(s) 
+HealthBarFit 1.3 by 1 for API(s) 
+BlockSniper 1.3.4 by BlockHorizons for API(s) Array
+BlockBoost[PTK] 1.0.0 by  for API(s) 
+Buyec 97 by AmGM for API(s) Array
+CustomEnchants[PTK] 0.2 by PTK-KienPham for API(s) Array
+DonRac[PTK] 2 by PTK-KienPham for API(s) Array
+DropParty 1.0.3 by HotshotHD for API(s) Array
+Enchant[PTK] 2 by PTK-KienPham for API(s) 
+Firework[PTK] 1 by PTK-KienPham for API(s) Array
+FlyText[PTK] 1 by PTK-KienPham for API(s) Array
+GenBuckets 1.0.0 by CortexPE for API(s) Array
+WarClan 9.7 by AmGM for API(s) 
+GiftCode 2 by PTK-KienPham for API(s) Array
+GiftCode-Sapling 2.0.1 by AmGM for API(s) Array
+GiftCodeV4 2.0.4 by PTK-KienPham4 for API(s) Array
+GiftCode[PTK] 2 by PTK-KienPham for API(s) Array
+FactionsPro 1.0 rewrite by PTK-KienPham by Array for API(s) Array
+ItemCommand20 1 by Matrix for API(s) Array
+JoinItems 1 by MaxFreeze for API(s) 
+LevelToMine 0.1 by AmGM-Encode for API(s) Array
+ManyWorlds 2.1.0 by aliuly for API(s) 
+MSpawns 1.5 by EvolSoft for API(s) Array
+MuaVIP 1.3 by WolfMine Team for API(s) 
+ConfigNapThe 2.2 by  for API(s) 
+AutoInv[PTK] 1.0.0 by PTK-KienPham for API(s) Array
+PurePerms 1.4.0 by PTK-KienPham for API(s) Array
+REDNoBreak 0.1 by Adam1609 for API(s) 
+AcidWater 1.1.0BETA by PTK-KienPham for API(s) Array
+SETVIP 2.3 by MCPEVN TEAM for API(s) 
+SlapperRotation 1.0.1 by jojoe77777 for API(s) Array
+SuperManOverBar 1.0.0 by AmGM for API(s) Array
+Tool[PTK] 2.0.0 by  for API(s) Array
+TradeAPI 2 by AmGM for API(s) 
+TransferServerTitle 1 by HoangKaito for API(s) Array
+MagicWE 0.2.6 by thebigsmileXD for API(s) Array
+Coin 2 by AmGM for API(s) Array
+WorldProtect[PTK] 1 by PTK-KienPham for API(s) Array
+Worlds 1.0.9 by  for API(s) Array
+EconomySell 2.0.7 by onebone for API(s) Array
+EconomyShop 2.0.7 by onebone for API(s) Array
+AacidIslandacutexxvide.com 3.2.9 by AmGM for API(s) Array
+PureChat 1.4.0 by 64FF00 for API(s) Array
+SimpleWarp 3.3.0 by Falkirks for API(s) Array

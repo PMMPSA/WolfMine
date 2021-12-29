@@ -1,0 +1,206 @@
+// __multiversion__
+// This signals the loading code to prepend either #version 100 or #version 300 es as apropriate.
+
+#include "fragmentVersionCentroid.h"
+
+#if __VERSION__ >= 300
+	#ifndef BYPASS_PIXEL_SHADER
+		#if defined(TEXEL_AA) && defined(TEXEL_AA_FEATURE)
+			_centroid in highp vec2 uv0;
+			_centroid in highp vec2 uv1;
+		#else
+			_centroid in vec2 uv0;
+			_centroid in vec2 uv1;
+		#endif
+	#endif
+#else
+	#ifndef BYPASS_PIXEL_SHADER
+		varying vec2 uv0;
+		varying vec2 uv1;
+	#endif
+#endif
+
+varying vec4 color;
+
+#ifdef FOG
+varying vec4 fogColor;
+#endif
+
+#include "uniformShaderConstants.h"
+#include "util.h"
+
+LAYOUT_BINDING(0) uniform sampler2D TEXTURE_0;
+LAYOUT_BINDING(1) uniform sampler2D TEXTURE_1;
+LAYOUT_BINDING(2) uniform sampler2D TEXTURE_2;
+
+// -- 光源の調整
+
+#define FLPE_TORCH_COLOR vec3(0.6,0.07,-0.2)
+
+
+
+// -- 影の調整
+
+#define FLPE_SHADOW_COLOR vec3 (-0.06,-0.06,-0.06)
+
+
+// -- トーンマップ
+
+#define enableFLPEmapping
+#define saturation 1.0
+#define exposure 1.9
+#define brightness 0.8
+#define gamma 1.7
+#define contrast 2.1
+
+
+  
+#define FLPE_SHADOW
+#define FLPE_WORLD_LIGHT 
+#define FLPE_TORCH
+
+
+float filmic_curve(float x) {
+
+// Shoulder strength
+float A = 0.22;
+// Linear strength
+float B = 0.5;
+// Linear angle
+float C = 0.15 * brightness;
+// Toe strength
+float D = 0.4 * gamma;
+// Toe numerator
+float E = 0.01 * contrast;
+// Toe denominator
+float F = 0.2;
+
+return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
+
+}
+
+vec3 doFLPEmapping(vec3 clr) {
+
+float W = 1.4 / exposure;
+
+#ifdef enableFLPEmapping
+
+float Luma = dot(clr, vec3(0.100, 0.1, 0.1));
+vec3 Chroma = clr - Luma;
+clr = (Chroma * saturation) + Luma;
+
+  clr = vec3(filmic_curve(clr.r), filmic_curve(clr.g), filmic_curve(clr.b)) / filmic_curve(W);
+#endif
+
+return clr;
+}
+
+
+
+void main()
+{
+#ifdef BYPASS_PIXEL_SHADER
+	gl_FragColor = vec4(0, 0, 0, 0);
+	return;
+#else 
+
+#if USE_TEXEL_AA
+	vec4 diffuse = texture2D_AA(TEXTURE_0, uv0);
+#else
+	vec4 diffuse = texture2D(TEXTURE_0, uv0);
+#endif
+
+#ifdef FLPE_SHADOW
+
+float torchlightaffects = (1.0 - uv1.x);
+
+#endif
+	
+#ifdef SEASONS_FAR
+	diffuse.a = 1.0;
+#endif
+
+#if USE_ALPHA_TEST
+	#ifdef ALPHA_TO_COVERAGE
+	#define ALPHA_THRESHOLD 0.05
+	#else
+	#define ALPHA_THRESHOLD 0.5
+	#endif
+	if(diffuse.a < ALPHA_THRESHOLD)
+		discard;
+#endif
+	
+vec4 inColor = color;
+
+#if defined(BLEND)
+	diffuse.a *= inColor.a;
+#endif
+
+#if !defined(ALWAYS_LIT)
+	diffuse *= texture2D( TEXTURE_1, uv1 );
+#endif
+
+#ifndef SEASONS
+	#if !USE_ALPHA_TEST && !defined(BLEND)
+		diffuse.a = inColor.a;
+	#endif
+	
+	diffuse.rgb *= inColor.rgb;
+#else
+	vec2 uv = inColor.xy;
+	diffuse.rgb *= mix(vec3(0.5,0.5,0.5), texture2D( TEXTURE_2, uv).rgb*2.0, inColor.b);
+	diffuse.rgb *= inColor.aaa;
+	diffuse.a = 1.0;
+#endif
+
+#ifdef FLPE_SHADOW
+
+float s_amount = 0.0;
+float nolight = (1.0 - uv1.x);
+
+
+
+if(uv1.y < 0.875){s_amount = 0.05;}
+if(uv1.y < 0.874){s_amount = 0.10;}
+if(uv1.y < 0.873){s_amount = 0.15;}
+if(uv1.y < 0.872){s_amount = 0.20;}
+if(uv1.y < 0.871){s_amount = 0.25;}
+if(uv1.y < 0.870){s_amount = 0.30;}
+if(uv1.y < 0.869){s_amount = 0.35;}
+if(uv1.y < 0.868){s_amount = 0.40;}
+if(uv1.y < 0.867){s_amount = 0.45;}
+
+
+diffuse.rgb = mix(diffuse.rgb, FLPE_SHADOW_COLOR, s_amount * nolight * torchlightaffects);
+
+#endif
+
+
+
+#ifdef FOG
+	diffuse.rgb = mix( diffuse.rgb, fogColor.rgb, fogColor.a );
+#endif
+
+#ifdef FLPE_WORLD_LIGHT
+	diffuse.rgb *= max(vec3(0.1), vec3(0.5) - diffuse.rgb)*1.2 + vec3(1.0);
+#endif
+
+
+
+#ifdef FLPE_TORCH
+#ifdef FLPE_TORCH_COLOR
+
+diffuse.rgb += FLPE_TORCH_COLOR*max(0.0,uv1.x-0.5); 
+#endif
+   #endif
+
+	
+
+diffuse.rgb = doFLPEmapping(diffuse.rgb);
+   
+
+
+	gl_FragColor = diffuse;
+	
+#endif // BYPASS_PIXEL_SHADER
+}

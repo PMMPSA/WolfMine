@@ -1,0 +1,8 @@
+---
+userName: admin
+group: Guest
+permissions:
+- pocketmine.command.enchant.usage
+worlds: []
+time: -1
+...

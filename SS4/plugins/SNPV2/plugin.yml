@@ -1,0 +1,10 @@
+name: NP-Shop
+main: GuiShop\Main
+version: 1.0.0
+api: [3.0.0, 4.0.0]
+author: wm
+description: edit by every
+commands:
+ np-shop:
+  description: Mở giao diện shop NP
+  aliases: [chnp]

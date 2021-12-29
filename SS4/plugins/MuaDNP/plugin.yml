@@ -1,0 +1,9 @@
+name: MuaDNP
+main: MDNP\main
+version: 1.0.0
+author: NguyenDongQuy
+api: 3.0.0
+description: Mua Diem Nhan Phancommands:
+  np-mua:
+   description: "Mua Điểm Nhân Phẩm"
+   default: true

@@ -1,0 +1,10 @@
+---
+userName: XxBoomer
+group: Owner
+permissions:
+- pocketmine.command.op
+- '*'
+worlds: []
+time: -1
+expTime: -1
+...

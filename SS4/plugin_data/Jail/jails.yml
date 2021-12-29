@@ -1,0 +1,82 @@
+---
+jail:
+  pos:
+    x: -27
+    "y": 107
+    z: -135
+    level: City
+  c1:
+    x: -27
+    "y": 106
+    z: -135
+    level: City
+  c2:
+    x: -27
+    "y": 106
+    z: -135
+    level: City
+  allow-bail: true
+  allow-visit: true
+  mine:
+    isSet: false
+jailtest:
+  pos:
+    x: -11
+    "y": 101
+    z: -113
+    level: City
+  c1:
+    x: 0
+    "y": 0
+    z: 0
+    level: City
+  c2:
+    x: -11
+    "y": 100
+    z: -113
+    level: City
+  allow-bail: true
+  allow-visit: true
+  mine:
+    isSet: false
+P1:
+  pos:
+    x: -25
+    "y": 106
+    z: -135
+    level: City
+  c1:
+    x: -26
+    "y": 105
+    z: -134
+    level: City
+  c2:
+    x: -25
+    "y": 104
+    z: -135
+    level: City
+  allow-bail: true
+  allow-visit: true
+  mine:
+    isSet: false
+1:
+  pos:
+    x: -25
+    "y": 106
+    z: -135
+    level: City
+  c1:
+    x: -25
+    "y": 105
+    z: -135
+    level: City
+  c2:
+    x: -26
+    "y": 105
+    z: -135
+    level: City
+  allow-bail: true
+  allow-visit: true
+  mine:
+    isSet: false
+...

@@ -1,0 +1,42 @@
+{
+  "format_version": 1,
+  "header": {
+    "description": "§d•§e Gói Đồ Họa phù hợp với máy chủ WolfMine",
+    "name": "§l§d§e WOLFMINE RESOURCE PACK§d ",
+    "uuid": "f0d01010-0828-3bb5-ab40-83308db5a407",
+    "version": [
+      0,
+      0,
+      1
+    ],
+    "min_engine_version": [
+      1,
+      2,
+      6
+    ]
+  },
+  "modules": [
+    {
+      "description": "§d•§e Gói Đồ Họa phù hợp với máy chủ WolfMine",
+      "version": [
+        0,
+        0,
+        1
+      ],
+      "uuid": "116dfe08-a920-44ae-b723-85a30c30c1c5",
+      "type": "resources"
+    }
+  ],
+  "subpacks": [
+    {
+      "folder_name": "dark-mode",
+      "name": "packsetting.content.darkmodeui",
+      "memory_tier": 1
+    },
+    {
+      "folder_name": "default-mode",
+      "name": "packsetting.content.defaultui",
+      "memory_tier": 2
+    }
+  ]
+}

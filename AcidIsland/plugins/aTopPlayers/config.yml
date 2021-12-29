@@ -1,0 +1,33 @@
+---
+titleStat: §c||§e■■■■■■■■■■■■■■■■■§c||||§e■■■■■■■■■■■■■■■■■|§e|
+userNotExist: ' '
+killTitle: §l§e⬛§6⬛⬛§d⬛⬛⬛§a⬛⬛⬛⬛§r§d Bảng Xếp Hạng §aKill §l§a⬛⬛⬛⬛§d⬛⬛⬛§6⬛⬛§e⬛§r§d
+killElement: §b{player} đã §ckill§a được {value} người
+killCount: 100
+deathTitle: §l§e⬛§6⬛⬛§d⬛⬛⬛§a⬛⬛⬛⬛§r§d Bảng Xếp Hạng §aDeath §l§a⬛⬛⬛⬛§d⬛⬛⬛§6⬛⬛§e⬛§r§d
+deathElement: §b{player} đã §cchết§a được {value} lần
+deathCount: 100
+breakTitle: §l§e⬛§6⬛⬛§d⬛⬛⬛§a⬛⬛⬛⬛§r§d Bảng Xếp Hạng §aBreak Block §l§a⬛⬛⬛⬛§d⬛⬛⬛§6⬛⬛§e⬛§r§d
+breakElement: §b{player} đã §cphá§a được {value} block
+breakCount: 200
+placeTitle: §l§e⬛§6⬛⬛§d⬛⬛⬛§a⬛⬛⬛⬛§r§d Bảng Xếp Hạng §aPlace Block §l§a⬛⬛⬛⬛§d⬛⬛⬛§6⬛⬛§e⬛§r§d
+placeElement: §b{player} đã §cđặt§a được {value} block
+placeCount: 200
+autoUpdate: 10
+coords:
+  kill:
+    x: 186.000000
+    "y": 125.500000
+    z: -762.000000
+    level: world
+  place:
+    x: -234.000000
+    "y": 7.500000
+    z: 548.000000
+    level: hub
+  death:
+    x: 198.000000
+    "y": 125.500000
+    z: -727.000000
+    level: world
+...

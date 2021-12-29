@@ -1,0 +1,9 @@
+name: OnlineRank
+version: 1
+main: Tungst_onlrank\Main
+api: 3.0.0
+author: TungstenVn
+commands:
+ checkplay:
+  default: op
+  description: "onlinerank"

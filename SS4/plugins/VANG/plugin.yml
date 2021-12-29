@@ -1,0 +1,15 @@
+name: VANG
+main: HWings\VANG\VANG
+version: 1.0.0
+author: NguyenDongQuy
+api: 3.0.0
+description: Hệ thống tiền tệ Vàngcommands:
+  vang-help:
+   description: "Bảng lệnh của hệ thống  điểm Nhân Phẩm"
+   default: true
+  vang:
+   description: "Xem số điểm Nhân Phẩm mà Cư Dân đang có"
+   default: true
+  vang-top:
+   description: "Xem danh sách Cư Dân gương mẫu"
+   default: true

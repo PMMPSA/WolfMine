@@ -1,0 +1,7 @@
+name: BlockBoost[PTK]
+authors: PTK-KienPham
+version: 1.0.0
+api: 2.0.0
+main: BlockBoost\Main
+load: STARTUP
+description: "Add a Boost on the block !"

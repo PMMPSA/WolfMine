@@ -1,0 +1,101 @@
+[
+    {
+        "id": 276,
+        "damage": 12,
+        "count": 1,
+        "enchants": null,
+        "name": "Diamond Sword",
+        "customname": null,
+        "seller": "mcnupngurb",
+        "price": "10000"
+    },
+    {
+        "id": 388,
+        "damage": 0,
+        "count": 5,
+        "enchants": null,
+        "name": "Emerald",
+        "customname": null,
+        "seller": "huygamer88",
+        "price": "1000"
+    },
+    {
+        "id": 278,
+        "damage": 0,
+        "count": 1,
+        "enchants": [
+            [
+                9,
+                5
+            ],
+            [
+                15,
+                5
+            ]
+        ],
+        "name": "Diamond Pickaxe",
+        "customname": null,
+        "seller": "heogm",
+        "price": "90000"
+    },
+    {
+        "id": 276,
+        "damage": 0,
+        "count": 5,
+        "enchants": null,
+        "name": "Diamond Sword",
+        "customname": null,
+        "seller": "jino_vn",
+        "price": "1000"
+    },
+    {
+        "id": 130,
+        "damage": 0,
+        "count": 64,
+        "enchants": null,
+        "name": "Ender Chest",
+        "customname": null,
+        "seller": "duygamer0",
+        "price": "100000"
+    },
+    {
+        "id": 41,
+        "damage": 0,
+        "count": 64,
+        "enchants": null,
+        "name": "Gold Block",
+        "customname": null,
+        "seller": "duygamer0",
+        "price": "13000"
+    },
+    {
+        "id": 22,
+        "damage": 0,
+        "count": 64,
+        "enchants": null,
+        "name": "Lapis Lazuli Block",
+        "customname": null,
+        "seller": "duygamer0",
+        "price": "12000"
+    },
+    {
+        "id": 42,
+        "damage": 0,
+        "count": 64,
+        "enchants": null,
+        "name": "Iron Block",
+        "customname": null,
+        "seller": "duygamer0",
+        "price": "14000"
+    },
+    {
+        "id": 138,
+        "damage": 0,
+        "count": 64,
+        "enchants": null,
+        "name": "Beacon",
+        "customname": null,
+        "seller": "duygamer0",
+        "price": "100000"
+    }
+]

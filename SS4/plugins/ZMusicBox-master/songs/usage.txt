@@ -1,0 +1,5 @@
+Please use Minecraft Note Block Studio to change midi files into nbs files.
+website: http://www.stuffbydavid.com/mcnbs
+
+
+Here are 3 example songs.

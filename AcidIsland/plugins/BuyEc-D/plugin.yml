@@ -1,0 +1,8 @@
+name: Buyec
+main: AmGM\Hulo
+author: AmGM
+version: 97
+api: [2.0.0]
+commands:
+ muaec:
+  description: "HELLOOO"

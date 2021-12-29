@@ -1,0 +1,16 @@
+---
+no_items_player: '&cNgười chơi này không có bất kỳ mặt hàng nào để bán, hãy thử lại sau :D'
+no_items_public: '&cKhông có mặt hàng nào có sẵn trong cửa hàng công cộng, hãy thử lại sau :D'
+no_offers: '&cRất tiếc! Không có mục nào có sẵn từ bạn D:'
+no_longer_available: '&cLấy làm tiếc! Có vẻ như mặt hàng này không còn có sẵn D:'
+enter_valid_price: '&cVui lòng nhập một giá hợp lệ.'
+not_enough_to_sell: "&cBạn không có đủ mặt hàng này để bán.\n&2Bạn có: &c@have\n&2Bạn đã chọn: &6@chose"
+selling_item: "&2@player is selling &d@item &r&d(x@amount) &2cho &d@price &2silver coins!\n&2Xem các mặt hàng: &6/traodoi @player"
+no_sufficient_funds: '&6Xin lỗi, bạn không có đủ tiền bạc để mua mặt hàng này.'
+bought_item: "&2@player has bough &d@item &r&d(x@amount) &2cho &d@price &2silver coins!"
+inventory_full: '&cHàng tồn kho của bạn quá đầy đủ để mua mặt hàng này! &2Xem các mặt hàng người này đã bán: &6/sgh'
+inventory_full_2: "&cBạn không có đủ không gian trong kho của bạn!\n&6Vui lòng tạo không gian và sau đó thử xóa nó một lần nữa."
+no_recent_items: '&6Bạn không có bất kỳ mục nào bạn đã xem gần đây.'
+no_empty: '&cHàng tồn kho của bạn không thể để trống.'
+deleted_item: '&2@player has removed &d@item &r&d(x@amount) &2từ các cửa hàng công cộng.'
+...

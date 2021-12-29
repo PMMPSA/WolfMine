@@ -1,0 +1,30 @@
+---
+#time in seconds a player has to wait to send a message again
+time: 1
+#max warnings a player will receive until they receive a block type
+max_warnings: 2
+#warn player each time they spam
+warning_message: "&eBạn chat quá nhanh xin hãy chat lại sau 2s! &cCảnh báo:&6 %warns%"
+#What type of block do you want?
+#Types: message, mute, kick, ban, ban-ip
+block_type: kick
+#how much time should the player be muted (in seconds)
+mute_time: 60
+#message when player gets muted
+mute_message: "&cBạn bị mute 60s vì spawn."
+#message when player is still muted
+muted_message: "&eBạn vẫn bị tắt tiếng."
+un-muted_message: "&abạn đã bị tắt tiếng! &bKhông spam, hoặc bạn sẽ bị tắt tiếng lại."
+#Reason why player was kicked
+#%player% = players name
+kick_reason: "&cBạn đã bị đuổi vì spam."
+#Reason why player was banned
+#%player% = players name
+ban_reason: "&4Bạn đã bị cấm gửi spam!"
+#Reason why player was ip-banned
+#%player% = players name
+ip_ban_reason: "&4Bạn đã được ip cấm để gửi thư rác!"
+#message that will be sent if player is spamming
+#%player% = players name
+message: "&aHãy để những người khác trò chuyện, cảm ơn bạn. :)"
+...

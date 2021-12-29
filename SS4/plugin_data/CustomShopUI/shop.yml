@@ -1,0 +1,42 @@
+---
+#                                                                                                         
+# |     |   ( )            | || |   |   \   ( )                     | |    |   \                          
+#   | |     | |   | ' \     \ , |   |   /   | |    \ \ /   / - )    | |    | |) |  / - )   \ V /    |  /  
+#   | |     | |   | || |    |  /    | |     | |    / \ \   \   |    | |    |   /   \   |    \ /     /  |  
+# |"""""| |"""""| |"""""| | """"| | """ | |"""""| |"""""| |"""""| |"""""| |"""""| |"""""| |"""""| |"""""| 
+#"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-' 
+
+## Welcome to the Only Fully Functional and 100% Customizeable ShopUI By: Alexpads!!
+# HOW TO USE:
+## First Put a Category Whatever you Put will be the Name Exactly Like its Spelled.
+## Then Ta over and Put a - "" in the quotes go in this order:
+#### ItemID:MetaData:AmmmountOfTheItem:CustomName:Price:SellPrice
+§d•§e Các Khối Màu Sắc §c(§aLen§c)§d •:
+    - "35:0:10:Len Trắng:5:0"
+    - "35:14:10:Len Đỏ:5:0"
+    - "35:1:10:Len Cam:5:0"
+    - "35:5:10:Len Xanh Lá Cây:5:0"
+    - "35:13:10:Len Xanh Lá Cây (Đậm):5:0"
+    - "35:4:10:Len Vàng:5:0"
+    - "35:2:10:Len Tím:5:0"
+    - "35:9:10:Len Xanh Nước Biển:5:0"
+§d•§e Các Khối Màu Sắc §c(§aBê Tông§c)§d •:
+    - "236:0:10:Bê Tông Trắng:5:0"
+    - "236:14:10:Bê Tông Đỏ:5:0"
+    - "236:1:10:Bê Tông Cam:5:0"
+    - "236:5:10:Bê Tông Xanh Lá Cây:5:0"
+    - "236:13:1:Bê Tông Xanh Lá Cây (Đậm):5:0"
+    - "236:4:10:Bê Tông Vàng:5:0"
+    - "236:2:10:Bê Tông Tím:5:0"
+    - "236:9:1:Bê Tông Xanh Nước Biển:5:0"
+§d•§e Thức Ăn Đã Chế Biến§d •:
+    - "364:0:5:Thịt Bò Nướng:5:0"
+    - "320:0:5:Thịt Heo Nướng:5:0"
+    - "366:0:1:Thịt Gà Nướng:10:0"
+§d•§e Vật Phẩm Gia Dụng§d •:
+    - "347:0:1:Đồng Hồ:10:0"
+    - "444:0:1:Cánh:20:0"
+    - "386:0:1:Sách Trống:20:0"
+    - "205:0:1:Shulker:25:0"
+    - "368:0:5:Mắt Rồng:10:0"
+...

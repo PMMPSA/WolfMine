@@ -1,0 +1,50 @@
+name: Worlds
+main: surva\Worlds\Worlds
+version: 1.0.9
+api: [2.0.0, 3.0.0-ALPHA1, 3.0.0-ALPHA2, 3.0.0-ALPHA3, 3.0.0-ALPHA4, 3.0.0-ALPHA5]
+commands:
+  worlds:
+    description: "Worlds"
+    usage: "/worlds <info|list> OR /worlds <create|remove|load|unload|tp> <world> [type] OR /worlds <copy|rename> <from> <to> OR /worlds set gamemode <survival|creative|adventure|spectator> OR /worlds set <|build|pvp|damage|drop|hunger|fly> <true|false>"
+    aliases: ["ws"]
+permissions:
+  worlds.list:
+    description: "List worlds"
+    default: true
+  worlds.admin:
+    description: "Create worlds, delete worlds, set parameters"
+    default: op
+    children:
+      worlds.admin.create:
+        description: "Create worlds"
+        default: op
+      worlds.admin.remove:
+        description: "Remove worlds"
+        default: op
+      worlds.admin.copy:
+        description: "Copy worlds"
+        default: op
+      worlds.admin.rename:
+        description: "Rename worlds"
+        default: op
+      worlds.admin.load:
+        description: "Load worlds"
+        default: op
+      worlds.admin.load:
+        description: "Unload worlds"
+        default: op
+      worlds.admin.teleport:
+        description: "Teleport to worlds"
+        default: op
+      worlds.admin.set:
+        description: "Set parameters"
+        default: op
+      worlds.admin.build:
+        description: "Allow building in protected worlds"
+        default: op
+      worlds.admin.gamemode:
+        description: "Don't change gamemode to world's gamemode"
+        default: false
+      worlds.admin.fly:
+        description: "Fly in every world"
+        default: op

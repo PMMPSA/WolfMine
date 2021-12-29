@@ -1,0 +1,89 @@
+TerminatorVN Crash Dump Sun Feb 11 22:45:27 AKST 2018
+
+Error: Cannot use MyPlot as MyPlot because the name is already in use
+File: /plugins/SuperBarOver/src/AmGM/BarMan
+Line: 18
+Type: E_COMPILE_ERROR
+
+THIS CRASH WAS CAUSED BY A PLUGIN
+
+Code:
+[9] use onebone\economyapi\EconomyAPI;
+[10] use PTK\coinapi\Coin;
+[11] use pocketmine\item\Item;
+[12] use _64FF00\PurePerms\PurePerms;
+[13] use MyPlot\EventListener;
+[14] use MyPlot\PlotLevelSettings;
+[15] use MyPlot\Plot;
+[16] use MyPlot\subcommand\InfoSubCommand;
+[17] use MyPlot\MyPlot;
+[18] use MyPlot;
+[19] use FactionsPro\FactionMain;
+[20] 
+[21] class BarMan extends PluginBase{
+[22] public $eco;
+[23] public $coin;
+[24] public $level;
+[25]     public function onEnable(){
+[26]         $this->getServer()->getScheduler()->scheduleRepeatingTask(new BarTask($this), 20);
+[27] 		$this->getLogger()->info("§c♦§7 Plugin Superbar Code By AmGM");
+[28] 		$this->EconomyAPI = $this->getServer()->getPluginManager()->getPlugin("EconomyAPI");
+
+Backtrace:
+#0 (): pocketmine\Server->crashDump(boolean)
+
+TerminatorVN version: 0000000000000000000000000000000000000000 [Protocol 113; API 3.0.1]
+uname -a: Windows NT WIN-VCQUKKDO8FH 6.3 build 9600 (Windows Server 2012 R2 Datacenter Edition) AMD64
+PHP version: 7.0.2
+Zend version: 3.0.0
+OS : WINNT, win
+
+Server uptime: 1 seconds
+Number of loaded worlds: 0
+Players online: 0/20
+
+Loaded plugins:
+AntiSpam 1.3 by xBeastMode for API(s) 
+Broadcaster 1.16 by EvolSoft for API(s) Array
+EconomyAPI 2.0.9 by onebone for API(s) Array
+essentialsTP 1.1.0 by LegendsOfMCPE for API(s) Array
+iProtector 3.1b by LDX for API(s) Array
+NoFrameDrop 1 by  for API(s) Array
+SimpleAuth 1.8.1 by PocketMine Team, shoghicp, awzaw for API(s) Array
+Slapper 1.3.5 by jojoe77777 for API(s) Array
+TapToDo 2.2.1 by Falk for API(s) Array
+TimeCommander 2.1 by LDX for API(s) Array
+VoteReward 3.0.2 by LDX for API(s) Array
+WorldFixer 1 by CreeperFace for API(s) 
+Kitt 1 by  for API(s) 
+AuctionHouse 1 by R4KT, Skull3x, Muqsit for API(s) 
+HealthBarFit 1.3 by 1 for API(s) 
+BlockSniper 1.3.4 by BlockHorizons for API(s) Array
+BlockBoost[PTK] 1.0.0 by  for API(s) 
+Buyec 97 by AmGM for API(s) Array
+CustomEnchants[PTK] 0.2 by PTK-KienPham for API(s) Array
+DonRac[PTK] 2 by PTK-KienPham for API(s) Array
+DropParty 1.0.3 by HotshotHD for API(s) Array
+Enchant[PTK] 2 by PTK-KienPham for API(s) 
+Firework[PTK] 1 by PTK-KienPham for API(s) Array
+FlyText[PTK] 1 by PTK-KienPham for API(s) Array
+GenBuckets 1.0.0 by CortexPE for API(s) Array
+WarClan 9.7 by AmGM for API(s) 
+GiftCode 2 by PTK-KienPham for API(s) Array
+GiftCode-Sapling 2.0.1 by AmGM for API(s) Array
+GiftCodeV4 2.0.4 by PTK-KienPham4 for API(s) Array
+GiftCode[PTK] 2 by PTK-KienPham for API(s) Array
+FactionsPro 1.0 rewrite by PTK-KienPham by Array for API(s) Array
+ItemCommand20 1 by Matrix for API(s) Array
+JoinItems 1 by MaxFreeze for API(s) 
+LevelToMine 0.1 by AmGM-Encode for API(s) Array
+ManyWorlds 2.1.0 by aliuly for API(s) 
+MSpawns 1.5 by EvolSoft for API(s) Array
+MuaVIP 1.3 by WolfMine Team for API(s) 
+ConfigNapThe 2.2 by  for API(s) 
+AutoInv[PTK] 1.0.0 by PTK-KienPham for API(s) Array
+PurePerms 1.4.0 by PTK-KienPham for API(s) Array
+REDNoBreak 0.1 by Adam1609 for API(s) 
+AcidWater 1.1.0BETA by PTK-KienPham for API(s) Array
+SETVIP 2.3 by MCPEVN TEAM for API(s) 
+SlapperRotation 1.0.1 by jojoe77777 for API(s) Array

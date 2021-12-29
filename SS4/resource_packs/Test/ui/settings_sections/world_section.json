@@ -1,0 +1,389 @@
+/*********************************************************
++*   File created:                                       *
++*   (c) Mojang. All rights reserved                     *
++*   (c) Microsoft. All rights reserved.                 *
++*********************************************************/
+
+/*********************************************************
++*   File modifity:                                      *
++*   (c) MINEPAPER. All rights reserved                  *
++*   (c) NaturalPack. All rights reserved.               *
++*********************************************************/
+
+{
+  "namespace": "world_section",
+
+   /*GAME button*/
+   "game_button@settings_common.section_toggle_base": {
+    "$toggle_view_binding_name": "game_button_toggle",
+    "$glyph_texture": "textures/ui/game_glyph",
+    "$glyph_color_texture": "textures/ui/game_glyph_color",
+    "$glyph_size": [ 23, 17 ], 
+    "$button_text": "options.category.game",
+    "$toggle_property_bag": {
+      "#panel_title": "createWorldScreen.game.settings"
+    }
+  },
+
+  /*MULTIPLAYER button*/
+  "multiplayer_button@settings_common.section_toggle_base": {
+    "$toggle_view_binding_name": "multiplayer_button_toggle",
+    "$glyph_texture": "textures/ui/multiplayer_glyph",
+    "$glyph_color_texture": "textures/ui/multiplayer_glyph_color",
+    "$glyph_size": [ 23, 17 ],
+    "$button_text": "options.group.multiplayer",
+    "$toggle_property_bag": {
+      "#panel_title": "createWorldScreen.multiplayer.settings"
+    }
+  },
+
+   /*selector_pane_content*/
+  "selector_pane_content": {
+    "type": "stack_panel",
+    "controls": [
+      {
+        "world_snapshot_image": {
+          "ignored": "(not $is_pregame)",
+          "type": "panel",
+          "size": [
+            "100%",
+            "100%c + 2px"
+          ],
+          "controls": [
+            {
+              "default_indent@common.default_indent": {
+                "size": [
+                  "100% - 2px",
+                  "100%c + 2px"
+                ],
+                "anchor_from": "top_middle",
+                "anchor_to": "top_middle",
+                "controls": [
+                  {
+                    "thumbnail": {
+                      "type": "image",
+                      "force_texture_reload": true,
+                      "size": [
+                        "100%",
+                        "56.25%x"
+                      ],
+                      "layer": 2,
+                      "anchor_from": "center",
+                      "anchor_to": "center",
+                      "controls": [
+                        {
+                          "border": {
+                            "type": "image",
+                            "size": [
+                              "100% + 2px",
+                              "100% + 2px"
+                            ],
+                            "texture": "textures/ui/BannersTransparent",
+                            "anchor_from": "center",
+                            "anchor_to": "center"
+                          }
+                        }
+                      ],
+                      "bindings": [
+                        {
+                          "binding_name": "#world_texture_name",
+                          "binding_name_override": "#texture"
+                        },
+                        {
+                          "binding_name": "#world_texture_locationtype",
+                          "binding_name_override": "#texture_file_system"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "create_or_play_button@settings_common.action_button": {
+          "ignored": "(not $is_pregame)",
+          "size": [
+            "100%",
+            30
+          ],
+          "$button_text": "menu.play",
+          "default_focus_precedence": 1,
+          "$pressed_button_name": "play_world_button",
+          "$focus_override_up": "FOCUS_OVERRIDE_STOP",
+          "variables": {
+            "requires": "(not $is_world_edit)",
+            "$button_text": "createWorldScreen.create",
+            "$pressed_button_name": "create_world_button"
+          }
+        }
+      },
+      {
+        "spacer": {
+          "type": "panel",
+          "ignored": "(not $is_pregame)",
+          "size": [
+            0,
+            2
+          ]
+        }
+      },
+      {
+        "server_settings_visibility_panel": {
+          "type": "stack_panel",
+          "bindings": [
+            {
+              "binding_name": "#server_settings_visible",
+              "binding_name_override": "#visible"
+            }
+          ],
+          "controls": [
+            {
+              "server_settings_button@world_section.server_settings_button": {
+                "ignored": "($is_pregame)",
+                "$toggle_group_forced_index": "$server_forced_index"
+              }
+            },
+            {
+              "server_spacer": {
+                "type": "panel",
+                "size": [
+                  0,
+                  2
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "game_button@world_section.game_button": {
+          "ignored": "($nx_os)",
+          "$toggle_group_forced_index": "$game_forced_index"
+        }
+      },
+      {
+        "switch_game_button@world_section.game_button": {
+          "ignored": "(not $nx_os)",
+          "$toggle_group_forced_index": "$game_forced_index",
+          "$glyph_texture": "textures/ui/controller_glyph_switch",
+          "$glyph_color_texture": "textures/ui/controller_glyph_color_switch"
+        }
+      },
+      {
+        "multiplayer_button@world_section.multiplayer_button": {}
+      } 
+    ]
+  },
+  "quick_button@settings_common.section_toggle_base": {
+    "$toggle_view_binding_name": "quick_button_toggle",
+    "$glyph_texture": "textures/ui/dev_glyph_color",
+    "$glyph_color_texture": "textures/ui/dev_glyph_color",
+    "$glyph_size": [
+      21,
+      14
+    ],
+    "$button_text": "pauseScreen.header",
+    "$toggle_property_bag": {
+      "#panel_title": "pauseScreen.header"
+    }
+  },
+  "quick_section": {
+    "type": "stack_panel",
+    "size": [
+      "100%",
+      "100%c"
+    ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "quick_button_toggle",
+        "source_property_name": "#toggle_state",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "perspective_dropdown@settings_common.option_dropdown": {
+          "$option_label": "options.thirdperson",
+          "ignored": "($is_holographic and $is_reality_mode)",
+          "$dropdown_content": "general_section.third_person_dropdown_content",
+          "$dropdown_area": "content_area",
+          "$dropdown_name": "third_person_dropdown",
+          "$option_enabled_binding_name": "#third_person_dropdown_enabled",
+          "$options_dropdown_toggle_label_binding": "#third_person_dropdown_toggle_label",
+          "$dropdown_scroll_content_size": [
+            "100%",
+            "200%"
+          ]
+        }
+      },
+      {
+        "ui_profile_dropdown@settings_common.option_dropdown": {
+          "ignored": "($console_edition)",
+          "$option_label": "options.uiprofile",
+          "$dropdown_content": "general_section.ui_profile_dropdown_content",
+          "$dropdown_area": "content_area",
+          "$dropdown_name": "ui_profile_dropdown",
+          "$option_enabled_binding_name": "#ui_profile_dropdown_enabled",
+          "$options_dropdown_toggle_label_binding": "#ui_profile_dropdown_toggle_label",
+          "$dropdown_scroll_content_size": [
+            "100%",
+            "145%"
+          ]
+        }
+      },
+      {
+        "gui_scale_slider@settings_common.option_slider": {
+          "ignored": "($is_holographic)",
+          "$option_label": "#gui_scale_slider_label",
+          "$slider_name": "gui_scale",
+          "$slider_value_binding_name": "#gui_scale",
+          "$option_enabled_binding_name": "#gui_scale_enabled",
+          "$slider_steps_binding_name": "#gui_scale_steps",
+          "$label_bindings": [
+            {
+              "binding_name": "#gui_scale_slider_label"
+            }
+          ]
+        }
+      },
+      {
+        "render_distance_slider@settings_common.option_slider": {
+          "ignored": "($is_holographic)",
+          "$option_label": "#render_distance_slider_label",
+          "$slider_name": "render_distance",
+          "$slider_value_binding_name": "#render_distance",
+          "$option_enabled_binding_name": "#render_distance_enabled",
+          "$slider_steps_binding_name": "#render_distance_steps",
+          "$label_bindings": [
+            {
+              "binding_name": "#render_distance_slider_label"
+            }
+          ]
+        }
+      },
+      {
+        "vr_render_distance_slider@settings_common.option_slider": {
+          "ignored": "(not $is_holographic)",
+          "$option_label": "#vr_render_distance_slider_label",
+          "$slider_name": "vr_render_distance",
+          "$slider_value_binding_name": "#vr_render_distance",
+          "$option_enabled_binding_name": "#vr_render_distance_enabled",
+          "$slider_steps_binding_name": "#vr_render_distance_steps",
+          "$label_bindings": [
+            {
+              "binding_name": "#vr_render_distance_slider_label"
+            }
+          ]
+        }
+      },
+      {
+        "particle_render_distance_slider@settings_common.option_slider": {
+          "ignored": "($pocket_edition or $is_holographic or $education_ios)",
+          "$option_label": "#particle_render_distance_slider_label",
+          "$slider_name": "particle_render_distance",
+          "$slider_value_binding_name": "#particle_render_distance",
+          "$option_enabled_binding_name": "#particle_render_distance_enabled",
+          "$label_bindings": [
+            {
+              "binding_name": "#particle_render_distance_slider_label"
+            }
+          ]
+        }
+      },
+      {
+        "vr_particle_render_distance_slider@settings_common.option_slider": {
+          "ignored": "($pocket_edition or not $is_holographic)",
+          "$option_label": "#vr_particle_render_distance_slider_label",
+          "$slider_name": "vr_particle_render_distance",
+          "$slider_value_binding_name": "#vr_particle_render_distance",
+          "$option_enabled_binding_name": "#vr_particle_render_distance_enabled",
+          "$label_bindings": [
+            {
+              "binding_name": "#vr_particle_render_distance_slider_label"
+            }
+          ]
+        }
+      },
+      {
+        "max_framerate_slider@settings_common.option_slider": {
+          "ignored": "($is_publish)",
+          "$option_label": "#max_framerate_slider_label",
+          "$slider_name": "max_framerate",
+          "$slider_value_binding_name": "#max_framerate",
+          "$option_enabled_binding_name": "#max_framerate_enabled",
+          "$slider_steps_binding_name": "#max_framerate_steps",
+          "$label_bindings": [
+            {
+              "binding_name": "#max_framerate_slider_label"
+            }
+          ]
+        }
+      },
+      {
+        "msaa_slider@settings_common.option_slider": {
+          "ignored": "($is_holographic or $is_win10_arm)",
+          "$option_label": "#msaa_slider_label",
+          "$slider_name": "msaa",
+          "$slider_value_binding_name": "#msaa",
+          "$option_enabled_binding_name": "#msaa_enabled",
+          "$slider_steps_binding_name": "#msaa_steps",
+          "$label_bindings": [
+            {
+              "binding_name": "#msaa_slider_label"
+            }
+          ]
+        }
+      },
+      {
+        "vr_msaa_slider@settings_common.option_slider": {
+          "ignored": "(not $is_holographic or $is_win10_arm)",
+          "$option_label": "#vr_msaa_slider_label",
+          "$slider_name": "vr_msaa",
+          "$slider_value_binding_name": "#vr_msaa",
+          "$option_enabled_binding_name": "#vr_msaa_enabled",
+          "$slider_steps_binding_name": "#vr_msaa_steps",
+          "$label_bindings": [
+            {
+              "binding_name": "#vr_msaa_slider_label"
+            }
+          ]
+        }
+      },
+      {
+        "texel_anti_aliasing_toggle@settings_common.option_toggle": {
+          "$option_label": "options.texelAA",
+          "$option_binding_name": "#texel_aa",
+          "$option_enabled_binding_name": "#texel_aa_enabled",
+          "$toggle_name": "texel_aa",
+          "bindings": [
+            {
+              "binding_name": "#show_texel_aa",
+              "binding_name_override": "#visible"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "addons_selector_panel": {
+    "type": "stack_panel",
+    "controls": [
+      {
+        "level_texture_pack_button@world_section.level_texture_pack_button": {
+          "$toggle_group_forced_index": "$level_texture_pack_toggle_index"
+        }
+      },
+      {
+        "addon_button@world_section.addon_button": {
+          "$toggle_group_forced_index": "$addon_toggle_index"
+        }
+      }
+    ]
+  }
+}

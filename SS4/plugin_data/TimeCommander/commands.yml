@@ -1,0 +1,12 @@
+# TimeCommander
+#
+# Command: Command to execute
+# Time: Amount of time in ticks until command is executed
+
+Commands:
+  - Command: clearlag
+    Time: 6000
+  - Command: weather rain
+    Time: 20000
+  - Command: weather clear
+    Time: 30000

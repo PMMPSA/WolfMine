@@ -1,0 +1,52 @@
+{
+  "resource_pack_name": "NaturalPack",
+  "texture_name": "atlas.terrain",
+  "padding": 32,
+  "num_mip_levels": 0,
+  "texture_data": {
+    
+   /* "grass_top": { ///In developer ///90% bugs!
+    "textures": [
+      "textures/blocks/grass/grass_top_variant_3",
+      "textures/blocks/grass_top",
+      "textures/blocks/grass_top",
+      "textures/blocks/grass_top",
+      "textures/blocks/grass/grass_top_variant_1",
+      "textures/blocks/grass_top",
+      "textures/blocks/grass_top",
+      "textures/blocks/grass_top",
+      "textures/blocks/grass/grass_top_variant_2",
+      "textures/blocks/grass_top",
+      "textures/blocks/grass_top",
+      "textures/blocks/grass_top",
+      "textures/blocks/grass/grass_top_variant_0",
+      "textures/blocks/grass_top",
+      "textures/blocks/grass_top",
+      "textures/blocks/grass_top",
+      "textures/blocks/grass/grass_top_variant_3"
+    ]
+  }, */
+
+    /* "fence": {  ///In developer 
+      "textures": [
+        "textures/blocks/fence/planks_oak_fence",
+        "textures/blocks/fence/planks_spruce_fence",
+        "textures/blocks/fence/planks_birch_fence",
+        "textures/blocks/fence/planks_jungle_fence",
+        "textures/blocks/fence/planks_acacia_fence",
+        "textures/blocks/fence/planks_big_oak_fence"
+      ]
+    },
+
+    "fence_top": {
+      "textures": [
+        "textures/blocks/fence/top/planks_oak_fence_top",
+        "textures/blocks/fence/top/planks_spruce_fence_top",
+        "textures/blocks/fence/top/planks_birch_fence_top",
+        "textures/blocks/fence/top/planks_jungle_fence_top",
+        "textures/blocks/fence/top/planks_acacia_fence_top",
+        "textures/blocks/fence/top/planks_big_oak_fence_top"
+      ]
+    } */
+  }
+}

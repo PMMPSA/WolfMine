@@ -1,0 +1,39 @@
+name: Coin
+main: PTK\coinapi\Coin
+version: 2.0
+author: AmGM
+api:
+- 2.0.0
+- 2.1.0
+- 3.0.0
+
+permissions:
+ coinapi.*:
+  default: op
+  description: Allows to control all of functions in Coin
+  children:
+   coinapi.command.*:
+    default: op
+    description: Allows to use all of commands in Coin
+    children:
+     coinapi.command.setcoin:
+      default: op
+      description: Chỉnh số coin của ai đó
+     coinapi.command.mycoin:
+      description: Xem số lượng coin mình có
+      default: true
+     coinapi.command.pay:
+      description: Trả coin cho ngưòi khác
+      default: true
+     coinapi.command.seecoin:
+      description: Xem số lưọng coin mà ai đó có
+      default: true
+     coinapi.command.givecoin:
+      description: Tặng thêm coin cho ai đó
+      default: op
+     coinapi.command.takecoin:
+      description: Lấy lại coin từ ai đó
+      default: false
+     coinapi.command.topcoin:
+      description: Xem top coin trong server
+      default: true

@@ -1,0 +1,33 @@
+---
+version: 0
+whatcrates:
+  §eGold Crate:
+    world: world
+    x: 100
+    "y": 100
+    z: 100
+    key: gold
+    rewards:
+    - cmd:10000$:givemoney "{USERNAME}" 10000
+    - item:10x Diamonds:264:0:10
+    - cmd:2000$:givemoney "{USERNAME}" 2000
+    - item:20x Diamonds:264:0:20
+  §6Bronze Crate:
+    world: world
+    x: 102
+    "y": 100
+    z: 100
+    key: bronze
+    rewards:
+    - cmd:1000$:givemoney "{USERNAME}" 1000
+    - item:1x Diamonds:264:0:1
+  Common:
+    world: Lobby
+    x: 252
+    "y": 22
+    z: 192
+    key: CommonKey
+    rewards:
+    - cmd:First Win:say 1
+    - cmd:Second Win:say 2
+...

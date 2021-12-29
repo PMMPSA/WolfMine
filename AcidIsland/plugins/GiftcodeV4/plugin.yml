@@ -1,0 +1,11 @@
+name: GiftCodeV4
+main: AmGM4\GiftCode4\Main4
+version: 2.0.4
+author: PTK-KienPham4
+api: [2.0.0, 3.0.0]
+description: RewriteByAmGMConCac4
+commands:
+  gencode-v4:
+   description: Sử dụng code.
+  code-v4:
+    description: Tạo code mới.

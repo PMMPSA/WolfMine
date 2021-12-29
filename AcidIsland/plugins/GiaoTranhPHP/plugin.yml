@@ -1,0 +1,14 @@
+name: WarClan
+version: 9.7
+main: Clan\War
+author: AmGM
+api: 2.0.0
+commands:
+ join:
+  usage: "/join <war, deny>"
+  permission: thamgia.war
+permisson:
+ thamgia:
+  children:
+  thamgia.war:
+  default: op

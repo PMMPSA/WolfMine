@@ -1,0 +1,5 @@
+name: OpJoinParticle
+main: OJP\Main
+version: 1.3
+api: [3.1.1]
+author: AmGM

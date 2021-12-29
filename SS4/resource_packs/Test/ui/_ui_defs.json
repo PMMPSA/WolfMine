@@ -1,0 +1,20 @@
+/*********************************************************
++*   File created:                                       *
++*   (c) Mojang. All rights reserved                     *
++*   (c) Microsoft. All rights reserved.                 *
++*********************************************************/
+
+/*********************************************************
++*   File modifity:                                      *
++*   (c) MINEPAPER. All rights reserved                  *
++*   (c) NaturalPack. All rights reserved.               *
++*********************************************************/
+
+{ 
+  "ui_defs": [ 
+    "ui/ui.naturalpack_panels_screen.json", 
+    "ui/settings_sections/ui.naturalpack/ui.naturalpack_credits_section.json", 
+    "ui/settings_sections/ui.naturalpack/ui.naturalpack_information_section.json",
+    "ui/settings_sections/ui.naturalpack/ui.naturalpack_marketplace_section.json" 
+  ]
+}

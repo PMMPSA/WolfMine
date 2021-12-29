@@ -1,0 +1,42 @@
+---
+#  _____     _              _  _     ___     _                       _      ___                           
+# |_   _|   (_)    _ _     | || |   | _ \   (_)    __ __    ___     | |    |   \    ___    __ __     ___  
+#   | |     | |   | ' \     \_, |   |  _/   | |    \ \ /   / -_)    | |    | |) |  / -_)   \ V /    |_ /  
+#  _|_|_   _|_|_  |_||_|   _|__/   _|_|_   _|_|_   /_\_\   \___|   _|_|_   |___/   \___|   _\_/_   _/__|  
+#_|"""""|_|"""""|_|"""""|_| """"|_| """ |_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""| 
+#"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-' 
+
+## Welcome to the Only Fully Functional and 100% Customizeable ShopUI By: Alexpads!!
+# HOW TO USE:
+## First Put a Category Whatever you Put will be the Name Exactly Like its Spelled.
+## Then Ta over and Put a - "" in the quotes go in this order:
+#### ItemID:MetaData:AmmmountOfTheItem:CustomName:Price:SellPrice
+Các_Khối_Màu_Sắc_(Len):
+    - "35:0:10:Len_Trắng:5:0"
+    - "35:14:10:Len_Đỏ:5:0"
+    - "35:1:10:Len_Cam:5:0"
+    - "35:5:10:Len_Xanh_Lá_Cây:5:0"
+    - "35:13:10:Len_Xanh_Lá_Cây_(Đậm):5:0"
+    - "35:4:10:Len_Vàng:5:0"
+    - "35:2:10:Len_Tím:5:0"
+    - "35:9:10:Len_Xanh_Nước_Biển:5:0"
+Các_Khối_Màu_Sắc_(Bê_Tông):
+    - "236:0:10:Bê_Tông_Trắng:5:0"
+    - "236:14:10:Bê_Tông_Đỏ:5:0"
+    - "236:1:10:Bê_Tông_Cam:5:0"
+    - "236:5:10:Bê_Tông_Xanh_Lá_Cây:5:0"
+    - "236:13:1:Bê_Tông_Xanh_Lá_Cây_(Đậm):5:0"
+    - "236:4:10:Bê_Tông_Vàng:5:0"
+    - "236:2:10:Bê_Tông_Tím:5:0"
+    - "236:9:1:Bê_Tông_Xanh_Nước_Biển:5:0"
+Thức_Ăn_Đã_Chế_Biến:
+    - "364:0:5:Thịt_Bò_Nướng:5:0"
+    - "320:0:5:Thịt_Heo_Nướng:5:0"
+    - "366:0:1:Thịt_Gà_Nướng:10:0"
+Vật_Phẩm_Gia_Dụng:
+    - "347:0:1:Đồng_Hồ:10:0"
+    - "444:0:1:Cánh:20:0"
+    - "386:0:1:Sách_Trống:20:0"
+    - "205:0:1:Shulker:25:0"
+    - "368:0:5:Mắt_Rồng:10:0"
+...

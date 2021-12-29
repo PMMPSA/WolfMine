@@ -1,0 +1,20 @@
+// __multiversion__
+// This signals the loading code to prepend either #version 100 or #version 300 es as apropriate.
+
+#include "fragmentVersionSimple.h"
+#include "uniformMacro.h"
+
+varying vec4 ColorOut;
+varying vec4 AdditionalOut;
+
+LAYOUT_BINDING(1) uniform sampler2D TEXTURE_1;
+
+float GetLuminance(vec3 color) {
+	return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+}
+
+void main() {
+	float dfValue = texture2D(TEXTURE_1, AdditionalOut.xy).r;
+	float lum = 1.45 - GetLuminance(ColorOut.xyz);
+	gl_FragColor = ColorOut * pow(dfValue, lum);
+}

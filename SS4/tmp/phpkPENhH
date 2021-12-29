@@ -1,0 +1,3055 @@
+<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper;
+
+use Johnmacrocraft\Newspaper\forms\MainForm;
+use Johnmacrocraft\Newspaper\tasks\CheckSubscriptionsTask;
+use pocketmine\command\Command;
+use pocketmine\command\CommandSender;
+use pocketmine\event\Listener;
+use pocketmine\event\player\PlayerJoinEvent;
+use pocketmine\item\ItemFactory;
+use pocketmine\item\ItemIds;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+use pocketmine\plugin\Plugin;
+use pocketmine\plugin\PluginBase;
+use pocketmine\Server;
+use pocketmine\utils\Config;
+use pocketmine\utils\TextFormat;
+use Johnmacrocraft\Newspaper\libs\spoondetector\SpoonDetector;
+
+class Newspaper extends PluginBase implements Listener {
+
+	/** @var string */
+	private $dataFolder;
+	/** @var string */
+	private $newspaperFolder;
+	/** @var string */
+	private $playersFolder;
+
+	/** @var BaseLang */
+	private $baseLang_eng;
+	/** @var BaseLang */
+	private $baseLang_kor;
+	/** @var BaseLang */
+	private $baseLang_jpn;
+
+	public function onEnable() : void {
+		SpoonDetector::printSpoon($this, "spoon.txt");
+
+		$this->dataFolder = $this->getDataFolder();
+
+		if(!is_dir($this->newspaperFolder = $this->dataFolder . "newspapers/")) {
+			mkdir($this->newspaperFolder);
+		}
+		if(!is_dir($this->playersFolder = $this->dataFolder . "players/")) {
+			mkdir($this->playersFolder);
+		}
+		$this->saveDefaultConfig();
+
+		foreach($this->getLanguageList() as $lang) {
+			$langName = pathinfo($lang, PATHINFO_FILENAME);
+			$this->{"baseLang_$langName"} = new BaseLang($langName, $this->getFile() . "resources/lang/");
+		}
+
+		$this->getServer()->getPluginManager()->registerEvents($this, $this);
+		$this->getScheduler()->scheduleRepeatingTask(new CheckSubscriptionsTask($this), 12000); //10 minutes
+	}
+
+	/**
+	 * @param CommandSender $sender
+	 * @param Command $command
+	 * @param string $label
+	 * @param string[] $args
+	 *
+	 * @return bool
+	 */
+	public function onCommand(CommandSender $sender, Command $command, string $label, array $args) : bool {
+		if($command->getName() === "newspaper") {
+			if($sender instanceof Player) {
+				$this->checkSubscriptions();
+				$sender->sendForm(new MainForm($sender->getName()));
+			} else {
+				$sender->sendMessage(TextFormat::RED . $this->getLanguage($this->getConfig()->get("lang"))->translateString("command.onlyPlayers"));
+			}
+			return true;
+		}
+	}
+
+	/**
+	 * @param PlayerJoinEvent $event
+	 * @priority MONITOR
+	 */
+	public function onPlayerJoin(PlayerJoinEvent $event) : void {
+		$playerName = $event->getPlayer()->getLowerCaseName();
+		if(!is_file($playerData = $this->getPlayersFolder() . "$playerName.yml")) {
+			new Config($playerData,
+				Config::YAML,
+				["lang" => $this->getConfig()->get("lang"),
+					"autorenew" => $this->getConfig()->get("autorenew"),
+					"subscriptions" => []
+				]
+			);
+		}
+
+		$subscriptions = $this->getPlayerData($playerName);
+
+		foreach($this->getSubscriptionsArray($subscriptions->getAll()) as $subscription) {
+			$player = $event->getPlayer();
+			$key = "subscriptions.$subscription.queue";
+			foreach($queue = $subscriptions->getNested($key) as $newspaper) {
+				$item = ItemFactory::fromString(ItemIds::WRITTEN_BOOK);
+				$item->setCount(1);
+				$item->setPages(($newspaperData = $this->getPublished($subscription, $newspaper))[1]->getAll());
+				$item->setTitle($newspaperData[0]->get("name"));
+				$item->setAuthor($newspaperData[0]->get("author"));
+				$item->setGeneration($newspaperData[0]->get("generation"));
+
+				if(!$player->getInventory()->canAddItem($item)) {
+					$player->sendMessage(TextFormat::RED . $this->getLanguage(Newspaper::getPlayerData($playerName)->get("lang"))->translateString("main.error.sub.invNoSpace", [$subscription]));
+					break 2;
+				}
+
+				$player->getInventory()->addItem($item);
+
+				unset($queue[array_search($newspaper, $queue)]);
+				$subscriptions->setNested($key, array_values($queue));
+			}
+		}
+		$subscriptions->save();
+	}
+
+	/**
+	 * Creates a new newspaper.
+	 *
+	 * @param string $newspaper
+	 * @param string $description
+	 * @param array $member
+	 * @param string $icon
+	 * @param int $perOneFee
+	 * @param int $subsFee
+	 */
+	public function createNewspaper(string $newspaper, string $description, array $member, string $icon, int $perOneFee, int $subsFee) {
+		$newspaperPath = $this->getNewspaperFolder() . strtolower($newspaper);
+
+		mkdir($newspaperPath);
+		mkdir($newspaperPath . "/newspaper");
+
+		$info = new Config($newspaperPath . "/info.yml",
+			Config::YAML,
+			["name" => $newspaper,
+				"description" => $description,
+				"member" => array_map("strtolower", $member),
+				"icon" => $icon
+			]
+		);
+
+		$info->setNested("price.perOne", $perOneFee);
+		$info->setNested("price.subscriptions", $subsFee);
+		$info->set("profit", 0);
+		$info->save();
+	}
+
+	/**
+	 * Publishes a newspaper.
+	 *
+	 * @param string $mainNewspaper
+	 * @param string $newspaper
+	 * @param string $description
+	 * @param string $author
+	 * @param int $generation
+	 * @param array $contents
+	 * @param bool|null $checkExpired
+	 */
+	public function publishNewspaper(string $mainNewspaper, string $newspaper, string $description, string $author, int $generation, array $contents, ?bool $checkExpired = true) {
+		$basePath = $this->getNewspaperFolder() . "$mainNewspaper/newspaper/" . strtolower($newspaper);
+
+		$newspaperInfo = new Config("$basePath.yml",
+			Config::YAML,
+			["name" => $newspaper,
+				"description" => $description,
+				"author" => $author,
+				"generation" => $generation
+			]
+		);
+		$newspaperData = new Config("$basePath.dat", Config::SERIALIZED, $contents);
+
+		if($checkExpired) {
+			$this->checkSubscriptions();
+		}
+		foreach(glob($this->getPlayersFolder() . "*.yml") as $playerDataPath) {
+			$playerData = new Config($playerDataPath, Config::YAML);
+
+			if(isset($playerData->getAll()["subscriptions"][$mainNewspaper])) {
+				if(($subscriber = $this->getServer()->getPlayer($subscriberName = pathinfo($playerDataPath, PATHINFO_FILENAME)))->isOnline()) {
+					$item = ItemFactory::fromString(ItemIds::WRITTEN_BOOK);
+					$item->setCount(1);
+					$item->setPages(($newspaperData->getAll()));
+					$item->setTitle($newspaperInfo->get("name"));
+					$item->setAuthor($newspaperInfo->get("author"));
+					$item->setGeneration($newspaperInfo->get("generation"));
+
+					if($subscriber->getInventory()->canAddItem($item)) {
+						$subscriber->getInventory()->addItem($item);
+						break;
+					} else {
+						$subscriber->sendMessage(TextFormat::GOLD . $this->getLanguage($this->getPlayerData($subscriberName)->get("lang"))->translateString("gui.publish.sub.info"));
+					}
+
+				}
+				$key = "subscriptions.$mainNewspaper.queue";
+				$queue = $playerData->getNested($key);
+				$queue[] = strtolower($newspaper);
+				$playerData->setNested($key, $queue);
+				$playerData->save();
+			}
+		}
+	}
+
+	/**
+	 * Returns newspaper information.
+	 *
+	 * @param string $newspaper
+	 *
+	 * @return Config
+	 */
+	public function getNewspaperInfo(string $newspaper) : Config {
+		if(!file_exists($path = $this->getNewspaperFolder() . strtolower($newspaper) . "/info.yml")) {
+			throw new \RuntimeException("Newspaper not found");
+		}
+		return new Config($path, Config::YAML);
+	}
+
+	/**
+	 * Returns an array of path to all the newspaper information files.
+	 *
+	 * @return array
+	 */
+	public function getAllNewspaperInfo() : array {
+		return glob($this->getNewspaperFolder() . "*/info.yml");
+	}
+
+	/**
+	 * Returns the published newspaper for the given newspaper.
+	 *
+	 * @param string $newspaper
+	 * @param string $published
+	 *
+	 * @return array
+	*/
+	public function getPublished(string $newspaper, string $published) : array {
+		if(!file_exists(($path = $this->getNewspaperFolder() . strtolower($newspaper) . "/newspaper/" . $published) . ".yml")) {
+			throw new \RuntimeException("Published newspaper info not found");
+		}
+		if(!file_exists("$path.dat")) {
+			throw new \RuntimeException("Published newspaper data not found");
+		}
+		return [new Config("$path.yml", Config::YAML), new Config("$path.dat", Config::SERIALIZED)];
+	}
+
+	/**
+	 * Returns an array of path to all the published newspapers for the given newspaper.
+	 *
+	 * @param string $newspaper
+	 *
+	 * @return array
+	 */
+	public function getAllPublished(string $newspaper) : array {
+		if(!file_exists($this->getNewspaperFolder() . strtolower($newspaper))) {
+			throw new \RuntimeException("Newspaper not found");
+		}
+		$escapedName = str_replace("[", "\[", $newspaper); //First checks for brackets
+		$escapedName = str_replace("]", "\]", $escapedName);
+		$escapedName = str_replace("\[", "[[]", $escapedName); //Second checks for brackets
+		$escapedName = str_replace("\]", "[]]", $escapedName);
+		return glob($this->getNewspaperFolder() . strtolower($escapedName) . "/newspaper/*.yml");
+	}
+
+	/**
+	 * Sets the subscription status of the specified newspaper for the given player.
+	 *
+	 * @param string $player
+	 * @param string $newspaper
+	 * @param \DateTime $subscribeUntil
+	 */
+	public function setSubscription(string $player, string $newspaper, ?\DateTime $subscribeUntil = null) : void {
+		if($subscribeUntil === null) {
+			$subscribeUntil = (new \DateTime())->add(new \DateInterval("P1M"));
+		}
+
+		$playerData = $this->getPlayerData($player);
+		$prefix = "subscriptions." . strtolower($newspaper);
+		$playerData->setNested("$prefix.subscribeUntil", $subscribeUntil);
+		$playerData->setNested("$prefix.queue", []);
+		$playerData->save();
+	}
+
+	/**
+	 * Returns the subscription status of the specified newspaper for the given player.
+	 *
+	 * @param string $player
+	 * @param string $newspaper
+	 *
+	 * @return array
+	 */
+	public function getSubscription(string $player, string $newspaper) : array {
+		return $this->getPlayerData($player)->getNested("subscriptions." . $newspaper);
+	}
+
+	/**
+	 * Removes the subscription of the specified newspaper for the given player.
+	 *
+	 * @param string $player
+	 * @param string $newspaper
+	 */
+	public function removeSubscription(string $player, string $newspaper) : void {
+		$playerData = $this->getPlayerData($player);
+		$playerData->removeNested("subscriptions." . $newspaper);
+		$playerData->save();
+	}
+
+	/**
+	 * Renews the subscription of the specified newspaper for the given player.
+	 *
+	 * @param string $player
+	 * @param string $newspaper
+	 */
+	public function renewSubscription(string $player, string $newspaper) : void {
+		if($this->getPlayerData($player)->get("autorenew")) {
+			if($this->canBuyNewspapers() && ($API = Newspaper::getPlugin()->getEconomyAPI())->reduceMoney($player, $this->getNewspaperInfo($newspaper)->getNested("price.subscriptions"), true, "Newspaper") === $API::RET_INVALID) {
+				$this->removeSubscription($player, $newspaper);
+				return;
+			}
+
+			$this->setSubscription($player, $newspaper);
+		} else {
+			$this->removeSubscription($player, $newspaper);
+		}
+	}
+
+	/**
+	 * Checks subscriptions and performs actions.
+	 *
+	 * @param array|null $pathArray
+	 */
+	public function checkSubscriptions(?array $pathArray = null) {
+		if($pathArray === null) {
+			$pathArray = glob($this->getPlayersFolder() . "*.yml");
+		}
+
+		foreach($pathArray as $dataPath) {
+			$playerData = new Config($dataPath, Config::YAML);
+
+			foreach($this->getSubscriptionsArray($playerData->getAll()) as $subscription) {
+				if(new \DateTime($playerData->getNested("subscriptions." . $subscription . ".subscribeUntil")) < new \DateTime()) {
+					$this->renewSubscription(pathinfo($dataPath, PATHINFO_FILENAME), $subscription);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Returns the player data for the given player.
+	 *
+	 * @param string $player
+	 *
+	 * @return Config
+	 */
+	public function getPlayerData(string $player) : Config {
+		if(!file_exists($path = $this->getPlayersFolder() . strtolower($player) . ".yml")) {
+			throw new \RuntimeException("Player data not found");
+		}
+		return new Config($path, Config::YAML);
+	}
+
+	/**
+	 * Returns an array of subscriptions.
+	 *
+	 * @param $array
+	 * @return array
+	 */
+	public function getSubscriptionsArray(array $array) : array {
+		$result = [];
+		unset($array["lang"]);
+		unset($array["autorenew"]);
+		foreach($array as $sub) {
+			$result = array_merge($result, $sub);
+		}
+		return array_keys($result);
+	}
+
+	/**
+	 * Returns the api of Economy plugin.
+	 *
+	 * @return Plugin|null
+	 */
+	public function getEconomyAPI() : ?Plugin {
+		return Server::getInstance()->getPluginManager()->getPlugin("EconomyAPI");
+	}
+
+	/**
+	 * Returns whether the players can buy newspapers (checks if Economy plugin exists).
+	 *
+	 * @return bool
+	 */
+	public function canBuyNewspapers() : bool {
+		return $this->getEconomyAPI() !== null && $this->getEconomyAPI()->isEnabled();
+	}
+
+	/**
+	 * Returns whether the given player has the permission, and sends the message if true.
+	 *
+	 * @param Player $player
+	 * @param string $perm
+	 * @param string $action
+	 *
+	 * @return bool
+	 */
+	public function badPerm(Player $player, string $perm, string $action = "main.perm.generic") : bool {
+		if(!$player->hasPermission("newspaper." . $perm)) {
+			$player->sendMessage(TextFormat::RED . $this->getLanguage($this->getPlayerData($player->getName())->get("lang"))->translateString("main.perm.base", ["%$action"]));
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Returns this class.
+	 *
+	 * @return Newspaper
+	 */
+	public static function getPlugin() : Newspaper {
+		return Server::getInstance()->getPluginManager()->getPlugin("Newspaper");
+	}
+
+	/**
+	 * Returns the path to the newspaper folder.
+	 *
+	 * @return string
+	 */
+	public function getNewspaperFolder() : string {
+		return $this->newspaperFolder;
+	}
+
+	/**
+	 * Returns the path to the players folder.
+	 *
+	 * @return string
+	 */
+	public function getPlayersFolder() : string {
+		return $this->playersFolder;
+	}
+
+	/**
+	 * Returns the path to the language files folder.
+	 *
+	 * @return string
+	 */
+	public function getLanguageFolder() : string {
+		return $this->getFile() . "resources/lang/";
+	}
+
+	/**
+	 * Returns BaseLang for the given language.
+	 *
+	 * @param string $lang
+	 *
+	 * @return BaseLang
+	 */
+	public function getLanguage(string $lang) : BaseLang {
+		return $this->{"baseLang_$lang"};
+	}
+
+	/**
+	 * Returns an array of path to all the language files.
+	 *
+	 * @return array
+	 */
+	public function getLanguageList() : array {
+		$langList = []; //From PocketMine
+		if(is_dir($this->getLanguageFolder())) {
+			foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->getFile() . "resources/lang/")) as $langPath) {
+				if($langPath->isFile()) {
+					$path = str_replace(DIRECTORY_SEPARATOR, "/", substr((string) $langPath, strlen($this->getFile() . "resources/lang/")));
+					$langList[$path] = $langPath;
+				}
+			}
+		}
+
+		return $langList;
+	}
+}
+<?php
+namespace Johnmacrocraft\Newspaper\libs\spoondetector;
+
+use pocketmine\plugin\PluginBase;
+use pocketmine\Server;
+
+/**
+ * This class is deliberately meant to be silly
+ * Class SpoonDetector
+ * @package falkirks\simplewarp\utils
+ */
+class SpoonDetector{
+
+    private static $subtleAsciiSpoon = "   
+         ___ _ __   ___   ___  _ __  
+        / __| '_ \\ / _ \\ / _ \\| '_ \\ 
+        \\__ \\ |_) | (_) | (_) | | | |
+        |___/ .__/ \\___/ \\___/|_| |_|
+            | |                      
+            |_|                      
+    ";
+
+    private static $spoonTxtContent = "
+    The author of this plugin does not provide support for third-party builds of 
+    PocketMine-MP (spoons). Spoons detract from the overall quality of the MCPE plugin environment, which is already 
+    lacking in quality. They force plugin developers to waste time trying to support conflicting APIs.
+    
+    In order to begin using this plugin you must understand that you will be offered no support. 
+    
+    Furthermore, the GitHub issue tracker for this project is targeted at vanilla PocketMine only. Any bugs you create which don't affect vanilla PocketMine, will be deleted.
+    
+    Have you read and understood the above (type 'yes' after the question mark)?";
+
+    private static $thingsThatAreNotSpoons = [
+        'PocketMine-MP'
+    ];
+
+    public static function isThisSpoon() : bool {
+        return !in_array(Server::getInstance()->getName(), self::$thingsThatAreNotSpoons);
+    }
+
+    private static function contentValid(string $content): bool {
+        return (strpos($content, self::$spoonTxtContent) !== false) && (strrpos($content, "yes") > strrpos($content, "?"));
+    }
+
+    public static function printSpoon(PluginBase $pluginBase, $fileToCheck){
+        if(self::isThisSpoon()){
+            if(!file_exists($pluginBase->getDataFolder() . $fileToCheck)){
+                file_put_contents($pluginBase->getDataFolder() . $fileToCheck, self::$spoonTxtContent);
+            }
+            if(!self::contentValid(file_get_contents($pluginBase->getDataFolder() . $fileToCheck))) {
+                $pluginBase->getLogger()->info(self::$subtleAsciiSpoon);
+                $pluginBase->getLogger()->warning("You are attempting to run " . $pluginBase->getDescription()->getName() . " on a SPOON!");
+                $pluginBase->getLogger()->warning("Before using the plugin you will need to open /plugins/" . $pluginBase->getDescription()->getName() . "/" . $fileToCheck . " in a text editor and agree to the terms.");
+                $pluginBase->getServer()->getPluginManager()->disablePlugin($pluginBase);
+            }
+        }
+    }
+
+}
+#The language to use for Newspaper messages in console, rcon and as default language for players
+lang: eng
+#Whether to automatically renew subscriptions
+autorenew: true
+; NOTE: We use the word newspaper for the following two meanings: the newspaper office and the newspaper (reading).
+
+; This string is used with ~.perm.* strings
+main.perm.base=You don't have permission to {%0}
+main.perm.generic=run this action
+main.error.sub.invNoSpace=Some newspapers from the queue of {%0} couldn't be added to your inventory because you don't have enough space in it. They'll be in your queue until there's a space.
+
+command.onlyPlayers=Only players can use this command
+
+gui.buy.info.noFee=This server doesn't seem to use an economy system, so the price is not counted.
+
+gui.buyinfo.title=Information for {%0}
+gui.buyinfo.label.desc=Description: {%0}
+gui.buyinfo.label.member=Member: {%0}
+gui.buyinfo.label.priceOne=Price per one: {%0}
+gui.buyinfo.label.priceSub=Subscription fee: {%0}
+gui.buyinfo.button.buy=Buy for {%0}
+gui.buyinfo.button.subscribe=Subscribe for {%0}
+gui.buyinfo.perm.subscribe=subscribe to newspapers
+gui.buyinfo.error.alreadySubscribe=You're already subscribing to this newspaper.
+gui.buyinfo.error.noMoney="You don't have enough money to subscribe to this newspaper; you need {%0} more"
+gui.buyinfo.info.invNoSpace=Your subscription was successful, but the newspapers couldn't be added to your inventory because you don't have enough space in it. They'll be added when you rejoin the server.
+gui.buyinfo.success.subscribe=You just subscribed to the {%0}!
+
+gui.buyitems.title=Select newspapers
+gui.buyitems.label.noItems=Oops, it seems like this newspaper hasn't published any newspapers. Check back later!
+gui.buyitems.info.cancelPurchase="No newspapers were selected; purchase canceled."
+gui.buyitems.error.noMoney="You don't have enough money to buy this newspaper; you need {%0} more"
+gui.buyitems.error.invNoSpace=You don't have enough space in your inventory to buy the selected item(s).
+gui.buyitems.success.buy=You just purchased the {%0} for {%1}!
+
+gui.create.title=Create...
+
+gui.create.input.name.name=Name
+gui.create.input.name.hint=Bunbunmaru Newspaper
+gui.create.input.desc.name=Description
+gui.create.input.desc.hint=A newspaper made by Shameimaru Aya
+gui.create.input.member.name=Member of this newspaper team, use a comma for an array
+gui.create.input.member.hint=ZUN, Shameimaru Aya
+gui.create.input.iconURL.name=Icon URL
+gui.create.input.priceOne.name=Price per one
+gui.create.input.priceSub.name=Subscription fee
+gui.create.error.alreadyExists=A newspaper with that name already exists.
+gui.create.error.invalidName=The name of the newspaper cannot contain the following characters: \\, /, :, *, ?, ", <, >, |, and cannot be empty.
+gui.create.success.create=Created a new newspaper!
+
+gui.createtype.label=Do you want to create a new one, or publish a new version of the previous one?
+gui.createtype.button.new=Create new
+gui.createtype.button.publish=Publish
+gui.createtype.perm.new=create new newspapers
+gui.createtype.perm.publish=publish newspapers
+
+gui.edit.title=Edit Newspaper...
+gui.edit.success.edit=Edited the newspaper!
+
+gui.itemlist.title=Buy/Read Newspaper
+gui.itemlist.label=Here you can buy and read newspapers. Some of them might be free!
+gui.itemlist.label.noItems=This server doesn't have any newspapers yet. Why don't you be the first newspaper?
+
+gui.main.label=What do you want to do?
+gui.main.button.create=Create newspapers
+gui.main.button.buy=Buy/Read newspapers
+gui.main.button.manage=Manage newspapers
+gui.main.button.settings=Settings
+gui.main.perm.create=create newspapers
+gui.main.perm.buy=buy newspapers
+gui.main.perm.manage=manage newspapers
+gui.main.perm.settings=to manage settings and subscriptions
+
+gui.manage.title=Manage Newspaper
+gui.manage.label=Here you can manage newspapers.
+
+gui.newspaperInfo.title=Information for {%0}
+gui.newspaperInfo.label=Profit: {%0}
+gui.newspaperInfo.button.edit=Edit newspaper
+gui.newspaperInfo.button.getProfit=Get a salary
+gui.newspaperinfo.perm.edit=edit newspapers
+gui.newspaperinfo.perm.getProfit=receive a salary
+gui.newspaperInfo.success.getProfit=You've received a salary! Don't forget to share it with your team's other members.
+
+gui.subinfo.title=Subscription status
+gui.subinfo.label.expiresAt=Expires at: {%0}
+gui.subinfo.label.autorenew.enabled=Your settings are currently set to renew your subscriptions automatically when it expires.
+gui.subinfo.label.autorenew.disabled=Your settings are currently not set to renew your subscriptions automatically when it expires.
+gui.subinfo.button.unsub=Unsubscribe
+gui.subinfo.perm.unsub=unsubscribe from newspapers
+gui.subinfo.success.unsub=Unsubscribed from the newspaper!
+
+gui.sub.title=My subscriptions
+gui.sub.label=Here you can view the status of your subscriptions.
+
+gui.publish.title=Publish Newspaper...
+gui.publish.label=Note: For the newspaper, the item what you're currently holding will be used.
+gui.publish.input.name.name=Name
+gui.publish.input.desc.name=Description
+gui.publish.input.desc.hint=Breaking news: Mojang finally removes Adler32 from Minecraft: Bedrock Edition
+gui.publish.input.author.name=Author
+gui.publish.input.author.hint=Third party devs
+gui.publish.sub.info=There is a new newspaper from your subscriptions, but it couldn't be added to your inventory because you don't have enough space in it. It'll be in your queue until there's a space.
+gui.publish.error.notBook=You are not holding a writable or written book!
+gui.publish.success.publish=Published a new newspaper!
+
+gui.publishitem.label=Which newspaper are you going to publish?
+
+gui.settings.title=Settings
+gui.settings.label=Here you can manage settings and your subscriptions.
+gui.settings.button.settings=Settings
+gui.settings.button.subscriptions=My subscriptions
+gui.settings.perm.settings=to manage settings
+gui.settings.perm.subscriptions=to check subscriptions
+
+gui.settingslist.dropdown.lang.name=Language
+gui.settingslist.toggle.autorenew.name=Automatically renew subscriptions
+gui.settingslist.success.set=Successfully changed settings! Some of these changes may take effect after you rejoin the server.
+; NOTE: We use the word newspaper for the following two meanings: the newspaper office and the newspaper (reading).
+
+; This string is used with ~.perm.* strings
+main.perm.base={%0}権限がありません
+main.perm.generic=このアクションを実行する
+main.error.sub.invNoSpace=インベントリに十分なスペースがなく、 {%0} のキューの一部の新聞を追加できません。新聞は、スペースがあるまでキューに入ります。
+
+command.onlyPlayers=プレイヤーのみこのコマンドを使用できます
+
+gui.buy.info.noFee=このサーバーは、経済システムを使用していないようなので、価格を計算しません。
+
+gui.buyinfo.title={%0} の情報
+gui.buyinfo.label.desc=説明：{%0}
+gui.buyinfo.label.member=メンバー：{%0}
+gui.buyinfo.label.priceOne=一個当たりの価格：{%0}
+gui.buyinfo.label.priceSub=購読料：{%0}
+gui.buyinfo.button.buy={%0} で購入
+gui.buyinfo.button.subscribe={%0} で購読
+gui.buyinfo.perm.subscribe=新聞を購読する
+gui.buyinfo.error.alreadySubscribe=この新聞を既に購読しています。
+gui.buyinfo.error.noMoney=この新聞を購読するのに十分なお金がありません、{%0} が必要です
+gui.buyinfo.info.invNoSpace=購読に成功しましたが、インベントリに十分なスペースがなく、新聞を追加できません。新聞は、あなたがサーバーに再び参加すると追加されます。
+gui.buyinfo.success.subscribe={%0} を購読しました！
+
+gui.buyitems.title=新聞を選択
+gui.buyitems.label.noItems=この新聞は、まだ何も発行していないようです。後で確認してください。
+gui.buyitems.info.cancelPurchase=選択した新聞がないので購入がキャンセルされました。
+gui.buyitems.error.noMoney=この新聞を購入するのに十分なお金がありません、{%0} が必要です
+gui.buyitems.error.invNoSpace=選択した項目を購入するのに十分なスペースがインベントリにありません。
+gui.buyitems.success.buy={%0} を {%1} で購入しました！
+
+gui.create.title=作成…
+
+gui.create.input.name.name=名前
+gui.create.input.name.hint=文々。新聞
+gui.create.input.desc.name=説明
+gui.create.input.desc.hint=射命丸文が作る新聞
+gui.create.input.member.name=この新聞チームのメンバーです、配列では、読点を使用してください
+gui.create.input.member.hint=ZUN、射命丸文
+gui.create.input.iconURL.name=アイコンの URL
+gui.create.input.priceOne.name=一つ当たりの価格
+gui.create.input.priceSub.name=購読料
+gui.create.error.alreadyExists=その名前の新聞は既に存在します。
+gui.create.error.invalidName=新聞の名前は以下の文字（\\、/、:、*、?、"、<、>、|）を含めることができず、空欄にはできません。
+gui.create.success.create=新しい新聞を作成しました！
+
+gui.createtype.label=新しく作成しますか、それとも既存の物の新しいバージョンを発行しますか？
+gui.createtype.button.new=新規作成
+gui.createtype.button.publish=発行
+gui.createtype.perm.new=新聞を作成する
+gui.createtype.perm.publish=新聞を発行する
+
+gui.edit.title=新聞を編集…
+gui.edit.success.edit=新聞を編集しました！
+
+gui.itemlist.title=新聞を購入・読む
+gui.itemlist.label=ここでは、新聞を購入して読むことができます。その中一部は無料かも…？
+gui.itemlist.label.noItems=このサーバーには、まだ新聞社がありません。最初の新聞社になってみてはどうですか？
+
+gui.main.label=何をしたいですか？
+gui.main.button.create=新聞を作成
+gui.main.button.buy=新聞を購入・読む
+gui.main.button.manage=新聞を管理
+gui.main.button.settings=設定
+gui.main.perm.create=新聞を作成する
+gui.main.perm.buy=新聞を購入する
+gui.main.perm.manage=新聞を管理する
+gui.main.perm.settings=設定と購読を管理する
+
+gui.manage.title=新聞を管理
+gui.manage.label=ここでは、新聞を管理できます。
+
+gui.newspaperInfo.title={%0} の情報
+gui.newspaperInfo.label=収益：{%0}
+gui.newspaperInfo.button.edit=新聞を編集
+gui.newspaperInfo.button.getProfit=給与を受け取る
+gui.newspaperinfo.perm.edit=新聞を編集する
+gui.newspaperinfo.perm.getProfit=給与を受け取ることができる
+gui.newspaperInfo.success.getProfit=給与を受け取りました！チームの他のメンバーと分けることを忘れないでください。
+
+gui.subinfo.title=購読のステータス
+gui.subinfo.label.expiresAt=満了日：{%0}
+gui.subinfo.label.autorenew.enabled=あなたの設定は、あなたの購読が満了されると自動的に更新するように現在設定されています。
+gui.subinfo.label.autorenew.disabled=あなたの設定は、あなたの購読が満了されると自動的に更新しないように現在設定されています。
+gui.subinfo.button.unsub=購読をキャンセル
+gui.subinfo.perm.unsub=新聞の購読をキャンセルする
+gui.subinfo.success.unsub=新聞の購読をキャンセルしました！
+
+gui.sub.title=私の購読
+gui.sub.label=ここでは、あなたの購読のステータスを見ることができます。
+
+gui.publish.title=新聞を発行…
+gui.publish.label=ノート：新聞では、手に持っているアイテムが使用されます。
+gui.publish.input.name.name=名前
+gui.publish.input.desc.name=説明
+gui.publish.input.desc.hint=速報：Mojang、ついに Minecraft: Bedrock Edition で Adler32 を除去
+gui.publish.input.author.name=作成者
+gui.publish.input.author.hint=サードパーティ開発者
+gui.publish.sub.info=あなたの購読で新しい新聞がありますが、インベントリに十分なスペースがなく、新聞を追加できません。新聞は、スペースがあるまでキューに入ります。
+gui.publish.error.notBook=書くことができる本か書かれた本を手に持っていません！
+gui.publish.success.publish=新しい新聞を発行しました！
+
+gui.publishitem.label=どの新聞を発行しますか？
+
+gui.settings.title=設定
+gui.settings.label=ここでは、設定とあなたの購読を管理できます。
+gui.settings.button.settings=設定
+gui.settings.button.subscriptions=私の購読
+gui.settings.perm.settings=設定を管理する
+gui.settings.perm.subscriptions=購読を確認する
+
+gui.settingslist.dropdown.lang.name=言語
+gui.settingslist.toggle.autorenew.name=購読を自動的に更新
+gui.settingslist.success.set=設定を変更しました。これらの変更の一部は、サーバーに再び参加した後に適用される場合があります。
+; NOTE: We use the word newspaper for the following two meanings: the newspaper office and the newspaper (reading).
+
+; This string is used with ~.perm.* strings
+main.perm.base={%0} 수 있는 권한이 없습니다
+main.perm.generic=이 작업을 실행할
+main.error.sub.invNoSpace=보관함에 충분한 공간이 없어서 {%0}의 대기열의 일부 신문을 추가할 수 없습니다. 신문은 공간이 있을 때까지 대기열에 있게 됩니다.
+
+command.onlyPlayers=플레이어만 이 명령어를 사용할 수 있습니다
+
+gui.buy.info.noFee=이 서버는 경제 시스템을 사용하는 것 같지 않기에 가격을 계산하지 않습니다.
+
+gui.buyinfo.title={%0}의 정보
+gui.buyinfo.label.desc=설명: {%0}
+gui.buyinfo.label.member=구성원: {%0}
+gui.buyinfo.label.priceOne=한 개당 가격: {%0}
+gui.buyinfo.label.priceSub=구독료: {%0}
+gui.buyinfo.button.buy={%0}(으)로 구입
+gui.buyinfo.button.subscribe={%0}(으)로 구독
+gui.buyinfo.perm.subscribe=신문을 구독할
+gui.buyinfo.error.alreadySubscribe=이미 이 신문을 구독하고 있습니다.
+gui.buyinfo.error.noMoney=이 신문을 구독하기에 충분한 금액이 없습니다, {%0}이(가) 더 필요합니다
+gui.buyinfo.info.invNoSpace=구독은 성공적이었지만, 보관함에 충분한 공간이 없어서 신문을 추가할 수 없습니다. 신문은 서버에 다시 참여하면 추가됩니다.
+gui.buyinfo.success.subscribe={%0}을(를) 구독했습니다!
+
+gui.buyitems.title=신문 선택
+gui.buyitems.label.noItems=이런, 이 신문사는 아무 신문도 발행하지 않은 것 같네요. 나중에 다시 확인해보세요!
+gui.buyitems.info.cancelPurchase=선택한 신문이 없기에 구입이 취소되었습니다.
+gui.buyitems.error.noMoney=이 신문을 구입하기에 충분한 금액이 없습니다, {%0}이(가) 더 필요합니다
+gui.buyitems.error.invNoSpace=선택한 항목을 구입하기에 충분한 공간이 보관함에 없습니다.
+gui.buyitems.success.buy={%0}을(를) {%1}(으)로 구입했습니다!
+
+gui.create.title=만들기...
+
+gui.create.input.name.name=이름
+gui.create.input.name.hint=붕붕마루 신문
+gui.create.input.desc.name=설명
+gui.create.input.desc.hint=샤메이마루 아야가 만드는 신문
+gui.create.input.member.name=이 신문팀의 구성원입니다, 배열로는 쉼표를 사용하세요
+gui.create.input.member.hint=ZUN, 샤메이마루 아야
+gui.create.input.iconURL.name=아이콘 URL
+gui.create.input.priceOne.name=한 개당 가격
+gui.create.input.priceSub.name=구독료
+gui.create.error.alreadyExists=해당 이름의 신문이 이미 존재합니다.
+gui.create.error.invalidName=신문의 이름은 다음 글자들(\\, /, :, *, ?, ", <, >, |)을 포함할 수 없으며, 비워둘 수 없습니다.
+gui.create.success.create=새로운 신문을 만들었습니다!
+
+gui.createtype.label=새로 만드시겠습니까, 아니면 기존 것의 새로운 버전을 발행하시겠습니까?
+gui.createtype.button.new=새로 만들기
+gui.createtype.button.publish=발행
+gui.createtype.perm.new=새로운 신문을 만들
+gui.createtype.perm.publish=신문을 발행할
+
+gui.edit.title=신문 수정...
+gui.edit.success.edit=신문을 수정했습니다!
+
+gui.itemlist.title=신문 구입/읽기
+gui.itemlist.label=여기서는 신문을 구입하고 읽을 수 있습니다. 그중 일부는 무료일지도...?
+gui.itemlist.label.noItems=이 서버에는 아직 신문사가 없습니다. 첫 번째 신문사가 되어 보시는 건 어떤가요?
+
+gui.main.label=무엇을 하시겠어요?
+gui.main.button.create=새로운 신문 만들기
+gui.main.button.buy=신문 구입/읽기
+gui.main.button.manage=신문 관리
+gui.main.button.settings=설정
+gui.main.perm.create=신문을 만들
+gui.main.perm.buy=신문을 구입할
+gui.main.perm.manage=신문을 관리할
+gui.main.perm.settings=설정과 구독을 관리할
+
+gui.manage.title=신문 관리
+gui.manage.label=여기서는 신문을 관리할 수 있습니다.
+
+gui.newspaperInfo.title={%0}의 정보
+gui.newspaperInfo.label=수익: {%0}
+gui.newspaperInfo.button.edit=신문 편집
+gui.newspaperInfo.button.getProfit=급여 받기
+gui.newspaperinfo.perm.edit=신문을 편집할
+gui.newspaperinfo.perm.getProfit=급여를 받을
+gui.newspaperInfo.success.getProfit=급여를 받았습니다! 팀의 다른 구성원들과 나누는 것 잊지 마세요.
+
+gui.subinfo.title=구독 상태
+gui.subinfo.label.expiresAt=만료 날짜: {%0}
+gui.subinfo.label.autorenew.enabled=설정이 구독이 만료되면 자동으로 갱신하도록 현재 설정되어 있습니다.
+gui.subinfo.label.autorenew.disabled=설정이 구독이 만료되면 자동으로 갱신하지 않도록 현재 설정되어 있습니다.
+gui.subinfo.button.unsub=구독 취소
+gui.subinfo.perm.unsub=신문의 구독을 취소할
+gui.subinfo.success.unsub=신문의 구독을 취소했습니다!
+
+gui.sub.title=내 구독
+gui.sub.label=여기서는 사용자의 구독 상태를 볼 수 있습니다.
+
+gui.publish.title=신문 발행...
+gui.publish.label=참고: 신문으로는 현재 사용자가 들고 있는 아이템이 사용됩니다.
+gui.publish.input.name.name=이름
+gui.publish.input.desc.name=설명
+gui.publish.input.desc.hint=속보: Mojang, 드디어 Minecraft: Bedrock Edition에서 Adler32 제거
+gui.publish.input.author.name=작성자
+gui.publish.input.author.hint=제3자 개발자
+gui.publish.sub.info=사용자의 구독에서 새로운 신문이 있지만, 보관함에 충분한 공간이 없어서 신문을 추가할 수 없습니다. 신문은 공간이 있을 때까지 대기열에 있게 됩니다.
+gui.publish.error.notBook=쓸 수 있거나 써진 책을 들고 있지 않습니다!
+gui.publish.success.publish=새로운 신문을 발행했습니다!
+
+gui.publishitem.label=어떤 신문을 발행하시겠습니까?
+
+gui.settings.title=설정
+gui.settings.label=여기서는 설정과 사용자의 구독을 관리할 수 있습니다.
+gui.settings.button.settings=설정
+gui.settings.button.subscriptions=내 구독
+gui.settings.perm.settings=설정을 관리할
+gui.settings.perm.subscriptions=구독을 확인할
+
+gui.settingslist.dropdown.lang.name=언어
+gui.settingslist.toggle.autorenew.name=구독을 자동으로 갱신
+gui.settingslist.success.set=설정을 성공적으로 변경했습니다! 이 변경 사항들 중 일부는 서버에 다시 참여한 후에 적용될 수도 있습니다.
+<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\tasks;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use pocketmine\scheduler\Task;
+
+class CheckSubscriptionsTask extends Task {
+
+	/** @var Newspaper */
+	private $plugin;
+
+	public function __construct(Newspaper $plugin) {
+		$this->plugin = $plugin;
+	}
+
+	public function onRun(int $currentTick) {
+		$this->plugin->checkSubscriptions();
+	}
+}
+<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuOption;
+use pocketmine\item\ItemFactory;
+use pocketmine\item\ItemIds;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+use pocketmine\utils\Config;
+use pocketmine\utils\TextFormat;
+
+class BuyInfoForm extends MenuForm {
+
+	/** @var Config */
+	private $info;
+	/** @var BaseLang */
+	private $lang;
+
+	public function __construct(Config $info, BaseLang $lang) {
+		$this->info = $info;
+		$this->lang = $lang;
+		parent::__construct($lang->translateString("gui.buyinfo.title", [$info->get("name")]),
+			$lang->translateString("gui.buyinfo.label.desc", [$info->get("description")]) . TextFormat::EOL .
+			$lang->translateString("gui.buyinfo.label.member", [implode(", ", $info->get("member"))]) . TextFormat::EOL .
+			$lang->translateString("gui.buyinfo.label.priceOne", [$info->get("price")["perOne"]]) . TextFormat::EOL .
+			$lang->translateString("gui.buyinfo.label.priceSub", [$info->get("price")["subscriptions"]]),
+			[new MenuOption($lang->translateString("gui.buyinfo.button.buy", [($monetary = (Newspaper::getPlugin()->canBuyNewspapers() ? Newspaper::getPlugin()->getEconomyAPI()->getMonetaryUnit() : null)) . $info->get("price")["perOne"]])),
+				new MenuOption($lang->translateString("gui.buyinfo.button.subscribe", [$monetary . $info->get("price")["subscriptions"]]))
+			],
+			function(Player $player, int $selectedOption) : void {
+				if($selectedOption === 0) {
+					if(!Newspaper::getPlugin()->badPerm($player, "gui.buy.one", "gui.main.perm.buy")) {
+						$player->sendForm(new BuyItemsListForm($this->info, $this->lang));
+					}
+				} elseif($selectedOption === 1) {
+					if(Newspaper::getPlugin()->badPerm($player, "gui.buy.subscribe", "gui.buyinfo.perm.subscribe")) {
+						return;
+					}
+
+					$newspaper = strtolower($this->info->get("name"));
+
+					if(isset(Newspaper::getPlugin()->getPlayerData($player->getName())->getAll()["subscriptions"][$newspaper])) {
+						$player->sendMessage(TextFormat::RED . $this->lang->translateString("gui.buyinfo.error.alreadySubscribe"));
+						return;
+					}
+
+					$price = $this->info->get("price")["subscriptions"];
+
+					if(Newspaper::getPlugin()->canBuyNewspapers()) {
+						if(($API = Newspaper::getPlugin()->getEconomyAPI())->reduceMoney($player, $price, true, "Newspaper") === $API::RET_INVALID) {
+							$player->sendMessage(TextFormat::RED . $this->lang->translateString("gui.buyinfo.error.noMoney", [Newspaper::getPlugin()->getEconomyAPI()->getMonetaryUnit() . ($price - $API->myMoney($player))]));
+							return;
+						}
+					} else {
+						$player->sendMessage(TextFormat::GOLD . $this->lang->translateString("gui.buy.info.noFee"));
+					}
+
+					$this->info->set("profit", $this->info->get("profit") + $price);
+					$this->info->save();
+					Newspaper::getPlugin()->setSubscription($player->getName(), $newspaper);
+					$noSpace = false;
+					$queue = [];
+
+					if($player->getInventory()->getSize() - count($player->getInventory()->getContents()) < count($publishedPaths = Newspaper::getPlugin()->getAllPublished($newspaper))) {
+						$noSpace = true;
+						$player->sendMessage(TextFormat::GOLD . $this->lang->translateString("gui.buyinfo.info.invNoSpace"));
+					}
+
+					foreach($publishedPaths as $publishedPath) {
+						$newspaperData = Newspaper::getPlugin()->getPublished($newspaper, pathinfo($publishedPath, PATHINFO_FILENAME));
+
+						if($noSpace) {
+							$queue[] = strtolower($newspaperData[0]->get("name"));
+						} else {
+							$item = ItemFactory::fromString(ItemIds::WRITTEN_BOOK);
+							$item->setCount(1);
+							$item->setPages($newspaperData[1]->getAll());
+							$item->setTitle($newspaperData[0]->get("name"));
+							$item->setAuthor($newspaperData[0]->get("author"));
+							$item->setGeneration($newspaperData[0]->get("generation"));
+							$player->getInventory()->addItem($item);
+						}
+					}
+
+					$player->sendMessage(TextFormat::GREEN . $this->lang->translateString("gui.buyinfo.success.subscribe", [$this->info->get("name")]));
+				}
+			}
+		);
+	}
+}
+<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\CustomForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\CustomFormResponse;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element\Label;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element\Toggle;
+use pocketmine\item\ItemFactory;
+use pocketmine\item\ItemIds;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+use pocketmine\utils\Config;
+use pocketmine\utils\TextFormat;
+
+class BuyItemsListForm extends CustomForm {
+
+	/** @var Config */
+	private $info;
+	/** @var BaseLang */
+	private $lang;
+	/** @var array */
+	private $newspapers = [];
+
+	public function __construct(Config $info, BaseLang $lang) {
+		$this->info = $info;
+		$this->lang = $lang;
+		if(empty($newspapers = Newspaper::getPlugin()->getAllPublished($info->get("name")))) {
+			$options[] = new Label("No_Newspapers", $lang->translateString("gui.buyitems.label.noItems"));
+		} else {
+			foreach($newspapers as $newspaper) {
+				$options[] = new Toggle($newspaperName = (new Config($newspaper, Config::YAML))->get("name"), $newspaperName);
+				$this->newspapers[] = $newspaperName;
+			}
+		}
+		parent::__construct($lang->translateString("gui.buyitems.title"), $options,
+			function(Player $player, CustomFormResponse $data) : void {
+				$selected = [];
+
+				foreach($this->newspapers as $newspaper) {
+					if($data->getBool($newspaper)) {
+						$selected[] = $newspaper;
+					}
+				}
+
+				$price = $this->info->get("price")["perOne"] * count($selected);
+
+				if(empty($selected)) {
+					$player->sendMessage(TextFormat::GOLD . $this->lang->translateString("gui.buyitems.info.cancelPurchase"));
+					return;
+				}
+
+				if($player->getInventory()->getSize() - count($player->getInventory()->getContents()) < count($selected)) {
+					$player->sendMessage(TextFormat::RED . $this->lang->translateString("gui.buyitems.error.invNoSpace"));
+					return;
+				}
+
+				if(Newspaper::getPlugin()->canBuyNewspapers()) {
+					if(($API = Newspaper::getPlugin()->getEconomyAPI())->reduceMoney($player, $price, true, "Newspaper") === $API::RET_INVALID) {
+						$player->sendMessage(TextFormat::RED . $this->lang->translateString("gui.buyitems.error.noMoney", [Newspaper::getPlugin()->getEconomyAPI()->getMonetaryUnit() . ($price - $API->myMoney($player))]));
+						return;
+					}
+				} else {
+					$player->sendMessage(TextFormat::GOLD . $this->lang->translateString("gui.buy.info.noFee"));
+				}
+
+				$this->info->set("profit", $this->info->get("profit") + $price);
+				$this->info->save();
+
+				foreach($selected as $newspaper) {
+					$item = ItemFactory::fromString(ItemIds::WRITTEN_BOOK);
+					$item->setCount(1);
+					$item->setPages(($newspaperData = Newspaper::getPlugin()->getPublished($this->info->get("name"), $newspaper))[1]->getAll());
+					$item->setTitle($newspaperData[0]->get("name"));
+					$item->setAuthor($newspaperData[0]->get("author"));
+					$item->setGeneration($newspaperData[0]->get("generation"));
+					$player->getInventory()->addItem($item);
+				}
+
+				$player->sendMessage(TextFormat::GREEN . $this->lang->translateString("gui.buyitems.success.buy", [$this->info->get("name"), Newspaper::getPlugin()->getEconomyAPI()->getMonetaryUnit() . $price]));
+			}
+		);
+	}
+}
+<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\CustomForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\CustomFormResponse;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element\Input;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+use pocketmine\utils\TextFormat;
+
+class CreateForm extends CustomForm {
+
+	/** @var BaseLang */
+	private $lang;
+
+	public function __construct(BaseLang $lang) {
+		$this->lang = $lang;
+		parent::__construct($lang->translateString("gui.create.title"),
+			[new Input("Name", $lang->translateString("gui.create.input.name.name"), $lang->translateString("gui.create.input.name.hint")),
+				new Input("Description", $lang->translateString("gui.create.input.desc.name"), $lang->translateString("gui.create.input.desc.hint")),
+				new Input("Member", $lang->translateString("gui.create.input.member.name"), $lang->translateString("gui.create.input.member.hint")),
+				new Input("Icon", $lang->translateString("gui.create.input.iconURL.name"), "https://en.touhouwiki.net/images/b/b4/Th16Aya.png"),
+				new Input("Price_PerOne", $lang->translateString("gui.create.input.priceOne.name"), "0"),
+				new Input("Price_Subscription", $lang->translateString("gui.create.input.priceSub.name"), "0")
+			],
+			function(Player $player, CustomFormResponse $data) : void {
+				if(is_dir(Newspaper::getPlugin()->getNewspaperFolder() . strtolower($newspaper = $data->getString("Name")))) {
+					$player->sendMessage(TextFormat::RED . $this->lang->translateString("gui.create.error.alreadyExists"));
+				} else {
+					if(strpbrk($newspaper, "\\/:*?\"<>|") === FALSE && !empty($newspaper)) { //We don't want people trying to use invalid characters on Windows system, or access parent directories
+						Newspaper::getPlugin()->createNewspaper($newspaper,
+							$data->getString("Description"),
+							(empty($member = $data->getString("Member")) || !in_array($player->getLowerCaseName(), $memberArray = explode(", ", $member)) ? [$player->getLowerCaseName()] : $memberArray),
+							$data->getString("Icon"),
+							(int) $data->getString("Price_PerOne"),
+							(int) $data->getString("Price_Subscription")
+						);
+
+						$player->sendMessage(TextFormat::GREEN . $this->lang->translateString("gui.create.success.create"));
+					} else {
+						$player->sendMessage(TextFormat::RED . $this->lang->translateString("gui.create.error.invalidName"));
+					}
+				}
+			}
+		);
+	}
+}
+<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuOption;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+
+class CreateTypeForm extends MenuForm {
+
+	/** @var BaseLang */
+	private $lang;
+
+	public function __construct(BaseLang $lang) {
+		$this->lang = $lang;
+		parent::__construct($lang->translateString("gui.create.title"),
+			$lang->translateString("gui.createtype.label"),
+			[new MenuOption($lang->translateString("gui.createtype.button.new")), new MenuOption($lang->translateString("gui.createtype.button.publish"))],
+			function(Player $player, int $selectedOption) : void {
+				if($selectedOption === 0) {
+					if(!Newspaper::getPlugin()->badPerm($player, "gui.create.new", "gui.createtype.perm.new")) {
+						$player->sendForm(new CreateForm($this->lang));
+					}
+				} elseif($selectedOption === 1) {
+					if(!Newspaper::getPlugin()->badPerm($player, "gui.create.publish", "gui.createtype.perm.publish")) {
+						$player->sendForm(new PublishItemForm($player->getLowerCaseName(), $this->lang));
+					}
+				}
+			}
+		);
+	}
+}<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\CustomForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\CustomFormResponse;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element\Input;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element\Label;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+use pocketmine\utils\Config;
+use pocketmine\utils\TextFormat;
+
+class EditForm extends CustomForm {
+
+	/** @var Config */
+	private $info;
+	/** @var BaseLang */
+	private $lang;
+
+	public function __construct(Config $info, BaseLang $lang) {
+		$this->info = $info;
+		$this->lang = $lang;
+		parent::__construct($lang->translateString("gui.edit.title"),
+			[new Label("Name", $info->get("name")),
+				new Input("Description", $lang->translateString("gui.create.input.desc.name"), $lang->translateString("gui.create.input.desc.hint"), $info->get("description")),
+				new Input("Member", $lang->translateString("gui.create.input.member.name"), $lang->translateString("gui.create.input.member.hint"), implode(", ", $info->get("member"))),
+				new Input("Icon", $lang->translateString("gui.create.input.iconURL.name"), "https://en.touhouwiki.net/images/b/b4/Th16Aya.png", $info->get("icon")),
+				new Input("Price_PerOne", $lang->translateString("gui.create.input.priceOne.name"), "0", $info->get("price")["perOne"]),
+				new Input("Price_Subscription", $lang->translateString("gui.create.input.priceSub.name"), "0", $info->get("price")["subscriptions"])
+			],
+			function(Player $player, CustomFormResponse $data) : void {
+				$profit = $this->info->get("profit"); //Copy profit value before setting data so that we don't lose it
+				$this->info->setAll(
+					["name" => $this->info->get("name"),
+						"description" => $data->getString("Description"),
+						"member" => (empty($member = $data->getString("Member")) ? [$player->getLowerCaseName()] : array_map("strtolower", explode(", ", $member))), //Players can retire from newspapers, so we don't check if their name is in the list
+						"icon" => $data->getString("Icon")
+					]
+				);
+				$this->info->setNested("price.perOne", (int) $data->getString("Price_PerOne"));
+				$this->info->setNested("price.subscriptions", (int) $data->getString("Price_Subscription"));
+				$this->info->set("profit", $profit);
+				$this->info->save();
+				$player->sendMessage(TextFormat::GREEN . $this->lang->translateString("gui.edit.success.edit"));
+			}
+		);
+	}
+}<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuOption;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+use pocketmine\utils\Config;
+use pocketmine\utils\TextFormat;
+
+class ItemListForm extends MenuForm {
+
+	/** @var BaseLang */
+	private $lang;
+
+	public function __construct(BaseLang $lang) {
+		$this->lang = $lang;
+		foreach(Newspaper::getPlugin()->getAllNewspaperInfo() as $info) {
+			$options[] = new MenuOption((new Config($info, Config::YAML))->get("name"));
+		}
+		parent::__construct($lang->translateString("gui.itemlist.title"),
+			$lang->translateString("gui.itemlist.label") .
+			(isset($options) ? "" : str_repeat(TextFormat::EOL, 2) . $lang->translateString("gui.itemlist.label.noItems")),
+			($options ?? []),
+			function(Player $player, int $selectedOption) : void {
+				$player->sendForm(new BuyInfoForm(Newspaper::getPlugin()->getNewspaperInfo($this->getOption($selectedOption)->getText()), $this->lang));
+			}
+		);
+	}
+}<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuOption;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+
+class MainForm extends MenuForm {
+
+	/** @var BaseLang */
+	private $lang;
+
+	public function __construct(string $playerName) {
+		$this->lang = Newspaper::getPlugin()->getLanguage(Newspaper::getPlugin()->getPlayerData($playerName)->get("lang"));
+		parent::__construct("Newspaper",
+			$this->lang->translateString("gui.main.label"),
+			[new MenuOption($this->lang->translateString("gui.main.button.create")),
+				new MenuOption($this->lang->translateString("gui.main.button.buy")),
+				new MenuOption($this->lang->translateString("gui.main.button.manage")),
+				new MenuOption($this->lang->translateString("gui.main.button.settings"))
+			],
+			function(Player $player, int $selectedOption) : void {
+				if($selectedOption === 0) {
+					if(!Newspaper::getPlugin()->badPerm($player, "gui.create", "gui.main.perm.create")) {
+						$player->sendForm(new CreateTypeForm($this->lang));
+					}
+				} elseif($selectedOption === 1) {
+					if(!Newspaper::getPlugin()->badPerm($player, "gui.buy", "gui.main.perm.buy")) {
+						$player->sendForm(new ItemListForm($this->lang));
+					}
+				} elseif($selectedOption === 2) {
+					if(!Newspaper::getPlugin()->badPerm($player, "gui.manage", "gui.main.perm.manage")) {
+						$player->sendForm(new ManageForm($player->getLowerCaseName(), $this->lang));
+					}
+				} elseif($selectedOption === 3) {
+					if(!Newspaper::getPlugin()->badPerm($player, "gui.settings", "gui.main.perm.settings")) {
+						$player->sendForm(new SettingsForm($this->lang));
+					}
+				}
+			}
+		);
+	}
+}<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuOption;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+use pocketmine\utils\Config;
+
+class ManageForm extends MenuForm {
+
+	/** @var BaseLang */
+	private $lang;
+
+	public function __construct(string $playerName, BaseLang $lang) {
+		$this->lang = $lang;
+		foreach(Newspaper::getPlugin()->getAllNewspaperInfo() as $info) {
+			if(in_array($playerName, ($config = new Config($info, Config::YAML))->get("member"))) {
+				$options[] = new MenuOption($config->get("name"));
+			}
+		}
+		parent::__construct($lang->translateString("gui.manage.title"), $this->lang->translateString("gui.manage.label"), $options,
+			function(Player $player, int $selectedOption) : void {
+				$player->sendForm(new MyNewspaperInfoForm(Newspaper::getPlugin()->getNewspaperInfo($this->getOption($selectedOption)->getText()), $this->lang));
+			}
+		);
+	}
+}<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuOption;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+use pocketmine\utils\Config;
+use pocketmine\utils\TextFormat;
+
+class MyNewspaperInfoForm extends MenuForm {
+
+	/** @var Config */
+	private $info;
+	/** @var BaseLang */
+	private $lang;
+
+	public function __construct(Config $info, BaseLang $lang) {
+		$this->info = $info;
+		$this->lang = $lang;
+		parent::__construct($lang->translateString("gui.newspaperInfo.title", [$info->get("name")]),
+			$lang->translateString("gui.newspaperInfo.label", [$info->get("profit")]),
+			[new MenuOption($lang->translateString("gui.newspaperInfo.button.edit")),
+				new MenuOption($lang->translateString("gui.newspaperInfo.button.getProfit"))
+			],
+			function(Player $player, int $selectedOption) : void {
+				if($selectedOption === 0) {
+					if(!Newspaper::getPlugin()->badPerm($player, "gui.manage.edit", "gui.newspaperinfo.perm.edit")) {
+						$player->sendForm(new EditForm($this->info, $this->lang));
+					}
+				} elseif($selectedOption === 1) {
+					if(!Newspaper::getPlugin()->badPerm($player, "gui.manage.getProfit", "gui.newspaperinfo.perm.getProfit")) {
+						if(Newspaper::getPlugin()->canBuyNewspapers()) {
+							Newspaper::getPlugin()->getEconomyAPI()->addMoney($player, $this->info->get("profit"));
+							$this->info->set("profit", 0);
+							$this->info->save();
+							$player->sendMessage(TextFormat::GREEN . $this->lang->translateString("gui.newspaperInfo.success.getProfit"));
+						} else {
+							$player->sendMessage(TextFormat::GOLD . $this->lang->translateString("gui.buy.info.noFee"));
+						}
+					}
+				}
+			}
+		);
+	}
+}
+<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuOption;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+use pocketmine\utils\TextFormat;
+
+class MySubscriptionInfoForm extends MenuForm {
+
+	/** @var string */
+	private $newspaper;
+	/** @var BaseLang */
+	private $lang;
+
+	public function __construct(string $player, string $newspaper, BaseLang $lang) {
+		$this->lang = $lang;
+		parent::__construct($this->lang->translateString("gui.subinfo.title"),
+			$this->lang->translateString("gui.subinfo.label.expiresAt", [Newspaper::getPlugin()->getSubscription($player, $newspaper)["subscribeUntil"]]) . TextFormat::EOL .
+			$this->lang->translateString(Newspaper::getPlugin()->getPlayerData($player)->get("autorenew") ?
+				"gui.subinfo.label.autorenew.enabled" :
+				"gui.subinfo.label.autorenew.disabled"),
+			[new MenuOption($this->lang->translateString("gui.subinfo.button.unsub"))],
+			function(Player $player) : void {
+				if(!Newspaper::getPlugin()->badPerm($player, "gui.subscriptions.unsubscribe", "gui.subinfo.perm.unsub")) {
+					Newspaper::getPlugin()->removeSubscription($player->getName(), $this->newspaper);
+					$player->sendMessage(TextFormat::GREEN . $this->lang->translateString("gui.subinfo.success.unsub"));
+				}
+			}
+		);
+		$this->newspaper = $newspaper;
+	}
+}
+<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuOption;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+
+class MySubscriptionsForm extends MenuForm {
+
+	/** @var BaseLang */
+	private $lang;
+
+	public function __construct(string $playerName, BaseLang $lang) {
+		$this->lang = $lang;
+		$options = [];
+		foreach(array_keys(Newspaper::getPlugin()->getPlayerData($playerName)->get("subscriptions")) as $subscribedItem) {
+				$options[] = new MenuOption($subscribedItem);
+		}
+		parent::__construct($lang->translateString("gui.sub.title"), $this->lang->translateString("gui.sub.label"), $options,
+			function(Player $player, int $selectedOption) : void {
+				$player->sendForm(new MySubscriptionInfoForm($player->getName(), strtolower($this->getOption($selectedOption)->getText()), $this->lang));
+			}
+		);
+	}
+}
+<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\CustomForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\CustomFormResponse;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element\Input;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element\Label;
+use pocketmine\item\ItemIds;
+use pocketmine\item\WrittenBook;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+use pocketmine\utils\TextFormat;
+
+class PublishForm extends CustomForm {
+
+	/** @var string */
+	public $mainNewspaper;
+	/** @var BaseLang */
+	private $lang;
+
+	public function __construct(string $mainNewspaper, BaseLang $lang) {
+		$this->lang = $lang;
+		parent::__construct($lang->translateString("gui.publish.title"),
+			[new Label("Notice", TextFormat::GOLD . $lang->translateString("gui.publish.label")),
+				new Input("Name", $lang->translateString("gui.publish.input.name.name"), "Bad Adler32!!"),
+				new Input("Description", $lang->translateString("gui.publish.input.desc.name"), $lang->translateString("gui.publish.input.desc.hint")),
+				new Input("Author", $lang->translateString("gui.publish.input.author.name"), $lang->translateString("gui.publish.input.author.name"))
+			],
+			function(Player $player, CustomFormResponse $data) : void {
+				$getItem = $player->getInventory()->getItemInHand();
+
+				if(($getId = $getItem->getId()) === ItemIds::WRITABLE_BOOK || $getId === ItemIds::WRITTEN_BOOK) {
+					if(is_file(Newspaper::getPlugin()->getNewspaperFolder() . $this->mainNewspaper . "/newspaper/" . (strtolower($newspaper = empty($data->getString("Name")) ? $getItem->getTitle() : $data->getString("Name"))) . ".yml")) {
+						$player->sendMessage(TextFormat::RED . $this->lang->translateString("gui.create.error.alreadyExists"));
+					} else {
+						if(strpbrk($newspaper, "\\/:*?\"<>|") === FALSE && !empty($newspaper)) { //We don't want people trying to use invalid characters on Windows system, access parent directories, or empty names
+							Newspaper::getPlugin()->publishNewspaper($this->mainNewspaper,
+								$newspaper,
+								$data->getString("Description"),
+								(empty($author = $data->getString("Author")) ? ($getId === ItemIds::WRITTEN_BOOK ? $getItem->getAuthor() : $player->getName()) : $author), //No need to use a lowercased name on here
+								$getItem === ItemIds::WRITTEN_BOOK ?: WrittenBook::GENERATION_ORIGINAL,
+								$getItem->getPages()
+							);
+
+							$player->sendMessage(TextFormat::GREEN . $this->lang->translateString("gui.publish.success.publish"));
+						} else {
+							$player->sendMessage(TextFormat::RED . $this->lang->translateString("gui.create.error.invalidName"));
+						}
+					}
+				} else {
+					$player->sendMessage(TextFormat::RED . $this->lang->translateString("gui.publish.error.notBook"));
+				}
+			}
+		);
+		$this->mainNewspaper = $mainNewspaper;
+	}
+}
+<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuOption;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+use pocketmine\utils\Config;
+
+class PublishItemForm extends MenuForm {
+
+	/** @var BaseLang */
+	private $lang;
+
+	public function __construct(string $playerName, BaseLang $lang) {
+		$this->lang = $lang;
+		$options = [];
+		foreach(Newspaper::getPlugin()->getAllNewspaperInfo() as $info) {
+			if(in_array($playerName, ($config = new Config($info, Config::YAML))->get("member"))) {
+				$options[] = new MenuOption($config->get("name"));
+			}
+		}
+		parent::__construct($lang->translateString("gui.publish.title"), $lang->translateString("gui.publishitem.label"), $options,
+			function(Player $player, int $selectedOption) : void {
+				$player->sendForm(new PublishForm(strtolower($this->getOption($selectedOption)->getText()), $this->lang));
+			}
+		);
+	}
+}
+<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\MenuOption;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+
+class SettingsForm extends MenuForm {
+
+	/** @var BaseLang */
+	private $lang;
+
+	public function __construct(BaseLang $lang) {
+		$this->lang = $lang;
+		parent::__construct($lang->translateString("gui.settings.title"),
+			$lang->translateString("gui.settings.label"),
+			[new MenuOption($lang->translateString("gui.settings.button.settings")), new MenuOption($lang->translateString("gui.sub.title"))],
+			function(Player $player, int $selectedOption) : void {
+				if($selectedOption === 0) {
+					if(!Newspaper::getPlugin()->badPerm($player, "gui.settings.settings", "gui.settings.perm.settings")) {
+						$player->sendForm(new SettingsListForm($player->getName(), $this->lang));
+					}
+				} elseif($selectedOption === 1) {
+					if(!Newspaper::getPlugin()->badPerm($player, "gui.subscriptions", "gui.settings.perm.subscriptions")) {
+						$player->sendForm(new MySubscriptionsForm($player->getName(), $this->lang));
+					}
+				}
+			}
+		);
+	}
+}
+<?php
+
+/*
+ *
+ * Newspaper
+ *
+ * Copyright © 2018 Johnmacrocraft
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ */
+
+namespace Johnmacrocraft\Newspaper\forms;
+
+use Johnmacrocraft\Newspaper\Newspaper;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\CustomForm;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\CustomFormResponse;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element\Dropdown;
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element\Toggle;
+use pocketmine\lang\BaseLang;
+use pocketmine\Player;
+use pocketmine\utils\Config;
+use pocketmine\utils\TextFormat;
+
+class SettingsListForm extends CustomForm {
+
+	/** @var BaseLang */
+	private $lang;
+	/** @var array */
+	private $langList;
+	/** @var Config */
+	private $playerData;
+
+	public function __construct(string $playerName, BaseLang $lang) {
+		$this->lang = $lang;
+		foreach(Newspaper::getPlugin()->getLanguageList() as $langPath) {
+			$this->langList[] = pathinfo($langPath, PATHINFO_FILENAME);
+		}
+		$this->playerData = Newspaper::getPlugin()->getPlayerData($playerName);
+		parent::__construct($lang->translateString("gui.settings.title"),
+			[new Dropdown("Language", $lang->translateString("gui.settingslist.dropdown.lang.name"), $this->langList, array_search($this->playerData->get("lang"), $this->langList)),
+				new Toggle("Auto_Renew", $lang->translateString("gui.settingslist.toggle.autorenew.name"), $this->playerData->get("autorenew"))
+			],
+			function(Player $player, CustomFormResponse $data) : void {
+				$this->playerData->set("lang", $this->langList[$data->getInt("Language")]);
+				$this->playerData->set("autorenew", $data->getBool("Auto_Renew"));
+				$this->playerData->save();
+				$player->sendMessage(TextFormat::GREEN . $this->lang->translateString("gui.settingslist.success.set"));
+			}
+		);
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+/**
+ * API for Minecraft: Bedrock custom UI (forms)
+ */
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms;
+
+use pocketmine\form\Form;
+
+/**
+ * Base class for a custom form. Forms are serialized to JSON data to be sent to clients.
+ */
+abstract class BaseForm implements Form{
+
+	/** @var string */
+	protected $title;
+
+	public function __construct(string $title){
+		$this->title = $title;
+	}
+
+	/**
+	 * Returns the text shown on the form title-bar.
+	 * @return string
+	 */
+	public function getTitle() : string{
+		return $this->title;
+	}
+
+	/**
+	 * Serializes the form to JSON for sending to clients.
+	 *
+	 * @return array
+	 */
+	final public function jsonSerialize() : array{
+		$ret = $this->serializeFormData();
+		$ret["type"] = $this->getType();
+		$ret["title"] = $this->getTitle();
+
+		return $ret;
+	}
+
+	/**
+	 * Returns the type used to show this form to clients
+	 * @return string
+	 */
+	abstract protected function getType() : string;
+
+	/**
+	 * Serializes additional data needed to show this form to clients.
+	 * @return array
+	 */
+	abstract protected function serializeFormData() : array;
+
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms;
+
+use Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element\CustomFormElement;
+use pocketmine\form\FormValidationException;
+use pocketmine\Player;
+use pocketmine\utils\Utils;
+
+abstract class CustomForm extends BaseForm{
+
+	/** @var CustomFormElement[] */
+	private $elements;
+	/** @var CustomFormElement[] */
+	private $elementMap = [];
+	/** @var \Closure */
+	private $onSubmit;
+	/** @var \Closure|null */
+	private $onClose = null;
+
+	/**
+	 * @param string              $title
+	 * @param CustomFormElement[] $elements
+	 * @param \Closure            $onSubmit signature `function(Player $player, CustomFormResponse $data)`
+	 * @param \Closure|null       $onClose signature `function(Player $player)`
+	 *
+	 * @throws \InvalidArgumentException
+	 */
+	public function __construct(string $title, array $elements, \Closure $onSubmit, ?\Closure $onClose = null){
+		parent::__construct($title);
+		$this->elements = array_values($elements);
+		foreach($this->elements as $element){
+			if(isset($this->elements[$element->getName()])){
+				throw new \InvalidArgumentException("Multiple elements cannot have the same name, found \"" . $element->getName() . "\" more than once");
+			}
+			$this->elementMap[$element->getName()] = $element;
+		}
+
+		Utils::validateCallableSignature(function(Player $player, CustomFormResponse $response) : void{}, $onSubmit);
+		$this->onSubmit = $onSubmit;
+		if($onClose !== null){
+			Utils::validateCallableSignature(function(Player $player) : void{}, $onClose);
+			$this->onClose = $onClose;
+		}
+	}
+
+	/**
+	 * @param int $index
+	 *
+	 * @return CustomFormElement|null
+	 */
+	public function getElement(int $index) : ?CustomFormElement{
+		return $this->elements[$index] ?? null;
+	}
+
+	/**
+	 * @param string $name
+	 *
+	 * @return null|CustomFormElement
+	 */
+	public function getElementByName(string $name) : ?CustomFormElement{
+		return $this->elementMap[$name] ?? null;
+	}
+
+	/**
+	 * @return CustomFormElement[]
+	 */
+	public function getAllElements() : array{
+		return $this->elements;
+	}
+
+	final public function handleResponse(Player $player, $data) : void{
+		if($data === null){
+			if($this->onClose !== null){
+				($this->onClose)($player);
+			}
+		}elseif(is_array($data)){
+			if(($actual = count($data)) !== ($expected = count($this->elements))){
+				throw new FormValidationException("Expected $expected result data, got $actual");
+			}
+
+			$values = [];
+
+			/** @var array $data */
+			foreach($data as $index => $value){
+				if(!isset($this->elements[$index])){
+					throw new FormValidationException("Element at offset $index does not exist");
+				}
+				$element = $this->elements[$index];
+				try{
+					$element->validateValue($value);
+				}catch(FormValidationException $e){
+					throw new FormValidationException("Validation failed for element \"" . $element->getName() . "\": " . $e->getMessage(), 0, $e);
+				}
+				$values[$element->getName()] = $value;
+			}
+
+			($this->onSubmit)($player, new CustomFormResponse($values));
+		}else{
+			throw new FormValidationException("Expected array or null, got " . gettype($data));
+		}
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function getType() : string{
+		return "custom_form";
+	}
+
+	protected function serializeFormData() : array{
+		return [
+			"content" => $this->elements
+		];
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms;
+
+class CustomFormResponse{
+	/** @var array */
+	private $data;
+
+	public function __construct(array $data){
+		$this->data = $data;
+	}
+
+	public function getInt(string $name) : int{
+		$this->checkExists($name);
+		return $this->data[$name];
+	}
+
+	public function getString(string $name) : string{
+		$this->checkExists($name);
+		return $this->data[$name];
+	}
+
+	public function getFloat(string $name) : float{
+		$this->checkExists($name);
+		return $this->data[$name];
+	}
+
+	public function getBool(string $name) : bool{
+		$this->checkExists($name);
+		return $this->data[$name];
+	}
+
+	public function getAll() : array{
+		return $this->data;
+	}
+
+	private function checkExists(string $name) : void{
+		if(!isset($this->data[$name])){
+			throw new \InvalidArgumentException("Value \"$name\" not found");
+		}
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms;
+
+/**
+ * Represents an icon which can be placed next to options on menus, or as the icon for the server-settings form type.
+ */
+class FormIcon implements \JsonSerializable{
+	public const IMAGE_TYPE_URL = "url";
+	public const IMAGE_TYPE_PATH = "path";
+
+	/**
+	 * @var string
+	 */
+	private $type;
+	/**
+	 * @var string
+	 */
+	private $data;
+
+	/**
+	 * @param string $data URL or path depending on the type chosen.
+	 * @param string $type Can be one of the constants at the top of the file, but only "url" is known to work.
+	 */
+	public function __construct(string $data, string $type = self::IMAGE_TYPE_URL){
+		$this->type = $type;
+		$this->data = $data;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getType() : string{
+		return $this->type;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getData() : string{
+		return $this->data;
+	}
+
+	public function jsonSerialize(){
+		return [
+			"type" => $this->type,
+			"data" => $this->data
+		];
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms;
+
+use pocketmine\form\FormValidationException;
+use pocketmine\Player;
+use pocketmine\utils\Utils;
+
+/**
+ * This form type presents a menu to the user with a list of options on it. The user may select an option or close the
+ * form by clicking the X in the top left corner.
+ */
+abstract class MenuForm extends BaseForm{
+
+	/** @var string */
+	protected $content;
+	/** @var MenuOption[] */
+	private $options;
+	/** @var \Closure */
+	private $onSubmit;
+	/** @var \Closure|null */
+	private $onClose = null;
+
+	/**
+	 * @param string        $title
+	 * @param string        $text
+	 * @param MenuOption[]  $options
+	 * @param \Closure      $onSubmit signature `function(Player $player, int $selectedOption)`
+	 * @param \Closure|null $onClose signature `function(Player $player)`
+	 */
+	public function __construct(string $title, string $text, array $options, \Closure $onSubmit, ?\Closure $onClose = null){
+		parent::__construct($title);
+		$this->content = $text;
+		$this->options = array_values($options);
+		Utils::validateCallableSignature(function(Player $player, int $selectedOption) : void{}, $onSubmit);
+		$this->onSubmit = $onSubmit;
+		if($onClose !== null){
+			Utils::validateCallableSignature(function(Player $player) : void{}, $onClose);
+			$this->onClose = $onClose;
+		}
+	}
+
+	public function getOption(int $position) : ?MenuOption{
+		return $this->options[$position] ?? null;
+	}
+
+	final public function handleResponse(Player $player, $data) : void{
+		if($data === null){
+			if($this->onClose !== null){
+				($this->onClose)($player);
+			}
+		}elseif(is_int($data)){
+			if(!isset($this->options[$data])){
+				throw new FormValidationException("Option $data does not exist");
+			}
+			($this->onSubmit)($player, $data);
+		}else{
+			throw new FormValidationException("Expected int or null, got " . gettype($data));
+		}
+	}
+
+	protected function getType() : string{
+		return "form";
+	}
+
+	protected function serializeFormData() : array{
+		return [
+			"content" => $this->content,
+			"buttons" => $this->options //yes, this is intended (MCPE calls them buttons)
+		];
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms;
+
+/**
+ * Represents an option on a MenuForm. The option is shown as a button and may optionally have an image next to it.
+ */
+class MenuOption implements \JsonSerializable{
+
+	/**
+	 * @var string
+	 */
+	private $text;
+	/**
+	 * @var FormIcon|null
+	 */
+	private $image;
+
+	public function __construct(string $text, ?FormIcon $image = null){
+		$this->text = $text;
+		$this->image = $image;
+	}
+
+	public function getText() : string{
+		return $this->text;
+	}
+
+	public function hasImage() : bool{
+		return $this->image !== null;
+	}
+
+	public function getImage() : ?FormIcon{
+		return $this->image;
+	}
+
+	public function jsonSerialize(){
+		$json = [
+			"text" => $this->text
+		];
+
+		if($this->hasImage()){
+			$json["image"] = $this->image;
+		}
+
+		return $json;
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms;
+
+use pocketmine\form\FormValidationException;
+use pocketmine\Player;
+use pocketmine\utils\Utils;
+
+/**
+ * This form type presents a simple "yes/no" dialog with two buttons.
+ */
+abstract class ModalForm extends BaseForm{
+
+	/** @var string */
+	private $content;
+	/** @var \Closure */
+	private $onSubmit;
+	/** @var string */
+	private $button1;
+	/** @var string */
+	private $button2;
+
+	/**
+	 * @param string   $title Text to put on the title of the dialog.
+	 * @param string   $text Text to put in the body.
+	 * @param \Closure $onSubmit signature `function(Player $player, bool $choice)`
+	 * @param string   $yesButtonText Text to show on the "Yes" button. Defaults to client-translated "Yes" string.
+	 * @param string   $noButtonText Text to show on the "No" button. Defaults to client-translated "No" string.
+	 */
+	public function __construct(string $title, string $text, \Closure $onSubmit, string $yesButtonText = "gui.yes", string $noButtonText = "gui.no"){
+		parent::__construct($title);
+		$this->content = $text;
+		Utils::validateCallableSignature(function(Player $player, bool $choice) : void{}, $onSubmit);
+		$this->onSubmit = $onSubmit;
+		$this->button1 = $yesButtonText;
+		$this->button2 = $noButtonText;
+	}
+
+	public function getYesButtonText() : string{
+		return $this->button1;
+	}
+
+	public function getNoButtonText() : string{
+		return $this->button2;
+	}
+
+	final public function handleResponse(Player $player, $data) : void{
+		if(!is_bool($data)){
+			throw new FormValidationException("Expected bool, got " . gettype($data));
+		}
+
+		($this->onSubmit)($player, $data);
+	}
+
+	protected function getType() : string{
+		return "modal";
+	}
+
+	protected function serializeFormData() : array{
+		return [
+			"content" => $this->content,
+			"button1" => $this->button1,
+			"button2" => $this->button2
+		];
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms;
+
+/**
+ * Represents a custom form which can be shown in the Settings menu on the client. This is exactly the same as a regular
+ * CustomForm, except that this type can also have an icon which can be shown on the settings section button.
+ *
+ * Passing this form to {@link Player::sendForm()} will not show a form with an icon nor set this form as the server
+ * settings.
+ */
+abstract class ServerSettingsForm extends CustomForm{
+	/**
+	 * @var FormIcon|null
+	 */
+	private $icon;
+
+	public function __construct(string $title, array $elements, ?FormIcon $icon, \Closure $onSubmit, ?\Closure $onClose = null){
+		parent::__construct($title, $elements, $onSubmit, $onClose);
+		$this->icon = $icon;
+	}
+
+	public function hasIcon() : bool{
+		return $this->icon !== null;
+	}
+
+	public function getIcon() : ?FormIcon{
+		return $this->icon;
+	}
+
+	protected function serializeFormData() : array{
+		$data = parent::serializeFormData();
+
+		if($this->hasIcon()){
+			$data["icon"] = $this->icon;
+		}
+
+		return $data;
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element;
+
+use pocketmine\form\FormValidationException;
+
+abstract class BaseSelector extends CustomFormElement{
+	/** @var int */
+	protected $defaultOptionIndex;
+	/** @var string[] */
+	protected $options;
+
+	/**
+	 * @param string   $name
+	 * @param string   $text
+	 * @param string[] $options
+	 * @param int      $defaultOptionIndex
+	 *
+	 * @throws \InvalidArgumentException
+	 */
+	public function __construct(string $name, string $text, array $options, int $defaultOptionIndex = 0){
+		parent::__construct($name, $text);
+		$this->options = array_values($options);
+
+		if(!isset($this->options[$defaultOptionIndex])){
+			throw new \InvalidArgumentException("No option at index $defaultOptionIndex, cannot set as default");
+		}
+		$this->defaultOptionIndex = $defaultOptionIndex;
+	}
+
+	/**
+	 * @param int $value
+	 *
+	 * @throws FormValidationException
+	 */
+	public function validateValue($value) : void{
+		if(!is_int($value)){
+			throw new FormValidationException("Expected int, got " . gettype($value));
+		}
+		if(!isset($this->options[$value])){
+			throw new FormValidationException("Option $value does not exist");
+		}
+	}
+
+	/**
+	 * Returns the text of the option at the specified index, or null if it doesn't exist.
+	 *
+	 * @param int $index
+	 *
+	 * @return string|null
+	 */
+	public function getOption(int $index) : ?string{
+		return $this->options[$index] ?? null;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getDefaultOptionIndex() : int{
+		return $this->defaultOptionIndex;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getDefaultOption() : string{
+		return $this->options[$this->defaultOptionIndex];
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public function getOptions() : array{
+		return $this->options;
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element;
+
+use pocketmine\form\FormValidationException;
+
+/**
+ * Base class for UI elements which can be placed on custom forms.
+ */
+abstract class CustomFormElement implements \JsonSerializable{
+	/** @var string */
+	private $name;
+	/** @var string */
+	private $text;
+
+	public function __construct(string $name, string $text){
+		$this->name = $name;
+		$this->text = $text;
+	}
+
+	/**
+	 * Returns the type of element.
+	 * @return string
+	 */
+	abstract public function getType() : string;
+
+	/**
+	 * Returns the element's name. This is used to identify the element in code.
+	 * @return string
+	 */
+	public function getName() : string{
+		return $this->name;
+	}
+
+	/**
+	 * Returns the element's label. Usually this is used to explain to the user what a control does.
+	 * @return string
+	 */
+	public function getText() : string{
+		return $this->text;
+	}
+
+	/**
+	 * Validates that the given value is of the correct type and fits the constraints for the component. This function
+	 * should do appropriate type checking and throw whatever errors necessary if the value is not valid.
+	 *
+	 * @param mixed $value
+	 * @throws FormValidationException
+	 */
+	abstract public function validateValue($value) : void;
+
+	/**
+	 * Returns an array of properties which can be serialized to JSON for sending.
+	 *
+	 * @return array
+	 */
+	final public function jsonSerialize() : array{
+		$ret = $this->serializeElementData();
+		$ret["type"] = $this->getType();
+		$ret["text"] = $this->getText();
+
+		return $ret;
+	}
+
+	/**
+	 * Returns an array of extra data needed to serialize this element to JSON for showing to a player on a form.
+	 * @return array
+	 */
+	abstract protected function serializeElementData() : array;
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element;
+
+class Dropdown extends BaseSelector{
+
+	public function getType() : string{
+		return "dropdown";
+	}
+
+	protected function serializeElementData() : array{
+		return [
+			"options" => $this->options,
+			"default" => $this->defaultOptionIndex
+		];
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element;
+
+use pocketmine\form\FormValidationException;
+
+/**
+ * Element which accepts text input. The text-box can have a default value, and may also have a text hint when there is
+ * no text in the box.
+ */
+class Input extends CustomFormElement{
+
+	/** @var string */
+	private $hint;
+	/** @var string */
+	private $default;
+
+	/**
+	 * @param string $name
+	 * @param string $text
+	 * @param string $hintText
+	 * @param string $defaultText
+	 */
+	public function __construct(string $name, string $text, string $hintText = "", string $defaultText = ""){
+		parent::__construct($name, $text);
+		$this->hint = $hintText;
+		$this->default = $defaultText;
+	}
+
+	public function getType() : string{
+		return "input";
+	}
+
+	/**
+	 * @param string $value
+	 *
+	 * @throws FormValidationException
+	 */
+	public function validateValue($value) : void{
+		if(!is_string($value)){
+			throw new FormValidationException("Expected string, got " . gettype($value));
+		}
+	}
+
+	/**
+	 * Returns the text shown in the text-box when the box is not focused and there is no text in it.
+	 * @return string
+	 */
+	public function getHintText() : string{
+		return $this->hint;
+	}
+
+	/**
+	 * Returns the text which will be in the text-box by default.
+	 * @return string
+	 */
+	public function getDefaultText() : string{
+		return $this->default;
+	}
+
+	protected function serializeElementData() : array{
+		return [
+			"placeholder" => $this->hint,
+			"default" => $this->default
+		];
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element;
+
+/**
+ * Element which displays some text on a form.
+ */
+class Label extends CustomFormElement{
+
+	public function getType() : string{
+		return "label";
+	}
+
+	public function validateValue($value) : void{
+		assert($value === null);
+	}
+
+	protected function serializeElementData() : array{
+		return [];
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element;
+
+use pocketmine\form\FormValidationException;
+
+class Slider extends CustomFormElement{
+
+	/** @var float */
+	private $min;
+	/** @var float */
+	private $max;
+	/** @var float */
+	private $step;
+	/** @var float */
+	private $default;
+
+	public function __construct(string $name, string $text, float $min, float $max, float $step = 1.0, ?float $default = null){
+		parent::__construct($name, $text);
+
+		if($this->min > $this->max){
+			throw new \InvalidArgumentException("Slider min value should be less than max value");
+		}
+		$this->min = $min;
+		$this->max = $max;
+
+		if($default !== null){
+			if($default > $this->max or $default < $this->min){
+				throw new \InvalidArgumentException("Default must be in range $this->min ... $this->max");
+			}
+			$this->default = $default;
+		}else{
+			$this->default = $this->min;
+		}
+
+		if($step <= 0){
+			throw new \InvalidArgumentException("Step must be greater than zero");
+		}
+		$this->step = $step;
+	}
+
+	public function getType() : string{
+		return "slider";
+	}
+
+	/**
+	 * @param float $value
+	 *
+	 * @throws FormValidationException
+	 */
+	public function validateValue($value) : void{
+		if(!is_float($value) and !is_int($value)){
+			throw new FormValidationException("Expected float, got " . gettype($value));
+		}
+		if($value < $this->min or $value > $this->max){
+			throw new FormValidationException("Value $value is out of bounds (min $this->min, max $this->max)");
+		}
+	}
+
+	/**
+	 * @return float
+	 */
+	public function getMin() : float{
+		return $this->min;
+	}
+
+	/**
+	 * @return float
+	 */
+	public function getMax() : float{
+		return $this->max;
+	}
+
+	/**
+	 * @return float
+	 */
+	public function getStep() : float{
+		return $this->step;
+	}
+
+	/**
+	 * @return float
+	 */
+	public function getDefault() : float{
+		return $this->default;
+	}
+
+	protected function serializeElementData() : array{
+		return [
+			"min" => $this->min,
+			"max" => $this->max,
+			"default" => $this->default,
+			"step" => $this->step
+		];
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element;
+
+class StepSlider extends BaseSelector{
+
+	public function getType() : string{
+		return "step_slider";
+	}
+
+	protected function serializeElementData() : array{
+		return [
+			"steps" => $this->options,
+			"default" => $this->defaultOptionIndex
+		];
+	}
+}
+<?php
+
+/*
+ *
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
+ *
+ *
+*/
+
+declare(strict_types=1);
+
+namespace Johnmacrocraft\Newspaper\libs\dktapps\pmforms\element;
+
+use pocketmine\form\FormValidationException;
+
+/**
+ * Represents a UI on/off switch. The switch may have a default value.
+ */
+class Toggle extends CustomFormElement{
+	/** @var bool */
+	private $default;
+
+	public function __construct(string $name, string $text, bool $defaultValue = false){
+		parent::__construct($name, $text);
+		$this->default = $defaultValue;
+	}
+
+	public function getType() : string{
+		return "toggle";
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function getDefaultValue() : bool{
+		return $this->default;
+	}
+
+	/**
+	 * @param bool $value
+	 *
+	 * @throws FormValidationException
+	 */
+	public function validateValue($value) : void{
+		if(!is_bool($value)){
+			throw new FormValidationException("Expected bool, got " . gettype($value));
+		}
+	}
+
+	protected function serializeElementData() : array{
+		return [
+			"default" => $this->default
+		];
+	}
+}
+{"Johnmacrocraft\\Newspaper\\libs\\spoondetector":{"name":"SpoonDetector","version":"0.0.0","antigen":"spoondetector","api":["2.0.0","3.0.0-ALPHA1","3.0.0-ALPHA2","3.0.0-ALPHA3","3.0.0-ALPHA4","3.0.0-ALPHA5"],"php":[7],"author":"Falk","build":{"builder":"PoggitCI\/1.0-beta poggit-virion\/1.0","buildTime":"2017-05-30T23:37:02+0000","poggitBuildId":23779,"projectBuildNumber":4,"class":"Dev"}},"Johnmacrocraft\\Newspaper\\libs\\dktapps\\pmforms":{"name":"pmforms","version":"1.0.0","antigen":"dktapps\\pmforms","api":"3.4.0","authors":["dktapps"],"description":"API allowing to manipulate the JSON forms implemented in MCPE 1.2","build":{"builder":"PoggitCI\/1.0-beta\/beta poggit-virion\/1.0","builderName":"poggit","buildTime":"2018-12-15T13:22:01+00:00","poggitBuildId":53326,"buildClass":"Dev","projectId":4369,"projectBuildNumber":3,"fromCommit":"945ab0f5f3dd693762b50b055e4194155fc770d2","poggitResourceId":47453}}}

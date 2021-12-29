@@ -1,0 +1,17 @@
+---
+RestrictEntityMovement: true
+RestrictPVP: false
+UpdatePlotLiquids: true
+ClaimPrice: 0
+ClearPrice: 5000000
+DisposePrice: 5000000
+ResetPrice: 50000000
+PlotSize: 31
+GroundHeight: 100
+RoadWidth: 7
+RoadBlock: "237:7"
+WallBlock: "44:0"
+PlotFloorBlock: "2:0"
+PlotFillBlock: "3:0"
+BottomBlock: "7:0"
+...

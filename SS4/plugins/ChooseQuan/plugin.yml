@@ -1,0 +1,18 @@
+name: APIQuan
+main: HWings\APIQuan\APIQuan
+version: 1.0.0
+author: WM
+api: 3.0.0
+description: WolfMine Quancommands:
+  quan:
+   description: "Xem bạn hiện đang ở Quận nào"
+   default: true
+  quan-dangky:
+   description: "Đăng ký Quận"
+   default: true
+  quan-check:
+   description: "Kiểm tra số người ở các Quận"
+   default: op
+  quan-help:
+   description: "Xem bảng lệnh Quận"
+   default: true

@@ -1,0 +1,250 @@
+<?php
+
+declare(strict_types = 1);
+
+namespace jojoe77777\FormAPI;
+
+use pocketmine\plugin\PluginBase;
+
+class FormAPI extends PluginBase{
+
+    /**
+     * @deprecated
+     *
+     * @param callable $function
+     * @return CustomForm
+     */
+    public function createCustomForm(callable $function = null) : CustomForm {
+        return new CustomForm($function);
+    }
+
+    /**
+     * @deprecated
+     *
+     * @param callable|null $function
+     * @return SimpleForm
+     */
+    public function createSimpleForm(callable $function = null) : SimpleForm {
+        return new SimpleForm($function);
+    }
+
+    /**
+     * @deprecated
+     *
+     * @param callable|null $function
+     * @return ModalForm
+     */
+    public function createModalForm(callable $function = null) : ModalForm {
+        return new ModalForm($function);
+    }
+}
+<?php
+
+declare(strict_types = 1);
+
+namespace jojoe77777\FormAPI;
+
+class SimpleForm extends Form {
+
+    const IMAGE_TYPE_PATH = 0;
+    const IMAGE_TYPE_URL = 1;
+
+    /** @var string */
+    private $content = "";
+
+    private $labelMap = [];
+
+    /**
+     * @param callable $callable
+     */
+    public function __construct(?callable $callable) {
+        parent::__construct($callable);
+        $this->data["type"] = "form";
+        $this->data["title"] = "";
+        $this->data["content"] = $this->content;
+    }
+
+    public function processData(&$data) : void {
+        $data = $this->labelMap[$data] ?? null;
+    }
+
+    /**
+     * @param string $title
+     */
+    public function setTitle(string $title) : void {
+        $this->data["title"] = $title;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTitle() : string {
+        return $this->data["title"];
+    }
+
+    /**
+     * @return string
+     */
+    public function getContent() : string {
+        return $this->data["content"];
+    }
+
+    /**
+     * @param string $content
+     */
+    public function setContent(string $content) : void {
+        $this->data["content"] = $content;
+    }
+
+    /**
+     * @param string $text
+     * @param int $imageType
+     * @param string $imagePath
+     * @param string $label
+     */
+    public function addButton(string $text, int $imageType = -1, string $imagePath = "", ?string $label = null) : void {
+        $content = ["text" => $text];
+        if($imageType !== -1) {
+            $content["image"]["type"] = $imageType === 0 ? "path" : "url";
+            $content["image"]["data"] = $imagePath;
+        }
+        $this->data["buttons"][] = $content;
+        $this->labelMap[] = $label ?? count($this->labelMap);
+    }
+
+}
+<?php
+
+declare(strict_types = 1);
+
+namespace jojoe77777\FormAPI;
+
+use pocketmine\form\Form as IForm;
+use pocketmine\Player;
+
+abstract class Form implements IForm{
+
+    /** @var array */
+    protected $data = [];
+    /** @var callable */
+    private $callable;
+
+    /**
+     * @param callable $callable
+     */
+    public function __construct(?callable $callable) {
+        $this->callable = $callable;
+    }
+
+    /**
+     * @deprecated
+     * @see Player::sendForm()
+     *
+     * @param Player $player
+     */
+    public function sendToPlayer(Player $player) : void {
+        $player->sendForm($this);
+    }
+
+    public function getCallable() : ?callable {
+        return $this->callable;
+    }
+
+    public function setCallable(?callable $callable) {
+        $this->callable = $callable;
+    }
+
+    public function handleResponse(Player $player, $data) : void {
+        $this->processData($data);
+        $callable = $this->getCallable();
+        if($callable !== null) {
+            $callable($player, $data);
+        }
+    }
+
+    public function processData(&$data) : void {
+    }
+
+    public function jsonSerialize(){
+        return $this->data;
+    }
+}
+<?php
+
+declare(strict_types = 1);
+
+namespace jojoe77777\FormAPI;
+
+class ModalForm extends Form {
+
+    /** @var string */
+    private $content = "";
+
+    /**
+     * @param callable $callable
+     */
+    public function __construct(?callable $callable) {
+        parent::__construct($callable);
+        $this->data["type"] = "modal";
+        $this->data["title"] = "";
+        $this->data["content"] = $this->content;
+        $this->data["button1"] = "";
+        $this->data["button2"] = "";
+    }
+
+    /**
+     * @param string $title
+     */
+    public function setTitle(string $title) : void {
+        $this->data["title"] = $title;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTitle() : string {
+        return $this->data["title"];
+    }
+
+    /**
+     * @return string
+     */
+    public function getContent() : string {
+        return $this->data["content"];
+    }
+
+    /**
+     * @param string $content
+     */
+    public function setContent(string $content) : void {
+        $this->data["content"] = $content;
+    }
+
+    /**
+     * @param string $text
+     */
+    public function setButton1(string $text) : void {
+        $this->data["button1"] = $text;
+    }
+
+    /**
+     * @return string
+     */
+    public function getButton1() : string {
+        return $this->data["button1"];
+    }
+
+    /**
+     * @param string $text
+     */
+    public function setButton2(string $text) : void {
+        $this->data["button2"] = $text;
+    }
+
+    /**
+     * @return string
+     */
+    public function getButton2() : string {
+        return $this->data["button2"];
+    }
+}

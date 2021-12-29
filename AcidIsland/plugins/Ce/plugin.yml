@@ -1,0 +1,21 @@
+name: CustomEnchants[PTK]
+main: PTK\CustomEnchants\Main
+version: 0.2
+api: [3.0.0, 3.0.1]
+load: POSTWORLD
+author: PTK-KienPham
+permissions:
+  customenchants:
+    default: false
+    description: "Sử Dụng CustomEnchants"
+    children:
+      customenchants.command:
+        default: op
+        description: "use all CustomEnchants commands"
+        children:
+          customenchants.command.ce:
+            default: op
+            description: "Use /customenchant"
+      customenchants.overridecheck:
+        default: false
+        description: "Override the check and enchant any item with any enchant"

@@ -1,0 +1,238 @@
+ /*********************************************************
++*   File created:                                       *
++*   (c) Mojang. All rights reserved                     *
++*   (c) Microsoft. All rights reserved.                 *
++*********************************************************/
+
+/*********************************************************
++*   File modifity:                                      *
++*   (c) MINEPAPER. All rights reserved                  *
++*   (c) NaturalPack. All rights reserved.               *
++*********************************************************/
+
+{
+  "namespace": "play",
+
+  //---------------------------------------------------------------------------
+  // Common
+  //---------------------------------------------------------------------------
+
+  "label_background": {
+    "type": "image",
+    "texture": "textures/ui/mainbanners"
+  },
+
+  "world_screenshot_base": {
+    "type": "image",
+    "size": [ "100%c + 2px", "100%" ],
+    "texture": "$border_texture",
+    "anchor_from": "left_middle",
+    "anchor_to": "left_middle",
+    "layer": 1
+  },
+
+  "collection_world_screenshot@play.world_screenshot_base": {
+    "$fit_image_to_width|default": false,
+    "$collection_binding_name|default": "",
+    "$image_binding_name|default": "",
+    "$texture_source_binding_name|default": "",
+    "controls": [
+      {
+        "picture": {
+          "type": "image",
+          "layer": 1,
+          "$fit_to_width": "$fit_image_to_width",
+          "force_texture_reload": true,
+          "size": [ "173.91%y", "100% - 2px" ],
+          "offset": [ 1, 1 ],
+          "fill": true,
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "bindings": [
+            {
+              "binding_name": "$image_binding_name",
+              "binding_name_override": "#texture",
+              "binding_type": "collection",
+              "binding_collection_name": "$collection_binding_name"
+            },
+            {
+              "binding_name": "$texture_source_binding_name",
+              "binding_name_override": "#texture_file_system",
+              "binding_type": "collection",
+              "binding_collection_name": "$collection_binding_name"
+            }
+          ]
+        }
+      }
+    ]
+  },
+
+  "world_item_grid_base": {
+    "type": "grid",
+    "size": [ "100%", "default" ],
+    "layer": 1,
+    "anchor_to": "top_left",
+    "anchor_from": "top_left"
+  },
+
+  //---------------------------------------------------------------------------
+  // Common Icons
+  //---------------------------------------------------------------------------
+
+  "edit_icon": {
+    "type": "image",
+    "texture": "textures/ui/editIcon",
+    "size": [ 16, 16 ]
+  },
+
+  "feed_icon": {
+    "type": "image",
+    "texture": "textures/ui/feedIcon",
+    "size": [ 22, 16 ]
+  },
+
+  "worlds_icon": {
+    "type": "image",
+    "texture": "textures/ui/worldsIcon",
+    "size": [ 15, 15 ]
+  },
+
+  "realms_icon": {
+    "type": "image",
+    "texture": "textures/ui/realmsIcon",
+    "size": [ 15, 15 ]
+  },
+
+  "friends_icon_1": {
+    "type": "image",
+    "texture": "textures/ui/Friend1",
+    "size": [ 15, 15 ]
+  },
+
+  "friends_icon_2": {
+    "type": "image",
+    "texture": "textures/ui/Friend2",
+    "size": [ 15, 15 ]
+  }, 
+  "third_party_servers_icon": {
+    "type": "image",
+    "texture": "textures/ui/addServer",
+    "size": [ 17, 13 ]
+  },
+
+  "lan_icon": {
+    "type": "image",
+    "texture": "textures/ui/lan_icon",
+    "size": [ 14, 14 ]
+  },
+
+  "friends_server_icon": {
+    "type": "image",
+    "size": [ 14, 14 ],
+    "bindings": [
+      {
+        "binding_name": "#friends_server_icon_texture_name",
+        "binding_name_override": "#texture",
+        "binding_type": "collection",
+        "binding_collection_name": "friends_network_worlds"
+      }
+    ]
+  },
+
+  "cross_platform_friends_server_icon": {
+    "type": "image",
+    "size": [ 14, 14 ],
+    "bindings": [
+      {
+        "binding_name": "#cross_platform_friends_server_icon_texture_name",
+        "binding_name_override": "#texture",
+        "binding_type": "collection",
+        "binding_collection_name": "cross_platform_friends_network_worlds"
+      }
+    ]
+  },
+
+  "realms_remove_icon": {
+    "type": "image",
+    "texture": "textures/ui/redX1",
+    "size": [ 12, 12 ]
+  },
+
+  "game_online_icon": {
+    "type": "image",
+    "texture": "textures/ui/online",
+    "size": [ 8, 8 ]
+  },
+
+  "game_offline_icon": {
+    "type": "image",
+    "texture": "textures/ui/offline",
+    "size": [ 8, 8 ]
+  },
+  
+  "game_unavailable_icon": {
+    "type": "image",
+    "texture": "textures/ui/offline",
+    "size": [ 8, 8 ]
+  },
+
+  "import_icon": {
+    "type": "image",
+    "texture": "textures/ui/import",
+    "size": [ 16, 16 ]
+  },
+
+  "add_server_icon": {
+    "type": "image",
+    "texture": "textures/ui/addServer",
+    "size": [ 17, 13 ]
+  },
+
+  "server_tab_icon": {
+    "type": "image",
+    "texture": "textures/ui/servers",
+    "size": [ 21, 17 ]
+  },
+
+  "invite_notification_icon": {
+    "type": "image",
+    "texture": "$invite_texture",
+    "size": [ 16, 16 ]
+  },
+
+  "realms_art_icon": {
+    "type": "image",
+    "texture": "textures/ui/realms_art_icon",
+    "size": [ 647, 760 ]
+  },
+
+  "realms_text_background": {
+    "type": "image",
+    "texture": "textures/ui/realms_text_background"
+  },
+
+  "connected_storage": {
+    "type": "image",
+    "texture": "textures/ui/local_and_cloud_storage",
+    "size": [ 12, 8 ]
+  },
+
+  "feedback_icon": {
+    "type": "image",
+    "texture": "textures/ui/Feedback",
+    "layer": 3,
+    "size": [ 16, 16 ]
+  },
+
+  "local_only_storage@play.connected_storage": {
+    "texture": "textures/ui/local_only_storage"
+  },
+
+  "local_and_cloud_storage@play.connected_storage": {
+    "texture": "textures/ui/local_and_cloud_storage"
+  },
+
+  "cloud_only_storage@play.connected_storage": {
+    "texture": "textures/ui/cloud_only_storage"
+  }
+  } 

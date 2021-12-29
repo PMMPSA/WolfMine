@@ -1,0 +1,9 @@
+name: ToolEnchant
+version: 1.0
+api: 3.0.0
+main: WM\ToolEnchant\Main
+author: NguyenDongQuy
+commands: 
+  tools:
+   description: Hệ thống mua Tools Enchant
+   default: true

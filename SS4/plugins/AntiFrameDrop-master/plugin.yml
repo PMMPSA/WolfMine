@@ -1,0 +1,15 @@
+name: AntiFrameDrop
+version: 1.0.0
+main: PJZ9n\AntiFrameDrop\Main
+api: 3.0.0
+
+
+permissions:
+  AntiFlameDrop:
+    default: true
+    children:
+      AntiFlameDrop.ForceEdit:
+        default: true
+        children:
+          AntiFlameDrop.ForceEdit.Flame:
+            default: op

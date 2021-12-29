@@ -1,0 +1,268 @@
+<?php
+namespace korado531m7\StairSeat;
+
+use pocketmine\Player;
+use pocketmine\block\Block;
+use pocketmine\block\Stair;
+use pocketmine\entity\Entity;
+use pocketmine\level\Level;
+use pocketmine\math\Vector3;
+use pocketmine\network\mcpe\protocol\AddActorPacket;
+use pocketmine\network\mcpe\protocol\RemoveActorPacket;
+use pocketmine\network\mcpe\protocol\SetActorLinkPacket;
+use pocketmine\network\mcpe\protocol\types\EntityLink;
+use pocketmine\plugin\PluginBase;
+use pocketmine\utils\Config;
+
+class StairSeat extends PluginBase{
+    public $sit = [];
+    
+    public function onEnable(){
+        $this->getServer()->getPluginManager()->registerEvents(new EventListener($this), $this);
+        @mkdir($this->getDataFolder(), 0744, true);
+        $this->saveResource('config.yml', false);
+        $this->config = new Config($this->getDataFolder().'config.yml', Config::YAML);
+    }
+    
+    public function isStairBlock(Block $block) : bool{
+        return $block instanceof Stair && $block->getDamage() <= 3;
+    }
+    
+    public function isAllowedUnderBlock(Block $block) : bool{
+        $bk = $this->config->get('allow-block-under-id');
+        $isBool = is_bool($bk);
+        return $isBool && $bk ? true : ($isBool ? false : $block->getLevel()->getBlock($block->down())->getId() === $bk);
+    }
+    
+    public function isAllowedStair(Block $block) : bool{
+        $id = $this->config->get('disable-block-ids');
+        if($id === false){
+            return true;
+        }else{
+            foreach(explode(',', $id) as $i){
+                if($block->getId() == trim($i)) return false;
+            }
+        }
+        return true;
+    }
+    
+    public function canUseWorld(Level $level) : bool{
+        $world = $this->config->get('apply-world');
+        if($world === true){
+            return true;
+        }else{
+            foreach(explode(',', $world) as $w){
+                if(strtolower($level->getName()) === strtolower(trim($w))) return true;
+            }
+        }
+        return false;
+    }
+    
+    public function isAllowedHighHeight(Player $player, Vector3 $pos) : bool{
+        return $this->config->get('allow-seat-high-height') ? true : $player->y - $pos->y >= 0;
+    }
+    
+    public function canSit(Player $player, Block $block) : bool{
+        return $this->isStairBlock($block) && 
+                $this->canUseWorld($player->getLevel()) && 
+                $this->isAllowedHighHeight($player, $block->asVector3()) && 
+                $this->isAllowedUnderBlock($block) &&
+                $this->isAllowedStair($block);
+    }
+    
+    public function isUsingSeat(Vector3 $pos) : ?Player{
+        foreach($this->sit as $name => $data){
+            if($pos->equals($data[1])){
+                $player = $this->getServer()->getPlayer($name);
+                return $player;
+            }
+        }
+        return null;
+    }
+    
+    public function getSitData(Player $player, int $type = 0){
+        return $this->sit[$player->getName()][$type];
+    }
+    
+    public function setSitPlayerId(Player $player, int $id, Vector3 $pos) : void{
+        $this->sit[$player->getName()] = [$id, $pos];
+    }
+    
+    public function isSitting(Player $player) : bool{
+        return array_key_exists($player->getName(), $this->sit);
+    }
+    
+    public function unsetSitting(Player $player){
+        $id = $this->getSitData($player);
+        $pk = new SetActorLinkPacket();
+        $entLink = new EntityLink();
+        $entLink->fromEntityUniqueId = $id;
+        $entLink->toEntityUniqueId = $player->getId();
+        $entLink->immediate = true;
+        $entLink->type = EntityLink::TYPE_REMOVE;
+        $pk->link = $entLink;
+        $this->getServer()->broadcastPacket($this->getServer()->getOnlinePlayers(), $pk);
+        $pk = new RemoveActorPacket();
+        $pk->entityUniqueId = $id;
+        $this->getServer()->broadcastPacket($this->getServer()->getOnlinePlayers(),$pk);
+        $player->setGenericFlag(Entity::DATA_FLAG_RIDING, false);
+        unset($this->sit[$player->getName()]);
+    }
+    
+    public function setSitting(Player $player, Vector3 $pos, int $id, ?Player $specific = null){
+        $addEntity = new AddActorPacket();
+        $addEntity->entityRuntimeId = $id;
+        $addEntity->type = 10;
+        $addEntity->position = $pos->add(0.5, 1.5, 0.5);
+        $flags = (1 << Entity::DATA_FLAG_IMMOBILE | 1 << Entity::DATA_FLAG_SILENT | 1 << Entity::DATA_FLAG_INVISIBLE);
+        $addEntity->metadata = [Entity::DATA_FLAGS => [Entity::DATA_TYPE_LONG, $flags]];
+        $setEntity = new SetActorLinkPacket();
+        $entLink = new EntityLink();
+        $entLink->fromEntityUniqueId = $id;
+        $entLink->toEntityUniqueId = $player->getId();
+        $entLink->immediate = true;
+        $entLink->type = EntityLink::TYPE_RIDER;
+        $setEntity->link = $entLink;
+        if($specific){
+            $specific->dataPacket($addEntity);
+            $specific->dataPacket($setEntity);
+        }else{
+            $player->setGenericFlag(Entity::DATA_FLAG_RIDING, true);
+            $this->setSitPlayerId($player, $id, $pos->floor());
+            $this->getServer()->broadcastPacket($this->getServer()->getOnlinePlayers(), $addEntity);
+            $this->getServer()->broadcastPacket($this->getServer()->getOnlinePlayers(), $setEntity);
+        }
+    }
+}<?php
+namespace korado531m7\StairSeat;
+
+use pocketmine\entity\Entity;
+use pocketmine\event\Listener;
+use pocketmine\event\block\BlockBreakEvent;
+use pocketmine\event\player\PlayerInteractEvent;
+use pocketmine\event\player\PlayerJoinEvent;
+use pocketmine\event\player\PlayerQuitEvent;
+use pocketmine\event\server\DataPacketReceiveEvent;
+use pocketmine\network\mcpe\protocol\InteractPacket;
+
+class EventListener implements Listener{
+    private $instance;
+    
+    public function __construct(StairSeat $instance){
+        $this->instance = $instance;
+    }
+    
+    public function onQuit(PlayerQuitEvent $event){
+        $player = $event->getPlayer();
+        if($this->instance->isSitting($player)){
+            $this->instance->unsetSitting($player);
+        }
+    }
+    
+    public function onInteract(PlayerInteractEvent $event){
+        $player = $event->getPlayer();
+        $block = $event->getBlock();
+        if(!$this->instance->isSitting($player) && $this->instance->canSit($player, $block)){
+            if($usePlayer = $this->instance->isUsingSeat($block->floor())){
+                $player->sendMessage(str_replace(['@p','@b'],[$usePlayer->getName(), $block->getName()],$this->instance->config->get('tryto-sit-already-inuse')));
+            }else{
+                $eid = Entity::$entityCount++;
+                $this->instance->setSitting($player, $block->asVector3(), $eid);
+                $player->sendTip(str_replace('@b',$block->getName(),$this->instance->config->get('send-tip-when-sit')));
+            }
+        }
+    }
+    
+    public function onJoin(PlayerJoinEvent $event){
+        $player = $event->getPlayer();
+        //Can't apply without delaying that's why using delayed task
+        if(count($this->instance->sit) >= 1) $this->instance->getScheduler()->scheduleDelayedTask(new SendTask($player, $this->instance->sit, $this->instance), 30);
+    }
+    
+    public function onBreak(BlockBreakEvent $event){
+        $block = $event->getBlock();
+        if($this->instance->isStairBlock($block) && ($usingPlayer = $this->instance->isUsingSeat($block->floor()))){
+            $this->instance->unsetSitting($usingPlayer);
+        }
+    }
+    
+    public function onLeave(DataPacketReceiveEvent $event){
+        $packet = $event->getPacket();
+        $player = $event->getPlayer();
+        if($packet instanceof InteractPacket && $this->instance->isSitting($player) && $packet->action === InteractPacket::ACTION_LEAVE_VEHICLE){
+            $this->instance->unsetSitting($player);
+        }
+    }
+}# StairSeat Configuration File
+
+# ------------------------------ Apply Settings ------------------------------
+
+# Enter world name for applying
+# if you want multiple worlds, separate with comma   (e.g. test1, test2)
+# (if set to true, all of worlds will be applied seat feature)
+
+apply-world: true
+
+# ----------------------------------------------------------------------------
+
+# Allow player to sit on seat if its height is higher than player
+
+allow-seat-high-height: false
+
+# ----------------------------------------------------------------------------
+
+# Player can sit on stair if under the block's id is this id.
+# (if set to true, all of blocks are allowed)
+# (Example: if set to 5 (oak wood block), player can sit on stair if under the stair's block is oak wood)
+
+allow-block-under-id: true
+
+# ----------------------------------------------------------------------------
+
+# Disable block id (if set to false, none of stairs are disabled)
+# To disable some blocks, separate with comma
+# (ex. to disable oak stair and stone stair, write '53, 109')
+
+disable-block-ids: false
+
+# ----------------------------------------------------------------------------
+
+
+
+
+
+# ---------------------------- General Settings -------------------------------
+
+# Send tip when sit down
+# Replacement : @b = block where player try to seat name
+
+send-tip-when-sit: Tap jump to exit the seat
+
+# ----------------------------------------------------------------------------
+
+# Send message when trying to seat on stair which is already used
+# Replacement : @b = try to seat block's name
+#               @b = try to seat block's name
+
+tryto-sit-already-inuse: This seat is used by @p
+
+# ----------------------------------------------------------------------------<?php
+namespace korado531m7\StairSeat;
+
+use pocketmine\scheduler\Task;
+use pocketmine\Player;
+
+class SendTask extends Task{
+    public function __construct(Player $player,array $data,StairSeat $instance){
+        $this->who = $player;
+        $this->data = $data;
+        $this->instance = $instance;
+    }
+    
+    public function onRun(int $tick) : void{
+        foreach($this->data as $name => $datum){
+            if(($player = $this->instance->getServer()->getPlayer($name)) === null || $this->who === null) continue;
+            $this->instance->setSitting($player, $datum[1], $datum[0], $this->who);
+        }
+    }
+}

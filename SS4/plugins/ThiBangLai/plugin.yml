@@ -1,0 +1,18 @@
+name: ThiBangLai
+main: HWings\ThiBangLai\ThiBangLai
+version: 1.0.0
+author: NguyenDongQuy
+api: 3.0.0
+description: Hệ thống thi bằng láicommands:
+  muaxe:
+   description: "Mua xe"
+   default: true
+  😲:
+   description: "Tiến hành thi lấy bằng lái xe"
+   default: true
+  🌙:
+   description: "Hoàn thành thi lấy bằng lái xe"
+   default: true
+  banglai:
+   deacription: "Xem bạn đã có Bằng Lái chưa"
+   default: true

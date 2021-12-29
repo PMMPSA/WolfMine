@@ -1,0 +1,173 @@
+---
+version: 1
+blocks:
+- x: -16
+  "y": 101
+  z: -29
+  level: City
+  commands:
+  - "\U0001F508"
+  - "\U0001F508"
+  - "\U0001F508"
+  - "\U0001F508"
+  - "\U0001F508"
+  - ??????
+  - "\U0001F508"
+- x: -15
+  "y": 101
+  z: -29
+  level: City
+  commands:
+  - "\U0001F508"
+  - q
+- x: -16
+  "y": 101
+  z: -28
+  level: City
+  commands:
+  - "\U0001F508"
+- x: 51
+  "y": 102
+  z: 37
+  level: City
+  commands:
+  - "\U0001F319"
+- x: 52
+  "y": 102
+  z: 37
+  level: City
+  commands:
+  - "\U0001F319"
+- x: 44
+  "y": 102
+  z: 51
+  level: City
+  commands:
+  - "\U0001F632"
+- x: -15
+  "y": 114
+  z: -32
+  level: City
+  commands:
+  - ??????p
+- x: -14
+  "y": 101
+  z: -29
+  level: City
+  commands:
+  - q
+- x: -13
+  "y": 101
+  z: -29
+  level: City
+  commands:
+  - q
+- x: -13
+  "y": 101
+  z: -28
+  level: City
+  commands:
+  - q
+- x: -14
+  "y": 101
+  z: -28
+  level: City
+  commands:
+  - q
+- x: -62
+  "y": 101
+  z: -14
+  level: City
+  commands:
+  - q
+- x: -61
+  "y": 101
+  z: -14
+  level: City
+  commands:
+  - q
+- x: -58
+  "y": 101
+  z: -40
+  level: City
+  commands:
+  - q
+- x: 39
+  "y": 101
+  z: -31
+  level: City
+  commands:
+  - q
+- x: 39
+  "y": 101
+  z: -32
+  level: City
+  commands:
+  - q
+- x: 40
+  "y": 101
+  z: 13
+  level: City
+  commands:
+  - q
+- x: 40
+  "y": 101
+  z: 14
+  level: City
+  commands:
+  - q
+- x: 48
+  "y": 101
+  z: 78
+  level: City
+  commands:
+  - q
+- x: 48
+  "y": 101
+  z: 79
+  level: City
+  commands:
+  - q
+- x: 1
+  "y": 101
+  z: 83
+  level: City
+  commands:
+  - q
+- x: 1
+  "y": 101
+  z: 82
+  level: City
+  commands:
+  - q
+- x: -46
+  "y": 101
+  z: 80
+  level: City
+  commands:
+  - q
+- x: -46
+  "y": 101
+  z: 79
+  level: City
+  commands:
+  - q
+- x: -76
+  "y": 97
+  z: 31
+  level: City
+  commands:
+  - tools bar1
+- x: -77
+  "y": 96
+  z: 31
+  level: City
+  commands:
+  - tools bar
+- x: -78
+  "y": 96
+  z: 31
+  level: City
+  commands:
+  - tools bar
+...

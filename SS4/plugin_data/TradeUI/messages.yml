@@ -1,0 +1,16 @@
+---
+no_items_player: '&d•&e Cư Dân này không có gì để bán,Hãy thử lại sau.'
+no_items_public: '&d•&e Không có vật phẩm có sẵn trong Sàn Giao Dịch. Hãy thử lại sau.'
+no_offers: '&d•&e Cư Dân không có vật phẩm để bán.'
+no_longer_available: '&d•&e Xin lỗi! Có thể vật phẩm Cư Dân đang muốn mua đã không còn.'
+enter_valid_price: '&d•&e Xin nhập giá thích hợp.'
+not_enough_to_sell: "&d•&e Cư Dân không có đủ vật phẩm để bán.\n&d•&e Cư Dân đang có: &c@have\n&d•&e Cư Dân đã chọn số lượng: &6@chose"
+selling_item: "&d•&e @player đang bán &b@item (x@amount)&e với giá &b@price Đồng!\n&d•&b Để xem,gõ&e: /sgd @player"
+no_sufficient_funds: '&d•&e Xin lỗi, Cư Dân không có đủ tiền để mua vật phẩm này.'
+bought_item: "&d•&e @player đã mua &b@item (x@amount) &evới giá &b@price Đồng!"
+inventory_full: '&d•&b Túi đồ của Cư Dân đã đầy, hãy dọn bớt chỗ trống trong túi đồ bạn rồi gõ&e: /sdg-nhan'
+inventory_full_2: "&d•&e Túi đồ của Cư Dân đã đầy!\n&d•&e Hãy dọn bớt chỗ trống trong túi đồ bạn và thử thu vật phẩm lại."
+no_recent_items: '&d•&e Không có món hàng nào mà Cư Dân đã mua gần đây.'
+no_empty: '&d•&e Túi đồ của Cư Dân không thể để trống được!.'
+deleted_item: '&d•&e @player đã thu lại &b@item (x@amount) &etừ Sàn Giao Dịch.'
+...

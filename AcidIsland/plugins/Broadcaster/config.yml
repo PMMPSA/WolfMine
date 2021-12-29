@@ -1,0 +1,24 @@
+---
+prefix: "Broadcaster"
+suffix: "[A]"
+time: 47
+sendmessage-format: "&e[{TIME}] &b[{PREFIX}] {SUFFIX} &a{SENDER}&e>&f {MESSAGE}"
+datetime-format: "H:i:s"
+broadcast-enabled: true
+messages:
+ - "Nếu trong quá trình chơi có gì không hài lòng hãy báo với admin"
+ - "Nếu muốn đẳng cấp hơn hãy nạp thẻ, hệ thông vip vô cùng đa dạng từ vip 1 đến vip 8. Để nạp thẻ hãy sử dụng /card"
+ - "Để muốn xem lịch event hàng tuần/hàng ngày hãy xem bảng event ở hub nhé"
+ - "Bây giờ là mấy giờ rồi? đừng quên bất cứ event nào nhé"
+ - "Để enchant vật phẩm hãy tap vào npc buyec ở hub để xem cách enchant nhé"
+ - "Để xem cách chơi hãy sử dụng lệnh /warp acid"
+ - "Nếu bạn là vip4 trở lên hãy liên hệ admin để nhận code vip hàng ngày nhé, đối với vip8 hãy liên hệ Nguyễn Đông Quý để nhận code Sapling"
+ - "Nếu có đủ key hãy tap vào 3 chiếc rương ở hub để quay nhé, lưu ý vật phẩm key chỉ xuất hiện khi mua của npc bên cạnh"
+ - "Hot: event drop sẽ được diễn ra khá thường xuyên nên hãy canh giờ cho đúng nhé"
+popup-time: 1000000
+popup-duration: 5
+sendpopup-format: "&a{SENDER}&e>>&f {MESSAGE}"
+popup-broadcast-enabled: true
+popups:
+ - " "
+...

@@ -1,0 +1,9 @@
+name: VoucherUI
+version: 1.0
+api: 3.0.0
+main: CUI\Main
+author: No2Fighter
+commands: 
+  vc:
+   description: Hệ thống tạo Voucher
+   default: op

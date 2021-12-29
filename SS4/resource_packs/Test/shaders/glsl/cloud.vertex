@@ -1,0 +1,52 @@
+// __multiversion__
+// This signals the loading code to prepend either #version 100 or #version 300 es as apropriate.
+
+#if __VERSION__ >= 300
+#define attribute in
+#define varying out
+#else
+
+#endif
+
+uniform vec2 FOG_CONTROL;
+uniform MAT4 WORLDVIEWPROJ;
+uniform MAT4 WORLD;
+uniform float RENDER_DISTANCE;
+uniform vec4 FOG_COLOR;
+uniform vec4 CURRENT_COLOR;
+uniform highp float TIME;
+
+attribute mediump vec4 POSITION;
+attribute vec4 COLOR;
+
+varying vec4 color;
+
+const float fogNear = 0.9;
+
+const vec3 inverseLightDirection = vec3(0.62, 0.78, 0.0);
+const float ambient = 0.7;
+
+void main()
+{
+    POS4 pos = WORLDVIEWPROJ * POSITION;
+	POS4 worldPos = WORLD * POSITION;
+    vec3 wave = POSITION.xyz;
+ 	gl_Position = pos;
+
+ 	color = FOG_COLOR;
+
+ 	float depth = length(worldPos.xyz) / RENDER_DISTANCE;
+ 	float fog = max(depth - fogNear, 0.0);
+
+ 	color.a *= 1.0 - fog;
+ 	
+float C = sin((TIME*0.87)+(FOG_CONTROL.x*0.5)+wave.x+wave.z+wave.x)*0.4;
+float L = sin((TIME*0.89)+wave.x+wave.z+wave.x)*0.3;
+
+
+color.a+= C;
+color.a *= 0.2+fog;
+color.a*= 0.37;
+color.a += (C*-0.17)+(L*0.2);
+gl_Position.y += C+L;
+}

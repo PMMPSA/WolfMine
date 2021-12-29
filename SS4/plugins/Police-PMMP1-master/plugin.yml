@@ -1,0 +1,11 @@
+name: Police1
+main: nlog1\Police1\Main1
+version: 1.0.0
+author: nlog1
+api:
+ - 3.0.0
+
+commands:
+ police1:
+  permission: op
+  description: Set police1 player

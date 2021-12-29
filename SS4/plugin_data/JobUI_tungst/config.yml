@@ -1,0 +1,570 @@
+---
+job:
+- name: ĐẦU BẾP
+  prefix: ""
+  item:
+  - "357:0:5"
+  - "350:0:5"
+  png: ""
+- name: THỢ HỒ
+  prefix: ""
+  item:
+  - 1:0:64
+  - "390:0:5"
+  png: ""
+- name: NÔNG DÂN
+  prefix: ""
+  item:
+  - "296:0:10"
+  - "391:0:5"
+  png: ""
+playerjobs:
+  LonMongManh69:
+    job: ""
+    name: LonMongManh69
+    idjob: 0
+    isCheck: true
+  ThinkerS2k18:
+    job: ""
+    name: ThinkerS2k18
+    idjob: 0
+    isCheck: false
+  ANGSEd910:
+    job: ""
+    name: ANGSEd910
+    idjob: 0
+    isCheck: false
+  phuongaz:
+    job: ""
+    name: phuongaz
+    idjob: 0
+    isCheck: false
+  ChickenVN123:
+    job: ""
+    name: ChickenVN123
+    idjob: 1
+    isCheck: false
+  GodOfHeavan:
+    job: ""
+    name: GodOfHeavan
+    idjob: 2
+    isCheck: false
+  LousWiteMC:
+    job: ""
+    name: LousWiteMC
+    idjob: 1
+    isCheck: false
+  VyVy2k3:
+    job: ""
+    name: VyVy2k3
+    idjob: 0
+    isCheck: true
+  GreenJajot:
+    job: ""
+    name: GreenJajot
+    idjob: 2
+    isCheck: false
+  KenGamerVN:
+    job: ""
+    name: KenGamerVN
+    idjob: 2
+    isCheck: false
+  LVTDragun:
+    job: ""
+    name: LVTDragun
+    idjob: 2
+    isCheck: true
+  HoangChoii:
+    job: ""
+    name: HoangChoii
+    idjob: 0
+    isCheck: false
+  NhoxSaoBang:
+    job: ""
+    name: NhoxSaoBang
+    idjob: 1
+    isCheck: true
+  WhiteTFC286:
+    job: ""
+    name: WhiteTFC286
+    idjob: 0
+    isCheck: true
+  MyNameHuy23:
+    job: ""
+    name: MyNameHuy23
+    idjob: 0
+    isCheck: false
+  ZzPhanVanTanzZ:
+    job: ""
+    name: ZzPhanVanTanzZ
+    idjob: 1
+    isCheck: false
+  ZenoKunDz:
+    job: ""
+    name: ZenoKunDz
+    idjob: 0
+    isCheck: false
+  BrianDuongVN:
+    job: ""
+    name: BrianDuongVN
+    idjob: 1
+    isCheck: false
+  TDWatch:
+    job: ""
+    name: TDWatch
+    idjob: 0
+    isCheck: false
+  BlackFoss2k4:
+    job: ""
+    name: BlackFoss2k4
+    idjob: 1
+    isCheck: true
+  Mondethuong:
+    job: ""
+    name: Mondethuong
+    idjob: 2
+    isCheck: false
+  nhocscamyt:
+    job: ""
+    name: nhocscamyt
+    idjob: 0
+    isCheck: false
+  KonyVN:
+    job: ""
+    name: KonyVN
+    idjob: 0
+    isCheck: false
+  Nhunekban:
+    job: ""
+    name: Nhunekban
+    idjob: 0
+    isCheck: false
+  StyleMC119:
+    job: ""
+    name: StyleMC119
+    idjob: 1
+    isCheck: false
+  Gabaku:
+    job: ""
+    name: Gabaku
+    idjob: 0
+    isCheck: false
+  FPVGAMER:
+    job: ""
+    name: FPVGAMER
+    idjob: 1
+    isCheck: false
+  TungTam:
+    job: ""
+    name: TungTam
+    idjob: 2
+    isCheck: false
+  GatheredSiren9:
+    job: ""
+    name: GatheredSiren9
+    idjob: 1
+    isCheck: false
+  YinZoXGamer:
+    job: ""
+    name: YinZoXGamer
+    idjob: 0
+    isCheck: true
+  ZyVy1062:
+    job: ""
+    name: ZyVy1062
+    idjob: 2
+    isCheck: false
+  Sasaki293:
+    job: ""
+    name: Sasaki293
+    idjob: 1
+    isCheck: false
+  BammBuu0310:
+    job: ""
+    name: BammBuu0310
+    idjob: 0
+    isCheck: false
+  Ender boy 2005:
+    job: ""
+    name: Ender boy 2005
+    idjob: 0
+    isCheck: true
+  LeHuyDzVL33:
+    job: ""
+    name: LeHuyDzVL33
+    idjob: 1
+    isCheck: false
+  SkyGamingBlue:
+    job: ""
+    name: SkyGamingBlue
+    idjob: 2
+    isCheck: true
+  WeptAntelope389:
+    job: ""
+    name: WeptAntelope389
+    idjob: 2
+    isCheck: false
+  HungGamingTv:
+    job: ""
+    name: HungGamingTv
+    idjob: 0
+    isCheck: false
+  ZzzNarutozzZ159:
+    job: ""
+    name: ZzzNarutozzZ159
+    idjob: 1
+    isCheck: false
+  MeoAnh:
+    job: ""
+    name: MeoAnh
+    idjob: 2
+    isCheck: false
+  ZFrivenZF0912:
+    job: ""
+    name: ZFrivenZF0912
+    idjob: 2
+    isCheck: true
+  Nhanciu:
+    job: ""
+    name: Nhanciu
+    idjob: 0
+    isCheck: false
+  bititpro:
+    job: ""
+    name: bititpro
+    idjob: 1
+    isCheck: false
+  CravingLace6596:
+    job: ""
+    name: CravingLace6596
+    idjob: 0
+    isCheck: false
+  RkGauTrucVN:
+    job: ""
+    name: RkGauTrucVN
+    idjob: 0
+    isCheck: false
+  PingingArtist84:
+    job: ""
+    name: PingingArtist84
+    idjob: 2
+    isCheck: false
+  SameAnteater792:
+    job: ""
+    name: SameAnteater792
+    idjob: 0
+    isCheck: false
+  quoc tuan 123:
+    job: ""
+    name: quoc tuan 123
+    idjob: 1
+    isCheck: false
+  LeSonNaD:
+    job: ""
+    name: LeSonNaD
+    idjob: 0
+    isCheck: false
+  CedarSephera:
+    job: ""
+    name: CedarSephera
+    idjob: 2
+    isCheck: false
+  Dtien08:
+    job: ""
+    name: Dtien08
+    idjob: 2
+    isCheck: false
+  HuyDepZaiz:
+    job: ""
+    name: HuyDepZaiz
+    idjob: 1
+    isCheck: false
+  Nhatthicuto:
+    job: ""
+    name: Nhatthicuto
+    idjob: 2
+    isCheck: false
+  LucBo001:
+    job: ""
+    name: LucBo001
+    idjob: 0
+    isCheck: false
+  nGoManhh:
+    job: ""
+    name: nGoManhh
+    idjob: 2
+    isCheck: false
+  mion1kaneki094:
+    job: ""
+    name: mion1kaneki094
+    idjob: 2
+    isCheck: false
+  zzHihizz:
+    job: ""
+    name: zzHihizz
+    idjob: 0
+    isCheck: true
+  OopsMuti:
+    job: ""
+    name: OopsMuti
+    idjob: 1
+    isCheck: false
+  PikkaPi:
+    job: ""
+    name: PikkaPi
+    idjob: 1
+    isCheck: false
+  JunKunGPS:
+    job: ""
+    name: JunKunGPS
+    idjob: 0
+    isCheck: false
+  Arkihasu:
+    job: ""
+    name: Arkihasu
+    idjob: 2
+    isCheck: false
+  YokoDz:
+    job: ""
+    name: YokoDz
+    idjob: 1
+    isCheck: false
+  Yukino Yakumi:
+    job: ""
+    name: Yukino Yakumi
+    idjob: 2
+    isCheck: true
+  GauYTVNMC:
+    job: ""
+    name: GauYTVNMC
+    idjob: 2
+    isCheck: false
+  donutboyz69:
+    job: ""
+    name: donutboyz69
+    idjob: 0
+    isCheck: false
+  ZomeQuangVN:
+    job: ""
+    name: ZomeQuangVN
+    idjob: 1
+    isCheck: false
+  UnluckyZoo96185:
+    job: ""
+    name: UnluckyZoo96185
+    idjob: 2
+    isCheck: false
+  ThienAnDepTrai:
+    job: ""
+    name: ThienAnDepTrai
+    idjob: 1
+    isCheck: false
+  SuTuCoDoc113:
+    job: ""
+    name: SuTuCoDoc113
+    idjob: 1
+    isCheck: true
+  mi thao 2:
+    job: ""
+    name: mi thao 2
+    idjob: 1
+    isCheck: false
+  masowm:
+    job: ""
+    name: masowm
+    idjob: 0
+    isCheck: false
+  NakGamingTV:
+    job: ""
+    name: NakGamingTV
+    idjob: 0
+    isCheck: false
+  CreeperBoy2403:
+    job: ""
+    name: CreeperBoy2403
+    idjob: 1
+    isCheck: false
+  ANGSED MC:
+    job: ""
+    name: ANGSED MC
+    idjob: 0
+    isCheck: false
+  NyToiTenOanh99:
+    job: ""
+    name: NyToiTenOanh99
+    idjob: 2
+    isCheck: false
+  VietNamHT2018:
+    job: ""
+    name: VietNamHT2018
+    idjob: 1
+    isCheck: false
+  nhoxkuboy:
+    job: ""
+    name: nhoxkuboy
+    idjob: 2
+    isCheck: false
+  SeMeRuVN:
+    job: ""
+    name: SeMeRuVN
+    idjob: 0
+    isCheck: false
+  NguyenDeepTry:
+    job: ""
+    name: NguyenDeepTry
+    idjob: 1
+    isCheck: false
+  STGhast666:
+    job: ""
+    name: STGhast666
+    idjob: 1
+    isCheck: false
+  andoragamer:
+    job: ""
+    name: andoragamer
+    idjob: 2
+    isCheck: false
+  PandemicPvPYT:
+    job: ""
+    name: PandemicPvPYT
+    idjob: 1
+    isCheck: false
+  TuiDepTraii:
+    job: ""
+    name: TuiDepTraii
+    idjob: 1
+    isCheck: true
+  caomanhduyFFA1:
+    job: ""
+    name: caomanhduyFFA1
+    idjob: 0
+    isCheck: true
+  Minecraft99985:
+    job: ""
+    name: Minecraft99985
+    idjob: 2
+    isCheck: false
+  FlyingDarkSoul:
+    job: ""
+    name: FlyingDarkSoul
+    idjob: 0
+    isCheck: false
+  ShippouPvP1110:
+    job: ""
+    name: ShippouPvP1110
+    idjob: 0
+    isCheck: false
+  Jeneration6:
+    job: ""
+    name: Jeneration6
+    idjob: 2
+    isCheck: false
+  DucAnhNguyen81:
+    job: ""
+    name: DucAnhNguyen81
+    idjob: 0
+    isCheck: false
+  giaving13014:
+    job: ""
+    name: giaving13014
+    idjob: 1
+    isCheck: false
+  RicardoTicas:
+    job: ""
+    name: RicardoTicas
+    idjob: 1
+    isCheck: false
+  MexissM:
+    job: ""
+    name: MexissM
+    idjob: 0
+    isCheck: false
+  FurryJaki1992:
+    job: ""
+    name: FurryJaki1992
+    idjob: 0
+    isCheck: false
+  robingachi:
+    job: ""
+    name: robingachi
+    idjob: 1
+    isCheck: false
+  LNTKien:
+    job: ""
+    name: LNTKien
+    idjob: 1
+    isCheck: false
+  FoxGinGamer:
+    job: ""
+    name: FoxGinGamer
+    idjob: 0
+    isCheck: false
+  Good Of Lee:
+    job: ""
+    name: Good Of Lee
+    idjob: 0
+    isCheck: false
+  DiseGamerTM:
+    job: ""
+    name: DiseGamerTM
+    idjob: 2
+    isCheck: false
+  YorickGamerVN:
+    job: ""
+    name: YorickGamerVN
+    idjob: 2
+    isCheck: false
+  NoobZeo:
+    job: ""
+    name: NoobZeo
+    idjob: 2
+    isCheck: false
+  BossHackerVNG:
+    job: ""
+    name: BossHackerVNG
+    idjob: 1
+    isCheck: false
+  DannyPlayMC:
+    job: ""
+    name: DannyPlayMC
+    idjob: 0
+    isCheck: false
+  CrucialHurdle55:
+    job: ""
+    name: CrucialHurdle55
+    idjob: 1
+    isCheck: false
+  MystoganMitz:
+    job: ""
+    name: MystoganMitz
+    idjob: 0
+    isCheck: true
+  ZedBoyMC:
+    job: ""
+    name: ZedBoyMC
+    idjob: 0
+    isCheck: true
+  senkairai:
+    job: ""
+    name: senkairai
+    idjob: 2
+    isCheck: true
+  UnfixedOdin9627:
+    job: ""
+    name: UnfixedOdin9627
+    idjob: 2
+    isCheck: true
+  WryBracelet8749:
+    job: ""
+    name: WryBracelet8749
+    idjob: 1
+    isCheck: true
+isCheckItem: false
+CheckTime:
+- 18
+- 21
+CommandForDoneJob:
+- givemoney {name} 50000
+CommandForUnDoneJob:
+- tdnp {name} 5
+...

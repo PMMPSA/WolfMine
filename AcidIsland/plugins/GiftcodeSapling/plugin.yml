@@ -1,0 +1,11 @@
+name: GiftCode-Sapling
+main: AmGM1\GiftCode1\Main1
+version: 2.0.1
+author: AmGM
+api: [2.0.0, 3.0.0]
+description: RewriteByAmGMConCac1
+commands:
+  gencode-sapling:
+   description: Sử dụng code.
+  code-sapling:
+    description: Tạo code mới.

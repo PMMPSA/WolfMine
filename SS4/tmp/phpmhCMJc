@@ -1,0 +1,218 @@
+<?php
+declare(strict_types = 1);
+
+namespace SalmonDE\TopVoter;
+
+use pocketmine\level\Level;
+use pocketmine\level\particle\FloatingTextParticle;
+use pocketmine\level\Position;
+use pocketmine\math\Vector3;
+use pocketmine\plugin\PluginBase;
+use SalmonDE\TopVoter\Tasks\{UpdateVotesTask, PocketVoteUpdateTask};
+
+class TopVoter extends PluginBase {
+
+	private $updateTask;
+	private $particles = [];
+
+	private $voters = [];
+
+	public function onEnable(): void{
+		$this->saveResource('config.yml');
+		$this->initParticles();
+
+		// Check if we want to enable PocketVote support.
+		if(empty($this->getConfig()->get('API-Key')) || $this->getConfig()->get('Use-PocketVote')) {
+			// If key is not set and PocketVote is loaded, use PocketVote.
+			// If Use-PocketVote is set to true and plugin is loaded, use PocketVote.
+			if($this->getServer()->getPluginManager()->getPlugin('PocketVote') !== null) {
+				$this->getScheduler()->scheduleRepeatingTask($this->updateTask = new PocketVoteUpdateTask($this), max(1, $this->getConfig()->get('Update-Interval')) * 20);
+			}
+		}
+
+		if(!$this->updateTask) {
+			$this->getScheduler()->scheduleRepeatingTask($this->updateTask = new UpdateVotesTask($this), max(180, $this->getConfig()->get('Update-Interval')) * 20);
+		}
+
+		$this->getServer()->getPluginManager()->registerEvents(new EventListener($this), $this);
+	}
+
+	private function initParticles(): void{
+		foreach((array) $this->getConfig()->get('Positions') as $pos){
+			if(($level = $this->getServer()->getLevelByName($pos['world'])) instanceof Level){
+				$particle = new FloatingTextParticle(new Vector3($pos['x'], $pos['y'], $pos['z']), '', $this->getConfig()->get('Header'));
+				$particle->encode(); // prevent empty batch error
+				$this->particles[$level->getFolderName()][] = $particle;
+			}
+		}
+	}
+
+	public function getParticles(): array{
+		return $this->particles;
+	}
+
+	public function sendParticles(Level $level = null, array $players = null){
+		if($level === null){
+			foreach(array_keys($this->particles) as $level){
+				if(($level = $this->getServer()->getLevelByName($level)) instanceof Level){
+					$this->sendParticles($level);
+				}
+			}
+
+			return;
+		}
+
+		if($players === null){
+			$players = $level->getPlayers();
+		}
+
+		foreach($this->particles[$level->getFolderName()] ?? [] as $particle){
+			$particle->setInvisible(false);
+			$level->addParticle($particle, $players);
+		}
+	}
+
+	public function removeParticles(Level $level, array $players = null){
+		if($players === null){
+			$players = $level->getPlayers();
+		}
+
+		foreach($this->particles[$level->getFolderName()] ?? [] as $particle){
+			$particle->setInvisible();
+			$level->addParticle($particle, $players);
+			$particle->setInvisible(false);
+		}
+	}
+
+	public function updateParticles(): void{
+		$text = '';
+
+		foreach($this->voters as $voter){
+			$text .= str_replace(['{player}', '{votes}'], [$voter['nickname'], $voter['votes']], $this->getConfig()->get('Text'))."\n";
+		}
+
+		foreach($this->particles as $levelParticles){
+			foreach($levelParticles as $particle){
+				$particle->setText($text);
+			}
+		}
+	}
+
+	public function setVoters(array $voters): void{
+		$this->voters = $voters;
+	}
+
+	public function getVoters(): array{
+		return $this->voters;
+	}
+
+	public function onDisable(): void{
+		foreach($this->particles as $level => $particles){
+			$level = $this->getServer()->getLevelByName($level);
+
+			if($level instanceof Level){
+				foreach($particles as $particle){
+					$particle->setInvisible();
+					$level->addParticle($particle);
+				}
+			}
+		}
+
+		$this->particles = [];
+	}
+}
+#Positions of the floating texts
+Positions:
+    - world: Spawn
+      x: 0
+      "y": 0
+      z: 0
+    - world: Spawn
+      x: 2
+      "y": 0
+      z: 0
+#API-Key of your server provided by minecraftpocket-servers.com
+API-Key: ""
+#Amount of voters who shall be shown (Max: 500)
+Amount: 5
+#Update interval of the query to the server in seconds
+Update-Interval: 180
+#Header of the floating text particle
+Header: "§6Top voters of the month <3"
+#Text for every row after the header
+Text: "§a{player} §d{votes}"
+#Check if the name of a voter is valid
+#Votes of invalidly named players will be discarded if enabled
+Check-Name: true
+#When set to true PocketVote will provide aggregated top voters instead of using your API-Key
+Use-PocketVote: false<?php
+declare(strict_types = 1);
+
+namespace SalmonDE\TopVoter\Tasks;
+
+use pocketmine\scheduler\Task;
+use SalmonDE\TopVoter\TopVoter;
+
+class UpdateVotesTask extends Task {
+
+	private $owner;
+	private $key = \null;
+	private $amount;
+
+	public function __construct(TopVoter $owner){
+		$this->owner = $owner;
+		$this->key = $owner->getConfig()->get('API-Key');
+		$this->amount = \min(500, (int) $owner->getConfig()->get('Amount'));
+	}
+
+	public function unsetKey(): void{
+		$this->key = \null;
+	}
+
+	public function onRun(int $currentTick): void{
+		if(!empty($this->key)){
+			$this->owner->getServer()->getAsyncPool()->submitTask(new QueryServerListTask($this->key, $this->amount));
+		}else{
+			$this->owner->getLogger()->warning('Invalid API key');
+			$this->owner->getScheduler()->cancelTask($this->getTaskId());
+			$this->owner->getServer()->getPluginManager()->disablePlugin($this->owner);
+		}
+	}
+
+	public function onCancel(): void{
+		$this->unsetKey();
+	}
+}
+<?php
+declare(strict_types = 1);
+
+namespace SalmonDE\TopVoter;
+
+use pocketmine\event\entity\EntityLevelChangeEvent;
+use pocketmine\event\Listener;
+use pocketmine\event\player\PlayerJoinEvent;
+use pocketmine\Player;
+
+class EventListener implements Listener {
+
+	private $plugin;
+
+	public function __construct(TopVoter $plugin){
+		$this->plugin = $plugin;
+	}
+
+	public function onJoin(PlayerJoinEvent $event){
+		$this->plugin->sendParticles($event->getPlayer()->getLevel(), [$event->getPlayer()]);
+	}
+
+	/**
+	* @priority MONITOR
+	* @ignoreCancelled true
+	*/
+	public function onLevelChange(EntityLevelChangeEvent $event){
+		if($event->getEntity() instanceof Player){
+			$this->plugin->removeParticles($event->getOrigin(), [$event->getEntity()]);
+			$this->plugin->sendParticles($event->getTarget(), [$event->getEntity()]);
+		}
+	}
+}

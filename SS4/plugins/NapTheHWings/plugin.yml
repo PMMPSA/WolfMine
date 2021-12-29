@@ -1,0 +1,9 @@
+name: MuaVang
+version: 1.0
+api: 3.0.0
+author: NguyenDongQuy
+main: HWings\Main
+commands:
+ muavang: 
+  description: Hệ thống mua vàng
+  default: true
